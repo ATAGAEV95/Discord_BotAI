@@ -27,6 +27,11 @@ async def on_message(message):
         await message.channel.send("История разговоров была очищена.")
         return
 
+    if message.content.startswith("!help"):
+        await message.channel.send("Это ЧатБот, чтобы его вызвать начинайте свое сообщение на символ '!' \n"
+                                   "Чтобы сбросить чат напишите команду '!reset'")
+        return
+
     response = await handlers.ai_generate(message.content, message.author)
 
     await message.channel.send(response)
