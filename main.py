@@ -15,7 +15,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f'Бот {bot.user} готов к работе!')
+    print(f'Бот {bot.user} готов к работе! Чтобы вызвать бота начните сообщение с символа "!"')
 
 
 @bot.event
