@@ -6,7 +6,7 @@ from app import handlers
 
 load_dotenv()
 
-TOKEN = os.getenv('DISCORD_BOT_TOKEN')
+TOKEN = os.getenv('DC_TOKEN')
 
 intents = discord.Intents.default()
 intents.message_content = True
