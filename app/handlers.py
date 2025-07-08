@@ -1,9 +1,9 @@
-from openai import AsyncOpenAI
 import os
-from dotenv import load_dotenv
-import asyncio
-import tiktoken
 import re
+
+import tiktoken
+from dotenv import load_dotenv
+from openai import AsyncOpenAI
 
 load_dotenv()
 
