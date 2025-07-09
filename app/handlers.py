@@ -9,6 +9,17 @@ load_dotenv()
 
 AI_TOKEN = os.getenv('AI_TOKEN')
 
+SYSTEM_PROMPT = """
+Ты — дружелюбный Discord бот. Твои задачи:
+1. Общаться с пользователями в Discord-чатах
+2. Использовать неформальный стиль общения (но сохранять вежливость)
+3. Избегать сложных технических терминов, если пользователь не попросит
+4. Отвечать кратко (1-2 предложения) для удобства чтения в чате
+5. Если пишет пользователь с user_id - serious_vlad, то он админ канала и проявить к нему особое уважение.
+
+Текущая платформа: Discord
+"""
+
 
 client = AsyncOpenAI(
     api_key=AI_TOKEN,
@@ -35,20 +46,32 @@ def count_tokens(text):
 
 
 def trim_messages(messages, max_tokens=3500):
+    if not messages:
+        return messages
+
+    system_message = messages[0] if messages[0]["role"] == "system" else None
+    other_messages = messages[1:] if system_message else messages
+
     total_tokens = sum(count_tokens(msg.get("content", "")) for msg in messages)
 
-    while total_tokens > max_tokens and len(messages) > 1:
-        removed_message = messages.pop(0)
+    while total_tokens > max_tokens and len(other_messages) > 1:
+        removed_message = other_messages.pop(0)
         total_tokens -= count_tokens(removed_message.get("content", ""))
 
-    return messages
+    return [system_message] + other_messages if system_message else other_messages
 
 
 async def ai_generate(text: str, user_id: int):
     global user_history
     messages = user_history.get(user_id, [])
 
-    messages.append({"role": "user", "content": text})
+    if not messages:
+        messages.append({"role": "system", "content": SYSTEM_PROMPT.strip()})
+
+    messages.append({
+        "role": "user",
+        "content": f"[Пользователь: {user_id}] {text}"
+    })
 
     messages = trim_messages(messages)
     if len(messages) >= 26:
