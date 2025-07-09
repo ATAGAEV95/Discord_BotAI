@@ -1,0 +1,14 @@
+[project]
+requires-python = ">=3.9"
+
+[tool.ruff]
+line-length = 101
+fix = true
+
+[tool.ruff.lint]
+extend-select = ["E501", "UP", "D", "I", "ANN001", "ANN201"]
+ignore = ["D100"]
+
+[tool.ruff.format]
+docstring-code-line-length = 100
+#quote-style = "single"

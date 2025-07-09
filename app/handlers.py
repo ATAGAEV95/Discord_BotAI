@@ -1,9 +1,9 @@
-from openai import AsyncOpenAI
 import os
-from dotenv import load_dotenv
-import asyncio
-import tiktoken
 import re
+
+import tiktoken
+from dotenv import load_dotenv
+from openai import AsyncOpenAI
 
 load_dotenv()
 
@@ -57,7 +57,8 @@ async def ai_generate(text: str, user_id: int):
     try:
         completion = await client.chat.completions.create(
             # model="gpt-4.1-nano",
-            model = "gpt-4o-mini",
+            # model = "gpt-4o-mini",
+            model="gpt-4.1-mini",
             messages=messages,
             max_tokens=4096 - sum(count_tokens(msg.get("content", "")) for msg in messages) - 100
         )
