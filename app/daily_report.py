@@ -2,8 +2,9 @@ import os
 import asyncio
 from datetime import datetime, timedelta
 import tiktoken
-from dotenv import load_dotenv
 from openai import AsyncOpenAI
+from dotenv import load_dotenv
+
 
 load_dotenv()
 
