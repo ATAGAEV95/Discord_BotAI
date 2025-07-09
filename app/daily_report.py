@@ -63,7 +63,7 @@ class ReportGenerator:
             except:
                 pass
 
-        if len(channel_data[channel_id]['messages']) >= 3:
+        if len(channel_data[channel_id]['messages']) >= 10:
             channel_data[channel_id]['timer'] = asyncio.create_task(
                 self.start_report_timer(channel_id)
             )
@@ -71,13 +71,13 @@ class ReportGenerator:
     async def start_report_timer(self, channel_id: int):
         """Запускает 60-минутный таймер для формирования отчета"""
         try:
-            await asyncio.sleep(30)  # 60 минут
+            await asyncio.sleep(3600)  # 60 минут
 
             if channel_id not in channel_data:
                 return
 
             last_time = channel_data[channel_id]['last_message_time']
-            if (datetime.utcnow() - last_time) < timedelta(seconds=30):
+            if (datetime.utcnow() - last_time) < timedelta(minutes=60):
                 return
 
             await self.generate_and_send_report(channel_id)
@@ -88,7 +88,7 @@ class ReportGenerator:
 
     async def generate_and_send_report(self, channel_id: int):
         """Генерирует и отправляет отчет для канала"""
-        if channel_id not in channel_data or len(channel_data[channel_id]['messages']) < 3:
+        if channel_id not in channel_data or len(channel_data[channel_id]['messages']) < 10:
             return
 
         messages_text = "\n".join(
