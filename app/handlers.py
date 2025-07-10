@@ -84,7 +84,7 @@ async def ai_generate(text: str, user_id: int):
 
     try:
         completion = await client.chat.completions.create(
-            # model="grok-3-mini-beta",
+            # model="grok-4",
             # model = "gemini-2.5-flash-preview-05-20-thinking",
             # model="gpt-4.1-mini",
             model="gpt-4.1",
