@@ -75,8 +75,9 @@ async def ai_generate(text: str, user_id: int):
     })
 
     messages = trim_messages(messages)
-    if len(messages) >= 26:
-        messages = messages[-24:]
+    non_system_messages = [msg for msg in messages if msg["role"] != "system"]
+    if len(non_system_messages) > 10:
+        messages = [messages[0]] + non_system_messages[-9:]
 
     try:
         completion = await client.chat.completions.create(
