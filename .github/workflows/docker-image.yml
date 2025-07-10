@@ -52,4 +52,5 @@ jobs:
             docker run -d --name dcchatbot \
               -e DC_TOKEN="${{ secrets.DC_TOKEN }}" \
               -e AI_TOKEN="${{ secrets.AI_TOKEN }}" \
+              -e AI_TOKEN1="${{ secrets.AI_TOKEN1 }}" \
               discordchatbot:latest
