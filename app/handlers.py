@@ -19,6 +19,7 @@ SYSTEM_PROMPT = """
 5. Информация по пользователям с user_id, но не упоминать об этом постоянно:
     - serious_vlad, он админ канала
     - rikka71, у него сильные скиллы в шутерах
+    - atagaev, создатель бота
 
 Текущая платформа: Discord
 """
@@ -66,54 +67,101 @@ def trim_messages(messages, max_tokens=3500):
     return [system_message] + other_messages if system_message else other_messages
 
 
-async def ai_generate(text: str, user_id: int):
-    global user_history
-    messages = user_history.get(user_id, [])
+async def summarize_chunk(messages: list) -> str:
+    """Создает суммаризацию для набора сообщений"""
+    conversation = "\n".join(
+        f"{msg['role']}: {msg['content']}"
+        for msg in messages
+    )
 
-    if not messages:
-        messages.append({"role": "system", "content": SYSTEM_PROMPT.strip()})
-
-    messages.append({
-        "role": "user",
-        "content": f"[Пользователь: {user_id}] {text}"
-    })
-
-    messages = trim_messages(messages)
-    non_system_messages = [msg for msg in messages if msg["role"] != "system"]
-    if len(non_system_messages) > 10:
-        messages = [messages[0]] + non_system_messages[-9:]
+    summary_prompt = [
+        {
+            "role": "system",
+            "content": "Ты компрессор диалогов. Создай КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя:"
+                       "\n1. Ключевые факты и решения"
+                       "\n2. Имена и особенности пользователей"
+        },
+        {
+            "role": "user",
+            "content": f"Суммаризируй этот диалог:\n\n{conversation}"
+        }
+    ]
 
     try:
         completion = await client.chat.completions.create(
             # model="grok-4",
             # model = "gemini-2.5-flash-preview-05-20-thinking",
-            # model="gpt-4.1-mini",
-            model="gpt-4.1",
+            model="gpt-4.1-mini",
+            # model="gpt-4.1",
+            messages=summary_prompt,
+            max_tokens=300,
+            temperature=0.1
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        print(f"Ошибка суммаризации: {e}")
+        return "[Не удалось создать сводку]"
+
+
+async def ai_generate(text: str, user_id: int):
+    global user_history
+    messages = user_history.get(user_id, [])
+
+    # Инициализация системного промпта
+    if not messages:
+        messages.append({"role": "system", "content": SYSTEM_PROMPT.strip()})
+
+    # Добавляем новое сообщение пользователя
+    user_msg = {"role": "user", "content": f"[Пользователь: {user_id}] {text}"}
+    messages.append(user_msg)
+
+    # Проверяем необходимость суммаризации
+    dialog_messages = [msg for msg in messages if msg["role"] != "system"]
+
+    if len(dialog_messages) >= 18:  # Превысили лимит
+        # Разделяем сообщения:
+        # - Старые: для суммаризации
+        # - Новые: сохраняем (5 последних пар)
+        to_summarize = dialog_messages[:-10]
+        to_keep = dialog_messages[-9:]
+
+        # Создаем суммаризацию
+        summary_text = await summarize_chunk(to_summarize)
+
+        # Формируем новую историю:
+        # 1. Системный промпт
+        # 2. Суммаризация как системное сообщение
+        # 3. 10 последних сообщений
+        new_history = [
+            messages[0],  # оригинальный системный промпт
+            {"role": "system", "content": f"КОНТЕКСТ: {summary_text}"}
+        ]
+        new_history.extend(to_keep)
+
+        messages = new_history
+
+    # Обрезка длинных сообщений (ваша существующая функция)
+    messages = trim_messages(messages)
+
+    try:
+        completion = await client.chat.completions.create(
+            # model="grok-4",
+            # model = "gemini-2.5-flash-preview-05-20-thinking",
+            model="gpt-4.1-mini",
+            # model="gpt-4.1",
             messages=messages,
             max_tokens=4096 - sum(count_tokens(msg.get("content", "")) for msg in messages) - 100
         )
 
+        # Добавляем ответ ассистента
         response_text = completion.choices[0].message.content
         messages.append({"role": "assistant", "content": response_text})
         cleaned_response_text = await clean_text(response_text)
 
+        # Сохраняем обновленную историю
         user_history[user_id] = messages
-        # print(count_tokens(messages))
-        # print(messages)
-        # print(len(messages))
-        #return cleaned_response_text + '\n' + '_______________' + '\n' + f'Сообщений: {len(messages)}' + '\n' + \
-        #    f'Длина: {len(str(messages))}' + '\n' + f'Ответ: {len(cleaned_response_text)}'
-        # total_token_count = sum(count_tokens(msg.get("content", "")) for msg in messages)
-
+        print(user_history)
         return cleaned_response_text
-
-        # return (cleaned_response_text + '\n' +
-        #         '_______________' + '\n' +
-        #         f'Сообщений: {len(messages)}' + '\n' +
-        #         f'Длина: {len(str(messages))}' + '\n' +
-        #         f'Ответ: {len(cleaned_response_text)}' + '\n' +
-        #         f'Использовано токенов: {total_token_count}')
-
     except Exception as e:
         print(f"Ошибка при вызове OpenAI API: {e}")
         return "Произошла ошибка. Пожалуйста, попробуйте позже."

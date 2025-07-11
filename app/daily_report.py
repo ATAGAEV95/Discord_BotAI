@@ -28,9 +28,9 @@ REPORT_PROMPT = """
 5. Объем: кратко (1-2 предложения) для удобства чтения в чате
 
 Пример структуры:
-Основные темы: [темы]
-Ключевые моменты: [наблюдения]
-Общий тон: [описание]
+Основные темы: 
+- [тема]
+- [тема]
 """
 
 
@@ -56,6 +56,7 @@ class ReportGenerator:
             'author': author,
             'timestamp': datetime.utcnow()
         })
+        print('Сообщение добавлено')
 
         channel_data[channel_id]['last_message_time'] = datetime.utcnow()
         if channel_data[channel_id]['timer'] and not channel_data[channel_id]['timer'].done():
@@ -64,7 +65,7 @@ class ReportGenerator:
             except:
                 pass
 
-        if len(channel_data[channel_id]['messages']) >= 10:
+        if len(channel_data[channel_id]['messages']) >= 5:
             channel_data[channel_id]['timer'] = asyncio.create_task(
                 self.start_report_timer(channel_id)
             )
@@ -72,13 +73,14 @@ class ReportGenerator:
     async def start_report_timer(self, channel_id: int):
         """Запускает 60-минутный таймер для формирования отчета"""
         try:
-            await asyncio.sleep(3600)  # 60 минут
+            await asyncio.sleep(30)
+            print('таймер запущен')
 
             if channel_id not in channel_data:
                 return
 
             last_time = channel_data[channel_id]['last_message_time']
-            if (datetime.utcnow() - last_time) < timedelta(minutes=60):
+            if (datetime.utcnow() - last_time) < timedelta(seconds=30):
                 return
 
             await self.generate_and_send_report(channel_id)
