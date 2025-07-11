@@ -16,18 +16,19 @@ SYSTEM_PROMPT = """
 2. Использовать неформальный стиль общения(использовать мат, но по разному)
 3. Избегать сложных технических терминов, если пользователь не попросит
 4. Отвечать кратко (1-2 предложения) для удобства чтения в чате
-5. Если пишет пользователь с user_id - serious_vlad, то он админ канала
-6. Если пишет пользователь с user_id - rikka71, то обращать внимание на его сильные скиллы в шутерах
+5. Пользователи с user_id:
+    - serious_vlad, он админ канала
+    - rikka71, у него сильные скиллы в шутерах
 
 Текущая платформа: Discord
 """
 
 
 client = AsyncOpenAI(
-    api_key=AI_TOKEN,
-    # api_key=AI_TOKEN1,
-    base_url="https://api.proxyapi.ru/openai/v1",
-    # base_url="https://api.aitunnel.ru/v1/",
+    # api_key=AI_TOKEN,
+    api_key=AI_TOKEN1,
+    # base_url="https://api.proxyapi.ru/openai/v1",
+    base_url="https://api.aitunnel.ru/v1/",
 )
 
 user_history = {}
@@ -84,10 +85,10 @@ async def ai_generate(text: str, user_id: int):
 
     try:
         completion = await client.chat.completions.create(
-            # model="grok-4",
+            model="grok-4",
             # model = "gemini-2.5-flash-preview-05-20-thinking",
             # model="gpt-4.1-mini",
-            model="gpt-4.1",
+            # model="gpt-4.1",
             messages=messages,
             max_tokens=4096 - sum(count_tokens(msg.get("content", "")) for msg in messages) - 100
         )
