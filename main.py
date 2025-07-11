@@ -21,7 +21,6 @@ report_generator: Optional[ReportGenerator] = None
 @bot.event
 async def on_ready():
     global report_generator
-    # print(f'Бот {bot.user} запущен!')
     report_generator = ReportGenerator(bot)
 
 
@@ -37,7 +36,8 @@ async def on_message(message):
             await report_generator.add_message(
                 message.channel.id,
                 message.content,
-                message.author.display_name
+                message.author.display_name,
+                message.id
             )
         return
 

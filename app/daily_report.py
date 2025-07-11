@@ -18,20 +18,6 @@ channel_data = {}
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
-REPORT_PROMPT = """
-Ты аналитик дискорд-сервера. Проанализируй сообщения из канала и создай краткий отчет.
-Основные требования:
-1. Выдели 2-3 основные темы обсуждения
-2. Сохраняй деловой стиль
-3. Объем: кратко (1-2 предложения) для удобства чтения в чате
-
-Пример структуры:
-Основные темы: 
-- [тема]
-- [тема]
-"""
-
-
 def count_tokens(text: str) -> int:
     return len(ENCODING.encode(text))
 
@@ -40,8 +26,7 @@ class ReportGenerator:
     def __init__(self, bot):
         self.bot = bot
 
-    async def add_message(self, channel_id: int, message: str, author: str) -> None:
-        """Добавляет сообщение в историю канала и управляет таймером"""
+    async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
         if channel_id not in channel_data:
             channel_data[channel_id] = {
                 'messages': [],
@@ -50,6 +35,7 @@ class ReportGenerator:
             }
 
         channel_data[channel_id]['messages'].append({
+            'id': message_id,
             'content': message,
             'author': author,
             'timestamp': datetime.utcnow()
@@ -91,12 +77,25 @@ class ReportGenerator:
             return
 
         messages_text = "\n".join(
-            f"[{msg['timestamp'].strftime('%H:%M')}] {msg['author']}: {msg['content']}"
+            f"[ID:{msg['id']}] [{msg['timestamp'].strftime('%H:%M')}] {msg['author']}: {msg['content']}"
             for msg in channel_data[channel_id]['messages']
         )
 
+        UPDATED_REPORT_PROMPT = """
+                Ты аналитик дискорд-сервера. Проанализируй сообщения из канала и создай краткий отчет.
+                Основные требования:
+                1. Выдели основные темы обсуждения
+                2. Для КАЖДОЙ темы укажи ID первого сообщения в формате [ID:123456789]
+                3. Сохраняй деловой стиль
+                4. Объем: кратко (1-2 предложения) для удобства чтения в чате
+
+                Пример структуры:
+                - [тема] [ID:123456789]
+                - [тема] [ID:987654321]
+                """
+
         messages = [
-            {"role": "system", "content": REPORT_PROMPT},
+            {"role": "system", "content": UPDATED_REPORT_PROMPT},
             {"role": "user", "content": f"Сообщения из канала:\n{messages_text}"}
         ]
 
@@ -113,6 +112,16 @@ class ReportGenerator:
         except Exception as e:
             print(f"Ошибка генерации отчета: {e}")
             report = "Ошибка генерации отчета"
+
+        if "ID:" in report:
+            channel = self.bot.get_channel(channel_id)
+            guild_id = channel.guild.id if channel and hasattr(channel, 'guild') else "UNKNOWN"
+
+            for msg in channel_data[channel_id]['messages']:
+                msg_id = str(msg['id'])
+                if f"[ID:{msg_id}]" in report:
+                    link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
+                    report = report.replace(f"[ID:{msg_id}]", f"({link})")
 
         try:
             channel = self.bot.get_channel(channel_id)
