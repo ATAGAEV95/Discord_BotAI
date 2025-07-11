@@ -22,10 +22,8 @@ REPORT_PROMPT = """
 Ты аналитик дискорд-сервера. Проанализируй сообщения из канала и создай краткий отчет.
 Основные требования:
 1. Выдели 2-3 основные темы обсуждения
-2. Отметь необычную активность (споры)
-3. Определи общий настрой (позитивный/нейтральный/негативный)
-4. Сохраняй деловой стиль
-5. Объем: кратко (1-2 предложения) для удобства чтения в чате
+2. Сохраняй деловой стиль
+3. Объем: кратко (1-2 предложения) для удобства чтения в чате
 
 Пример структуры:
 Основные темы: 
@@ -56,7 +54,6 @@ class ReportGenerator:
             'author': author,
             'timestamp': datetime.utcnow()
         })
-        print('Сообщение добавлено')
 
         channel_data[channel_id]['last_message_time'] = datetime.utcnow()
         if channel_data[channel_id]['timer'] and not channel_data[channel_id]['timer'].done():
@@ -74,7 +71,6 @@ class ReportGenerator:
         """Запускает 60-минутный таймер для формирования отчета"""
         try:
             await asyncio.sleep(30)
-            print('таймер запущен')
 
             if channel_id not in channel_data:
                 return
@@ -91,7 +87,7 @@ class ReportGenerator:
 
     async def generate_and_send_report(self, channel_id: int):
         """Генерирует и отправляет отчет для канала"""
-        if channel_id not in channel_data or len(channel_data[channel_id]['messages']) < 10:
+        if channel_id not in channel_data or len(channel_data[channel_id]['messages']) < 5:
             return
 
         messages_text = "\n".join(
