@@ -121,7 +121,7 @@ class ReportGenerator:
                 msg_id = str(msg['id'])
                 if f"[ID:{msg_id}]" in report:
                     link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
-                    report = report.replace(f"[ID:{msg_id}]", f"({link})")
+                    report = report.replace(f"[ID:{msg_id}]", f"[ссылка]({link})")
 
         try:
             channel = self.bot.get_channel(channel_id)
