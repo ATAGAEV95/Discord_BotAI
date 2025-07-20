@@ -87,7 +87,7 @@ class ReportGenerator:
                 1. Выдели 2-3 основные темы обсуждения
                 2. Для КАЖДОЙ темы укажи ID первого сообщения в формате [ID:123456789]
                 3. Сохраняй деловой стиль
-                4. Объем: кратко (1 предложение) для удобства чтения в чате
+                4. Объем: очень кратко (в двух-трех словах) для удобства чтения в чате
 
                 Пример структуры:
                 - [тема] [ID:123456789]
@@ -105,6 +105,7 @@ class ReportGenerator:
         try:
             response = await report_client.chat.completions.create(
                 model="gpt-4.1",
+                # model="gpt-4.1-mini",
                 messages=messages,
                 max_tokens=max_tokens
             )
