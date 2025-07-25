@@ -26,10 +26,12 @@ SYSTEM_PROMPT = """
 
 
 client = AsyncOpenAI(
-    api_key=AI_TOKEN,
+    # api_key=AI_TOKEN,
     # api_key=AI_TOKEN1,
-    base_url="https://api.proxyapi.ru/openai/v1",
+    api_key='Whatever',
+    # base_url="https://api.proxyapi.ru/openai/v1",
     # base_url="https://api.aitunnel.ru/v1/",
+    base_url="http://127.0.0.1:1234/v1"
 )
 
 user_history = {}
@@ -136,7 +138,8 @@ async def ai_generate(text: str, user_id: int):
             # model="grok-4",
             # model = "gemini-2.5-flash-preview-05-20-thinking",
             # model="gpt-4.1-mini",
-            model="gpt-4.1",
+            model="gemma-3n-e4b",
+            # model="gpt-4.1",
             messages=messages,
             max_tokens=4096 - sum(count_tokens(msg.get("content", "")) for msg in messages) - 100
         )
