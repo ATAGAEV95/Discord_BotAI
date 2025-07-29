@@ -23,25 +23,29 @@ def count_tokens(text: str) -> int:
 
 
 class ReportGenerator:
+    """Генерирует и управляет отчетами о сообщениях в Discord-боте."""
+
     def __init__(self, bot):
+        """Инициализирует экземпляр класса ReportGenerator."""
         self.bot = bot
 
     async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
+        """Добавляет сообщение в историю отчетов."""
         if channel_id not in channel_data:
             channel_data[channel_id] = {
                 'messages': [],
                 'timer': None,
-                'last_message_time': datetime.utcnow()
+                'last_message_time': datetime.now()
             }
 
         channel_data[channel_id]['messages'].append({
             'id': message_id,
             'content': message,
             'author': author,
-            'timestamp': datetime.utcnow()
+            'timestamp': datetime.now()
         })
 
-        channel_data[channel_id]['last_message_time'] = datetime.utcnow()
+        channel_data[channel_id]['last_message_time'] = datetime.now()
         if channel_data[channel_id]['timer'] and not channel_data[channel_id]['timer'].done():
             try:
                 channel_data[channel_id]['timer'].cancel()
@@ -62,7 +66,7 @@ class ReportGenerator:
                 return
 
             last_time = channel_data[channel_id]['last_message_time']
-            if (datetime.utcnow() - last_time) < timedelta(minutes=60):
+            if (datetime.now() - last_time) < timedelta(minutes=60):
                 return
 
             await self.generate_and_send_report(channel_id)
@@ -138,7 +142,6 @@ class ReportGenerator:
         try:
             channel = self.bot.get_channel(channel_id)
             if channel:
-                # await channel.send(f"**Отчет по активности:**\n{report}")
                 await channel.send(report)
         except Exception as e:
             print(f"Ошибка отправки отчета в канал {channel_id}: {e}")

@@ -41,8 +41,9 @@ async def clean_text(text):
     return cleaned_text
 
 
-async def reset_history():
-    user_history.clear()
+async def clear_user_history(user_id):
+    if user_id in user_history:
+        del user_history[user_id]
 
 
 def count_tokens(text):
