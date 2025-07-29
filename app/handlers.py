@@ -104,14 +104,14 @@ async def summarize_chunk(messages: list) -> str:
         return "[Не удалось создать сводку]"
 
 
-async def ai_generate(text: str, user_id: int):
+async def ai_generate(text: str, user_id: str, name: str):
     global user_history
     messages = user_history.get(user_id, [])
 
     if not messages:
         messages.append({"role": "system", "content": SYSTEM_PROMPT.strip()})
 
-    user_msg = {"role": "user", "content": f"[Пользователь: {user_id}] {text}"}
+    user_msg = {"role": "user", "content": f"[Пользователь: {name}] {text}"}
     messages.append(user_msg)
 
     dialog_messages = [msg for msg in messages if msg["role"] != "system"]

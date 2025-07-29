@@ -45,9 +45,9 @@ async def on_message(message):
         user_id = message.author.id
         if user_id in handlers.user_history:
             await handlers.clear_user_history(user_id)
-            await message.channel.send(f"История переписки для {message.author.mention} успешно очищена.")
+            await message.channel.send(f"История переписки для {message.author} успешно очищена.")
         else:
-            await message.channel.send(f"У {message.author.mention} нет истории, которую можно очистить.")
+            await message.channel.send(f"У {message.author} нет истории, которую можно очистить.")
         return
 
     if message.content.startswith("!help"):
@@ -58,7 +58,7 @@ async def on_message(message):
         )
         return
 
-    response = await handlers.ai_generate(message.content, message.author.id)
+    response = await handlers.ai_generate(message.content, message.author.id, message.author)
     await message.channel.send(response)
 
 
