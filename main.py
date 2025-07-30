@@ -6,6 +6,7 @@ from typing import Optional
 
 from app import handlers
 from app.daily_report import ReportGenerator
+from app.models import init_models
 
 load_dotenv()
 
@@ -20,6 +21,7 @@ report_generator: Optional[ReportGenerator] = None
 
 @bot.event
 async def on_ready():
+    await init_models()
     global report_generator
     report_generator = ReportGenerator(bot)
 

@@ -5,6 +5,8 @@ import tiktoken
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
+from app.requests import save_user_context, get_user_context, delete_user_context
+
 load_dotenv()
 
 AI_TOKEN = os.getenv('AI_TOKEN')
@@ -44,6 +46,7 @@ async def clean_text(text):
 async def clear_user_history(user_id):
     if user_id in user_history:
         del user_history[user_id]
+        await delete_user_context(user_id)
 
 
 def count_tokens(text):
@@ -104,12 +107,15 @@ async def summarize_chunk(messages: list) -> str:
         return "[Не удалось создать сводку]"
 
 
-async def ai_generate(text: str, user_id: str, name: str):
+async def ai_generate(text: str, user_id: int, name: str):
     global user_history
     messages = user_history.get(user_id, [])
 
     if not messages:
         messages.append({"role": "system", "content": SYSTEM_PROMPT.strip()})
+        context = await get_user_context(user_id)
+        if isinstance(context, list):
+            messages.extend(context)
 
     user_msg = {"role": "user", "content": f"[Пользователь: {name}] {text}"}
     messages.append(user_msg)
@@ -148,6 +154,7 @@ async def ai_generate(text: str, user_id: str, name: str):
 
         user_history[user_id] = messages
         print(user_history)
+        await save_user_context(user_id, name, user_history[user_id])
         return cleaned_response_text
     except Exception as e:
         print(f"Ошибка при вызове OpenAI API: {e}")
