@@ -45,11 +45,8 @@ async def on_message(message):
 
     if message.content.startswith("!reset"):
         user_id = message.author.id
-        if user_id in handlers.user_history:
-            await handlers.clear_user_history(user_id)
-            await message.channel.send(f"История переписки для {message.author} успешно очищена.")
-        else:
-            await message.channel.send(f"У {message.author} нет истории, которую можно очистить.")
+        await handlers.clear_user_history(user_id)
+        await message.channel.send(f"История переписки для {message.author} успешно очищена.")
         return
 
     if message.content.startswith("!help"):

@@ -44,9 +44,11 @@ async def clean_text(text):
 
 
 async def clear_user_history(user_id):
-    if user_id in user_history:
+    await delete_user_context(user_id)
+    try:
         del user_history[user_id]
-        await delete_user_context(user_id)
+    except KeyError:
+        print('Такого ключа нет')
 
 
 def count_tokens(text):
@@ -153,7 +155,7 @@ async def ai_generate(text: str, user_id: int, name: str):
         cleaned_response_text = await clean_text(response_text)
 
         user_history[user_id] = messages
-        # print(user_history)
+        print(user_history)
         try:
             await save_user_context(user_id, name, user_history[user_id])
         except Exception as e:
