@@ -80,17 +80,22 @@ async def summarize_chunk(messages: list) -> str:
         for msg in messages
     )
 
+    from openai.types.chat import (
+        ChatCompletionSystemMessageParam,
+        ChatCompletionUserMessageParam
+    )
+
     summary_prompt = [
-        {
-            "role": "system",
-            "content": "Ты компрессор диалогов. Создай КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя:"
-                       "\n1. Ключевые факты и решения"
-                       "\n2. Имена и особенности пользователей"
-        },
-        {
-            "role": "user",
-            "content": f"Суммаризируй этот диалог:\n\n{conversation}"
-        }
+        ChatCompletionSystemMessageParam(
+            role="system",
+            content="Ты компрессор диалогов. Создай КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя:"
+                    "\n1. Ключевые факты и решения"
+                    "\n2. Имена и особенности пользователей"
+        ),
+        ChatCompletionUserMessageParam(
+            role="user",
+            content=f"Суммаризируй этот диалог:\n\n{conversation}"
+        )
     ]
 
     try:
