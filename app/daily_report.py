@@ -19,18 +19,48 @@ ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
 def count_tokens(text: str) -> int:
+    """
+    Подсчитывает количество токенов текста на основе заданной модели.
+
+    Аргументы:
+      text (str): Входная строка для подсчёта токенов.
+
+    Возвращает:
+      int: Число токенов, соответствующих входному тексту.
+    """
     return len(ENCODING.encode(text))
 
 
 class ReportGenerator:
-    """Генерирует и управляет отчетами о сообщениях в Discord-боте."""
+    """
+    Класс ReportGenerator используется для накопления сообщений в Discord-канале и автоматической отправки
+    отчета о содержимом канала после 60 минут без активности, при достижении порогового количества сообщений."""
 
     def __init__(self, bot):
-        """Инициализирует экземпляр класса ReportGenerator."""
+        """
+        Инициализация экземпляра ReportGenerator.
+
+        Аргументы:
+          bot (DiscordBot): Объект бота для доступа к Discord API.
+        """
         self.bot = bot
 
     async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
-        """Добавляет сообщение в историю отчетов."""
+        """
+        Добавляет сообщение в историю канала и обновляет время последней активности.
+
+        Если это первое сообщение для канала, создаёт запись с пустым списком сообщений.
+        При достижении или превышении количества 15 сообщений запускается задача на отправку отчета через 60 минут.
+
+        Аргументы:
+          channel_id (int): ID Discord канала.
+          message (str): Текст сообщения.
+          author (str): Имя или идентификатор автора.
+          message_id (int): ID сообщения в Discord.
+
+        Возвращает:
+          None
+        """
         if channel_id not in channel_data:
             channel_data[channel_id] = {
                 'messages': [],
@@ -49,8 +79,9 @@ class ReportGenerator:
         if channel_data[channel_id]['timer'] and not channel_data[channel_id]['timer'].done():
             try:
                 channel_data[channel_id]['timer'].cancel()
-            except:
-                pass
+            except Exception as e:
+                # Логирование ошибки при отмене таймера можно добавить здесь
+                print(f"Ошибка при отмене таймера для канала {channel_id}: {e}")
 
         if len(channel_data[channel_id]['messages']) >= 15:
             channel_data[channel_id]['timer'] = asyncio.create_task(
@@ -58,7 +89,16 @@ class ReportGenerator:
             )
 
     async def start_report_timer(self, channel_id: int):
-        """Запускает 60-минутный таймер для формирования отчета"""
+        """
+        Запускает задачу, которая ожидает 60 минут. Если после последнего сообщения прошло
+        не менее 60 минут без активности, то генерируется и отправляется аналитический отчет.
+
+        Аргументы:
+          channel_id (int): ID Discord канала.
+
+        Возвращает:
+          None
+        """
         try:
             await asyncio.sleep(3600)
 
@@ -67,16 +107,27 @@ class ReportGenerator:
 
             last_time = channel_data[channel_id]['last_message_time']
             if (datetime.now() - last_time) < timedelta(minutes=60):
+                # Если за 60 минут появились новые сообщения, не отправляем отчет.
                 return
 
             await self.generate_and_send_report(channel_id)
         except asyncio.CancelledError:
+            # Если задача была отменена, завершаем выполнение
             pass
         except Exception as e:
             print(f"Ошибка в таймере для канала {channel_id}: {e}")
 
     async def generate_and_send_report(self, channel_id: int):
-        """Генерирует и отправляет отчет для канала"""
+        """
+        Генерирует аналитический отчет на основе накопленных сообщений с использованием GPT-модели
+        и отправляет его в канал.
+
+        Аргументы:
+          channel_id (int): ID Discord канала.
+
+        Возвращает:
+          None
+        """
         if channel_id not in channel_data or len(channel_data[channel_id]['messages']) < 15:
             return
 
