@@ -9,9 +9,16 @@ from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUs
 
 load_dotenv()
 
-report_client = AsyncOpenAI(
-    api_key=os.getenv('AI_TOKEN'),
-    base_url="https://api.proxyapi.ru/openai/v1",
+AI_TOKEN = os.getenv('AI_TOKEN')
+AI_TOKEN1 = os.getenv('AI_TOKEN1')
+
+client = AsyncOpenAI(
+    # api_key=AI_TOKEN,
+    api_key=AI_TOKEN1,
+    # api_key='google/gemma-3n-e4b',
+    # base_url="https://api.proxyapi.ru/openai/v1",
+    base_url="https://api.aitunnel.ru/v1/",
+    # base_url='http://localhost:1234/v1/'
 )
 
 
