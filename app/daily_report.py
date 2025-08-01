@@ -12,7 +12,7 @@ load_dotenv()
 AI_TOKEN = os.getenv('AI_TOKEN')
 AI_TOKEN1 = os.getenv('AI_TOKEN1')
 
-client = AsyncOpenAI(
+report_client = AsyncOpenAI(
     # api_key=AI_TOKEN,
     api_key=AI_TOKEN1,
     # api_key='google/gemma-3n-e4b',
