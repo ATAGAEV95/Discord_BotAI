@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import tiktoken
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 
 load_dotenv()
@@ -164,8 +165,14 @@ class ReportGenerator:
         """
 
         messages = [
-            {"role": "system", "content": UPDATED_REPORT_PROMPT},
-            {"role": "user", "content": f"Сообщения из канала:\n{messages_text}"}
+            ChatCompletionSystemMessageParam(
+                role="system",
+                content=UPDATED_REPORT_PROMPT,
+            ),
+            ChatCompletionUserMessageParam(
+                role="user",
+                content=f"Сообщения из канала:\n{messages_text}"
+            )
         ]
 
         total_tokens = sum(count_tokens(msg["content"]) for msg in messages)

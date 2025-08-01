@@ -4,6 +4,7 @@ import re
 import tiktoken
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.requests import save_user_context, get_user_context, delete_user_context
 
@@ -62,32 +63,59 @@ def count_tokens(text):
     return len(ENCODING.encode(text))
 
 
-def trim_messages(messages, max_tokens=3500):
-    if not messages:
-        return messages
+# def trim_messages(messages, max_tokens=3500):
+#     if not messages:
+#         return messages
+#
+#     system_message = messages[0] if messages[0]["role"] == "system" else None
+#     other_messages = messages[1:] if system_message else messages
+#
+#     total_tokens = sum(count_tokens(msg.get("content", "")) for msg in messages)
+#
+#     while total_tokens > max_tokens and len(other_messages) > 1:
+#         removed_message = other_messages.pop(0)
+#         total_tokens -= count_tokens(removed_message.get("content", ""))
+#
+#     return [system_message] + other_messages if system_message else other_messages
 
-    system_message = messages[0] if messages[0]["role"] == "system" else None
-    other_messages = messages[1:] if system_message else messages
 
-    total_tokens = sum(count_tokens(msg.get("content", "")) for msg in messages)
 
-    while total_tokens > max_tokens and len(other_messages) > 1:
-        removed_message = other_messages.pop(0)
-        total_tokens -= count_tokens(removed_message.get("content", ""))
+async def summarize_contexts(contexts: list) -> str:
+    """Суммаризирует список контекстных сообщений в одну строку."""
+    context_text = "\n".join(
+        msg['content'] for msg in contexts
+    )
 
-    return [system_message] + other_messages if system_message else other_messages
+    prompt = [
+        ChatCompletionSystemMessageParam(
+            role="system",
+            content="""Ты компрессор контекстных сводок. Объедини несколько контекстных сводок 
+                    в одну КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя самую важную информацию. 
+                    Игнорируй отметки 'КОНТЕКСТ:'"""
+        ),
+        ChatCompletionUserMessageParam(
+            role="user",
+            content=f"Суммаризируй эти контексты:\n\n{context_text}"
+        )
+    ]
 
+    try:
+        completion = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=prompt,
+            max_tokens=300,
+            temperature=0.1
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        print(f"Ошибка суммаризации контекстов: {e}")
+        return "[Не удалось создать сводку контекстов]"
 
 async def summarize_chunk(messages: list) -> str:
     """Создает суммаризацию для набора сообщений"""
     conversation = "\n".join(
         f"{msg['role']}: {msg['content']}"
         for msg in messages
-    )
-
-    from openai.types.chat import (
-        ChatCompletionSystemMessageParam,
-        ChatCompletionUserMessageParam
     )
 
     summary_prompt = [
@@ -106,10 +134,8 @@ async def summarize_chunk(messages: list) -> str:
 
     try:
         completion = await client.chat.completions.create(
-            # model="grok-4",
-            # model = "gemini-2.5-flash-preview-05-20-thinking",
-            model="gpt-4.1-mini",
-            # model="gpt-4.1",
+            model="gpt-4o-mini",
+            # model="gpt-4.1-mini",
             messages=summary_prompt,
             max_tokens=300,
             temperature=0.1
@@ -122,6 +148,7 @@ async def summarize_chunk(messages: list) -> str:
 
 async def ai_generate(text: str, user_id: int, name: str):
     global user_history
+    context_messages = []
     messages = user_history.get(user_id, [])
 
     if not messages:
@@ -136,36 +163,49 @@ async def ai_generate(text: str, user_id: int, name: str):
     user_msg = {"role": "user", "content": f"[Пользователь: {name}] {text}"}
     messages.append(user_msg)
 
-    system_messages = [msg for msg in messages if msg["role"] == "system"]
     dialog_messages = [msg for msg in messages if msg["role"] != "system"]
-    # context_messages = system_messages[1:]
 
     if len(dialog_messages) >= 16:
         to_summarize = dialog_messages[:-8]
         to_keep = dialog_messages[-7:]
+        context_messages.clear()
+        system_messages = [msg for msg in messages if msg["role"] == "system"]
+        if len(system_messages) > 1:
+            context_messages.extend(system_messages[1:])
 
         summary_text = await summarize_chunk(to_summarize)
 
+        if len(context_messages) == 3:
+            summary_of_contexts = await summarize_contexts(context_messages)
+            context_messages = [
+                {"role": "system", "content": f"КОНТЕКСТ: {summary_of_contexts}"}
+            ]
+
         new_history = [
             messages[0],
+            *context_messages,
             {"role": "system", "content": f"КОНТЕКСТ: {summary_text}"}
         ]
         new_history.extend(to_keep)
 
         messages = new_history
 
-    messages = trim_messages(messages)
+    # messages = trim_messages(messages)
 
     try:
         completion = await client.chat.completions.create(
-            # model="grok-4",
+            # model="gpt-4o-mini",
             model = "gpt-4o",
             # model="gpt-4.1-mini",
             # model="gpt-4.1",
-            # model="gpt-4.1",
             # model="gemma-3n-e4b",
             messages=messages,
-            max_tokens=4096 - sum(count_tokens(msg.get("content", "")) for msg in messages) - 100
+            temperature=0.85,  # Оптимальный баланс креативности/когерентности
+            top_p=0.95,  # Шире выборка слов
+            frequency_penalty=0.3,  # Поощряет новые формулировки
+            presence_penalty=0.4,  # Поощряет новые темы
+            max_tokens=3500
+                       # - sum(count_tokens(msg.get("content", "")) for msg in messages) - 100
         )
 
         response_text = completion.choices[0].message.content
