@@ -13,7 +13,7 @@ AI_TOKEN = os.getenv('AI_TOKEN')
 AI_TOKEN1 = os.getenv('AI_TOKEN1')
 
 SYSTEM_PROMPT = """
-Ты — Discord бот, дерзкий, немного грубый и остроумный. Твои задачи:
+Ты — Discord бот с острым языком и остроумием. Твои задачи:
 1. Общаться с пользователями в Discord-чатах
 2. Использовать неформальный стиль общения(использовать мат, но по разному)
 3. Избегать сложных технических терминов, если пользователь не попросит
@@ -30,8 +30,10 @@ SYSTEM_PROMPT = """
 client = AsyncOpenAI(
     # api_key=AI_TOKEN,
     api_key=AI_TOKEN1,
+    # api_key='google/gemma-3n-e4b',
     # base_url="https://api.proxyapi.ru/openai/v1",
     base_url="https://api.aitunnel.ru/v1/",
+    # base_url='http://localhost:1234/v1/'
 )
 
 user_history = {}
@@ -134,7 +136,9 @@ async def ai_generate(text: str, user_id: int, name: str):
     user_msg = {"role": "user", "content": f"[Пользователь: {name}] {text}"}
     messages.append(user_msg)
 
+    system_messages = [msg for msg in messages if msg["role"] == "system"]
     dialog_messages = [msg for msg in messages if msg["role"] != "system"]
+    context_messages = system_messages[1:]
 
     if len(dialog_messages) >= 16:
         to_summarize = dialog_messages[:-8]
@@ -158,6 +162,8 @@ async def ai_generate(text: str, user_id: int, name: str):
             model = "gpt-4o",
             # model="gpt-4.1-mini",
             # model="gpt-4.1",
+            # model="gpt-4.1",
+            # model="gemma-3n-e4b",
             messages=messages,
             max_tokens=4096 - sum(count_tokens(msg.get("content", "")) for msg in messages) - 100
         )
@@ -167,7 +173,12 @@ async def ai_generate(text: str, user_id: int, name: str):
         cleaned_response_text = await clean_text(response_text)
 
         user_history[user_id] = messages
-        print(user_history)
+        # print(user_history)
+        # print(context_messages)
+        # print(len(context_messages))
+        # print(f'Токены ответа {count_tokens(response_text)}')
+        # print(f'Токены вопроса {count_tokens(messages)}')
+        # print(f'Количество сообщений {len(dialog_messages)}')
         try:
             await save_user_context(user_id, name, user_history[user_id])
         except Exception as e:
