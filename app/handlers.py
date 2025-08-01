@@ -161,10 +161,7 @@ async def ai_generate(text: str, user_id: int, name: str):
 
         user_history[user_id] = messages
         print(user_history)
-        try:
-            await save_user_context(user_id, name, user_history[user_id])
-        except Exception as e:
-            print(f"Произошла ошибка при сохранении контекста в БД: {e}")
+        await save_user_context(user_id, name, user_history[user_id])
         return cleaned_response_text
     except Exception as e:
         print(f"Ошибка при вызове OpenAI API: {e}")

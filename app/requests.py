@@ -18,9 +18,12 @@ async def get_user_context(user_id: int):
 async def save_user_context(user_id: int, name: str, context: list):
     """Сохраняет контекст пользователя в базе данных."""
     async with async_session() as session:
-        new_user = User(user_id=user_id, name=str(name), context=context[1:])
-        session.add(new_user)
-        await session.commit()
+        try:
+            new_user = User(user_id=user_id, name=str(name), context=context[1:])
+            session.add(new_user)
+            await session.commit()
+        except Exception as e:
+            raise Exception(f"База данных недоступна: {e}")
 
 async def delete_user_context(user_id: int):
     """Удаляет контекст пользователя из базы данных."""
