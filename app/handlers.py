@@ -92,8 +92,9 @@ async def summarize_chunk(messages: list) -> str:
         ChatCompletionSystemMessageParam(
             role="system",
             content="Ты компрессор диалогов. Создай КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя:"
-                    "\n1. Ключевые факты и решения"
-                    "\n2. Имена и особенности пользователей"
+                    "\n1. Основные темы общения"
+                    "\n2. Ключевые факты и решения"
+                    "\n3. Игнорируй приветствия, прощания и пустые реплики"
         ),
         ChatCompletionUserMessageParam(
             role="user",
@@ -135,9 +136,9 @@ async def ai_generate(text: str, user_id: int, name: str):
 
     dialog_messages = [msg for msg in messages if msg["role"] != "system"]
 
-    if len(dialog_messages) >= 18:
-        to_summarize = dialog_messages[:-10]
-        to_keep = dialog_messages[-9:]
+    if len(dialog_messages) >= 16:
+        to_summarize = dialog_messages[:-8]
+        to_keep = dialog_messages[-7:]
 
         summary_text = await summarize_chunk(to_summarize)
 
