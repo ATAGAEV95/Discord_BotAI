@@ -44,7 +44,10 @@ async def clean_text(text):
 
 
 async def clear_user_history(user_id):
-    await delete_user_context(user_id)
+    try:
+        await delete_user_context(user_id)
+    except Exception as e:
+        print(f"[Ошибка] Удаление контекста: {e}")
     try:
         del user_history[user_id]
     except KeyError:
@@ -120,9 +123,12 @@ async def ai_generate(text: str, user_id: int, name: str):
 
     if not messages:
         messages.append({"role": "system", "content": SYSTEM_PROMPT.strip()})
-        context = await get_user_context(user_id)
-        if isinstance(context, list):
-            messages.extend(context)
+        try:
+            context = await get_user_context(user_id)
+            if isinstance(context, list):
+                messages.extend(context)
+        except Exception as e:
+            print(f"[Ошибка] Загрузка контекста: {e}")
 
     user_msg = {"role": "user", "content": f"[Пользователь: {name}] {text}"}
     messages.append(user_msg)
@@ -161,7 +167,10 @@ async def ai_generate(text: str, user_id: int, name: str):
 
         user_history[user_id] = messages
         print(user_history)
-        await save_user_context(user_id, name, user_history[user_id])
+        try:
+            await save_user_context(user_id, name, user_history[user_id])
+        except Exception as e:
+            print(f"[Ошибка] Сохранение контекста: {e}")
         return cleaned_response_text
     except Exception as e:
         print(f"Ошибка при вызове OpenAI API: {e}")
