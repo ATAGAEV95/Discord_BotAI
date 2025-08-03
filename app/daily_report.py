@@ -5,6 +5,7 @@ import tiktoken
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+from app.requests import save_channel_message, get_channel_messages, delete_channel_messages
 
 
 load_dotenv()
@@ -56,8 +57,6 @@ class ReportGenerator:
     async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
         """
         Добавляет сообщение в историю канала и обновляет время последней активности.
-
-        Если это первое сообщение для канала, создаёт запись с пустым списком сообщений.
         При достижении или превышении количества 15 сообщений запускается задача на отправку отчета через 60 минут.
 
         Аргументы:
@@ -69,6 +68,9 @@ class ReportGenerator:
         Возвращает:
           None
         """
+        # Сохраняем сообщение в базу данных
+        await save_channel_message(channel_id, message_id, author, message)
+
         if channel_id not in channel_data:
             channel_data[channel_id] = {
                 'messages': [],
@@ -88,10 +90,15 @@ class ReportGenerator:
             try:
                 channel_data[channel_id]['timer'].cancel()
             except Exception as e:
-                # Логирование ошибки при отмене таймера можно добавить здесь
                 print(f"Ошибка при отмене таймера для канала {channel_id}: {e}")
 
+        db_messages = await get_channel_messages(channel_id)
+
         if len(channel_data[channel_id]['messages']) >= 15:
+            channel_data[channel_id]['timer'] = asyncio.create_task(
+                self.start_report_timer(channel_id)
+            )
+        elif len(db_messages) >= 15:
             channel_data[channel_id]['timer'] = asyncio.create_task(
                 self.start_report_timer(channel_id)
             )
@@ -136,7 +143,8 @@ class ReportGenerator:
         Возвращает:
           None
         """
-        if channel_id not in channel_data or len(channel_data[channel_id]['messages']) < 15:
+        messages = await get_channel_messages(channel_id)
+        if not messages or len(messages) < 15:
             return
 
         messages_text = "\n".join(
@@ -215,6 +223,8 @@ class ReportGenerator:
                 await channel.send(report)
         except Exception as e:
             print(f"Ошибка отправки отчета в канал {channel_id}: {e}")
+
+        await delete_channel_messages(channel_id)
 
         if channel_id in channel_data:
             del channel_data[channel_id]
