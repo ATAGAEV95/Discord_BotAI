@@ -122,12 +122,10 @@ class ReportGenerator:
 
             last_time = channel_data[channel_id]['last_message_time']
             if (datetime.now() - last_time) < timedelta(minutes=60):
-                # Если за 60 минут появились новые сообщения, не отправляем отчет.
                 return
 
             await self.generate_and_send_report(channel_id)
         except asyncio.CancelledError:
-            # Если задача была отменена, завершаем выполнение
             pass
         except Exception as e:
             print(f"Ошибка в таймере для канала {channel_id}: {e}")
@@ -190,8 +188,6 @@ class ReportGenerator:
             )
         ]
 
-        total_tokens = sum(count_tokens(msg["content"]) for msg in messages)
-        max_tokens = min(3500 - total_tokens, 500)
 
         try:
             response = await report_client.chat.completions.create(
@@ -200,7 +196,7 @@ class ReportGenerator:
                 messages=messages,
                 temperature=0.0,
                 top_p=0.01,
-                max_tokens=max_tokens
+                max_tokens=500
             )
             report = response.choices[0].message.content
         except Exception as e:

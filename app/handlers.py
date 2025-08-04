@@ -14,7 +14,7 @@ AI_TOKEN = os.getenv('AI_TOKEN')
 AI_TOKEN1 = os.getenv('AI_TOKEN1')
 
 SYSTEM_PROMPT = """
-Ты — Discord бот с острым языком и остроумием. Твои задачи:
+Ты — Discord бот, дерзкий, немного грубый и остроумный. Твои задачи:
 1. Общаться с пользователями в Discord-чатах
 2. Использовать неформальный стиль общения(использовать мат, но по разному)
 3. Избегать сложных технических терминов, если пользователь не попросит
@@ -61,23 +61,6 @@ def count_tokens(text):
     if not isinstance(text, str):
         text = str(text) if text else ""
     return len(ENCODING.encode(text))
-
-
-# def trim_messages(messages, max_tokens=3500):
-#     if not messages:
-#         return messages
-#
-#     system_message = messages[0] if messages[0]["role"] == "system" else None
-#     other_messages = messages[1:] if system_message else messages
-#
-#     total_tokens = sum(count_tokens(msg.get("content", "")) for msg in messages)
-#
-#     while total_tokens > max_tokens and len(other_messages) > 1:
-#         removed_message = other_messages.pop(0)
-#         total_tokens -= count_tokens(removed_message.get("content", ""))
-#
-#     return [system_message] + other_messages if system_message else other_messages
-
 
 
 async def summarize_contexts(contexts: list) -> str:
@@ -190,7 +173,6 @@ async def ai_generate(text: str, user_id: int, name: str):
 
         messages = new_history
 
-    # messages = trim_messages(messages)
 
     try:
         completion = await client.chat.completions.create(
@@ -205,7 +187,6 @@ async def ai_generate(text: str, user_id: int, name: str):
             frequency_penalty=0.3,  # Поощряет новые формулировки
             presence_penalty=0.4,  # Поощряет новые темы
             max_tokens=3500
-                       # - sum(count_tokens(msg.get("content", "")) for msg in messages) - 100
         )
 
         response_text = completion.choices[0].message.content
