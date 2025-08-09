@@ -158,7 +158,7 @@ class ReportGenerator:
             return
 
         messages_text = "\n".join(
-            f"[ID:{msg['id']}] [{msg['timestamp'].strftime('%H:%M')}] {msg['author']}: {msg['content']}"
+            f"[ID:{msg.message_id}] [{msg.timestamp.strftime('%H:%M')}] {msg.author}: {msg.content}"
             for msg in messages
         )
 
@@ -189,7 +189,7 @@ class ReportGenerator:
         • Реакции + мнения + шутки по одной теме → ОДНА тема
         """
 
-        messages = [
+        message = [
             ChatCompletionSystemMessageParam(
                 role="system",
                 content=UPDATED_REPORT_PROMPT,
@@ -205,7 +205,7 @@ class ReportGenerator:
             response = await report_client.chat.completions.create(
                 model="gpt-4.1",
                 # model="gpt-4.1-mini",
-                messages=messages,
+                messages=message,
                 temperature=0.0,
                 top_p=0.01,
                 max_tokens=500
@@ -220,7 +220,7 @@ class ReportGenerator:
             guild_id = channel.guild.id if channel and hasattr(channel, 'guild') else "UNKNOWN"
 
             for msg in messages:
-                msg_id = str(msg['id'])
+                msg_id = str(msg.message_id)
                 if f"[ID:{msg_id}]" in report:
                     link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
                     report = report.replace(f"[ID:{msg_id}]", f"[ссылка]({link})")
