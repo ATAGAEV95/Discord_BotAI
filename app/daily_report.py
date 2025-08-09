@@ -23,7 +23,6 @@ report_client = AsyncOpenAI(
 )
 
 
-channel_data = {}
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
@@ -53,6 +52,7 @@ class ReportGenerator:
           bot (DiscordBot): Объект бота для доступа к Discord API.
         """
         self.bot = bot
+        self.channel_data = {}
 
     async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
         """
@@ -74,26 +74,27 @@ class ReportGenerator:
         except Exception as e:
             print(f"Ошибка при сохранении сообщения в канал {channel_id}: {e}")
 
-        if channel_id not in channel_data:
-            channel_data[channel_id] = {
+        if channel_id not in self.channel_data:
+            self.channel_data[channel_id] = {
                 'messages': [],
                 'timer': None,
                 'last_message_time': datetime.now()
             }
 
-        channel_data[channel_id]['messages'].append({
+        self.channel_data[channel_id]['messages'].append({
             'id': message_id,
             'content': message,
             'author': author,
             'timestamp': datetime.now()
         })
 
-        channel_data[channel_id]['last_message_time'] = datetime.now()
-        if channel_data[channel_id]['timer'] and not channel_data[channel_id]['timer'].done():
+        self.channel_data[channel_id]['last_message_time'] = datetime.now()
+        if self.channel_data[channel_id]['timer'] and not self.channel_data[channel_id]['timer'].done():
             try:
-                channel_data[channel_id]['timer'].cancel()
+                self.channel_data[channel_id]['timer'].cancel()
             except Exception as e:
                 print(f"Ошибка при отмене таймера для канала {channel_id}: {e}")
+
 
         try:
             db_messages = await get_channel_messages(channel_id)
@@ -101,11 +102,11 @@ class ReportGenerator:
             print(f"Ошибка при получении сообщений из канала {channel_id}: {e}")
             db_messages = []
 
-        cache_count = len(channel_data[channel_id]['messages'])
+        cache_count = len(self.channel_data[channel_id]['messages'])
         db_count = len(db_messages)
 
         if cache_count >= 15 or db_count >= 15:
-            channel_data[channel_id]['timer'] = asyncio.create_task(
+            self.channel_data[channel_id]['timer'] = asyncio.create_task(
                 self.start_report_timer(channel_id)
             )
 
@@ -123,10 +124,10 @@ class ReportGenerator:
         try:
             await asyncio.sleep(3600)
 
-            if channel_id not in channel_data:
+            if channel_id not in self.channel_data:
                 return
 
-            last_time = channel_data[channel_id]['last_message_time']
+            last_time = self.channel_data[channel_id]['last_message_time']
             if (datetime.now() - last_time) < timedelta(minutes=60):
                 return
 
@@ -236,5 +237,5 @@ class ReportGenerator:
         except Exception as e:
             print(f"Ошибка при удалении сообщений из канала {channel_id}: {e}")
 
-        if channel_id in channel_data:
-            del channel_data[channel_id]
+        if channel_id in self.channel_data:
+            del self.channel_data[channel_id]
