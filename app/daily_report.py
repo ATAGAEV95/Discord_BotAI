@@ -101,11 +101,10 @@ class ReportGenerator:
             print(f"Ошибка при получении сообщений из канала {channel_id}: {e}")
             db_messages = []
 
-        if len(channel_data[channel_id]['messages']) >= 15:
-            channel_data[channel_id]['timer'] = asyncio.create_task(
-                self.start_report_timer(channel_id)
-            )
-        elif len(db_messages) >= 15:
+        cache_count = len(channel_data[channel_id]['messages'])
+        db_count = len(db_messages)
+
+        if cache_count >= 15 or db_count >= 15:
             channel_data[channel_id]['timer'] = asyncio.create_task(
                 self.start_report_timer(channel_id)
             )
@@ -159,7 +158,7 @@ class ReportGenerator:
 
         messages_text = "\n".join(
             f"[ID:{msg['id']}] [{msg['timestamp'].strftime('%H:%M')}] {msg['author']}: {msg['content']}"
-            for msg in channel_data[channel_id]['messages']
+            for msg in messages
         )
 
         UPDATED_REPORT_PROMPT = """
@@ -219,7 +218,7 @@ class ReportGenerator:
             channel = self.bot.get_channel(channel_id)
             guild_id = channel.guild.id if channel and hasattr(channel, 'guild') else "UNKNOWN"
 
-            for msg in channel_data[channel_id]['messages']:
+            for msg in messages:
                 msg_id = str(msg['id'])
                 if f"[ID:{msg_id}]" in report:
                     link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
