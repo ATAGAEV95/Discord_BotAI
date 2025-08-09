@@ -68,8 +68,11 @@ class ReportGenerator:
         Возвращает:
           None
         """
-        # Сохраняем сообщение в базу данных
-        await save_channel_message(channel_id, message_id, author, message)
+
+        try:
+            await save_channel_message(channel_id, message_id, author, message)
+        except Exception as e:
+            print(f"Ошибка при сохранении сообщения в канал {channel_id}: {e}")
 
         if channel_id not in channel_data:
             channel_data[channel_id] = {
@@ -92,7 +95,11 @@ class ReportGenerator:
             except Exception as e:
                 print(f"Ошибка при отмене таймера для канала {channel_id}: {e}")
 
-        db_messages = await get_channel_messages(channel_id)
+        try:
+            db_messages = await get_channel_messages(channel_id)
+        except Exception as e:
+            print(f"Ошибка при получении сообщений из канала {channel_id}: {e}")
+            db_messages = []
 
         if len(channel_data[channel_id]['messages']) >= 15:
             channel_data[channel_id]['timer'] = asyncio.create_task(
@@ -141,7 +148,12 @@ class ReportGenerator:
         Возвращает:
           None
         """
-        messages = await get_channel_messages(channel_id)
+        try:
+            messages = await get_channel_messages(channel_id)
+        except Exception as e:
+            print(f"Ошибка при получении сообщений для генерации отчета в канале {channel_id}: {e}")
+            return
+
         if not messages or len(messages) < 15:
             return
 
@@ -220,7 +232,10 @@ class ReportGenerator:
         except Exception as e:
             print(f"Ошибка отправки отчета в канал {channel_id}: {e}")
 
-        await delete_channel_messages(channel_id)
+        try:
+            await delete_channel_messages(channel_id)
+        except Exception as e:
+            print(f"Ошибка при удалении сообщений из канала {channel_id}: {e}")
 
         if channel_id in channel_data:
             del channel_data[channel_id]
