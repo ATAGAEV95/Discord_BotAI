@@ -148,8 +148,8 @@ async def ai_generate(text: str, user_id: int, name: str):
 
     dialog_messages = [msg for msg in messages if msg["role"] != "system"]
 
-    if len(dialog_messages) >= 18:
-        to_summarize = dialog_messages[:-10]
+    if len(dialog_messages) >= 20:
+        to_summarize = dialog_messages[:-9]
         to_keep = dialog_messages[-9:]
         context_messages.clear()
         system_messages = [msg for msg in messages if msg["role"] == "system"]
