@@ -14,11 +14,11 @@ AI_TOKEN = os.getenv('AI_TOKEN')
 AI_TOKEN1 = os.getenv('AI_TOKEN1')
 
 report_client = AsyncOpenAI(
-    # api_key=AI_TOKEN,
     api_key=AI_TOKEN1,
-    # api_key='google/gemma-3n-e4b',
-    # base_url="https://api.proxyapi.ru/openai/v1",
     base_url="https://api.aitunnel.ru/v1/",
+    # api_key=AI_TOKEN,
+    # base_url="https://api.proxyapi.ru/openai/v1",
+    # api_key='google/gemma-3n-e4b',
     # base_url='http://localhost:1234/v1/'
 )
 
