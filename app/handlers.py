@@ -176,8 +176,8 @@ async def ai_generate(text: str, user_id: int, name: str):
 
     try:
         completion = await client.chat.completions.create(
-            # model="gpt-4o-mini",
-            model = "gpt-4o",
+            model="gpt-5-chat",
+            # model = "gpt-4o",
             # model="gpt-4.1-mini",
             # model="gpt-4.1",
             # model="gemma-3n-e4b",
