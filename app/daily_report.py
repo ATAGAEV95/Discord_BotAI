@@ -158,13 +158,14 @@ class ReportGenerator:
             return
 
         messages_text = "\n".join(
-            f"[ID:{msg.message_id}] [{msg.timestamp.strftime('%H:%M')}] {msg.author}: {msg.content}"
+            f"[ID:{msg.message_id}] {msg.author}: {msg.content}"
             for msg in messages
         )
 
         UPDATED_REPORT_PROMPT = """
         Ты аналитик дискорд-сервера. Проанализируй сообщения и выдели ОСНОВНЫЕ темы обсуждения. 
         Жесткие правила:
+        0. Игнорировать темы если они состоят из 1-2 сообщений пользователей
         1. СТРОГО ИГНОРИРУЙ:
            - Технические реплики ("опа", "нормально так", "ага", "спс")
            - Уточняющие вопросы ("что?", "когда?", "где?")
