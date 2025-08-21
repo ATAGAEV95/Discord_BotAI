@@ -7,6 +7,8 @@ from typing import Optional
 from app import handlers
 from app.daily_report import ReportGenerator
 from app.models import init_models
+from app.scheduler import start_scheduler
+from app.requests import save_birthday
 
 load_dotenv()
 
@@ -24,6 +26,7 @@ async def on_ready():
     await init_models()
     global report_generator
     report_generator = ReportGenerator(bot)
+    start_scheduler(bot)
 
 
 @bot.event
@@ -43,6 +46,13 @@ async def on_message(message):
             )
         return
 
+    if message.content.startswith("!birthday"):
+        await save_birthday(
+                message.content,
+                message.author.display_name,
+                message.author.id)
+        return
+
     if message.content.startswith("!reset"):
         user_id = message.author.id
         await handlers.clear_user_history(user_id)
@@ -54,6 +64,7 @@ async def on_message(message):
             "Команды бота:\n"
             "!reset - очистка истории чата\n"
             "!help - справка по командам"
+            "!birthday YYYY-MM-DD - команда чтобы добавить свое день рождение"
         )
         return
 

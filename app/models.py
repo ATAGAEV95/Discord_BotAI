@@ -53,6 +53,15 @@ class ChannelMessage(Base):
     timestamp = Column(DateTime, default=func.now())
 
 
+class Birthday(Base):
+    __tablename__ = 'birthday'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, nullable=False)
+    name = Column(String(50), nullable=False)
+    birthday = Column(DateTime, nullable=True)
+    datetime_insert = Column(DateTime, default=func.now())
+
+
 async def init_models() -> None:
     """Создает таблицы в базе данных, если они не существуют."""
     async with engine.begin() as conn:

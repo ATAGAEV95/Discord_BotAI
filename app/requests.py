@@ -1,6 +1,8 @@
 import asyncio
 from sqlalchemy import select, delete
-from app.models import User, async_session, ChannelMessage
+from app.models import User, async_session, ChannelMessage, Birthday
+import re
+from datetime import datetime
 
 DB_TIMEOUT = 10
 
@@ -90,3 +92,41 @@ async def delete_channel_messages(channel_id: int):
             raise Exception("Таймаут при удалении сообщений канала.")
         except Exception as e:
             raise Exception(f"Ошибка удаления сообщений канала: {e}")
+
+
+async def save_birthday(content, display_name, user_id):
+    """
+    Сохраняет дату рождения пользователя.
+    Формат команды: !birthday YYYY-MM-DD
+    """
+    # Извлекаем параметры после команды
+    try:
+        args = content[len("!birthday"):].strip()
+        # Проверяем корректность формата даты (YYYY-MM-DD)
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", args):
+            raise ValueError("Некорректный формат даты. Используйте YYYY-MM-DD.")
+        birthday = datetime.strptime(args, "%Y-%m-%d")
+    except Exception:
+        raise ValueError("Некорректный формат даты. Используйте YYYY-MM-DD.")
+
+    async with async_session() as session:
+        try:
+            # Пробуем обновить дату, если она уже есть
+            query = select(Birthday).where(Birthday.user_id == user_id)
+            result = await session.execute(query)
+            birthday_entry = result.scalar()
+            if birthday_entry:
+                birthday_entry.birthday = birthday
+                birthday_entry.name = display_name  # обновим на всякий случай
+            else:
+                birthday_entry = Birthday(
+                    user_id=user_id,
+                    name=display_name,
+                    birthday=birthday
+                )
+                session.add(birthday_entry)
+            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
+        except asyncio.TimeoutError:
+            raise Exception("Таймаут при сохранении даты рождения.")
+        except Exception as e:
+            raise Exception(f"Ошибка при сохранении даты рождения: {e}")
