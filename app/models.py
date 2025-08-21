@@ -55,10 +55,9 @@ class ChannelMessage(Base):
 
 class Birthday(Base):
     __tablename__ = 'birthday'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, nullable=False)
+    user_id = Column(BigInteger, primary_key=True, nullable=False)
     name = Column(String(50), nullable=False)
-    birthday = Column(DateTime, nullable=True)
+    birthday = Column(DateTime, nullable=False)
     datetime_insert = Column(DateTime, default=func.now())
 
 

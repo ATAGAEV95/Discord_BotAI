@@ -99,7 +99,6 @@ async def save_birthday(content, display_name, user_id):
     Сохраняет дату рождения пользователя.
     Формат команды: !birthday YYYY-MM-DD
     """
-    # Извлекаем параметры после команды
     try:
         args = content[len("!birthday"):].strip()
         # Проверяем корректность формата даты (YYYY-MM-DD)
