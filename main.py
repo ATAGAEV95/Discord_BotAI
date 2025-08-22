@@ -48,11 +48,17 @@ async def on_message(message):
         return
 
     if message.content.startswith("!birthday"):
-        await save_birthday(
+        try:
+            await save_birthday(
                 message.content,
                 message.author.display_name,
+                message.author.name,
                 message.author.id)
-        await message.channel.send(f"Дата рождения сохранена.")
+            await message.channel.send(f"Дата рождения сохранена.")
+        except ValueError as ve:
+            await message.channel.send(str(ve))
+        except Exception as e:
+            await message.channel.send(f"Произошла ошибка при сохранении даты рождения: {e}")
         return
 
     if message.content.startswith("!reset"):

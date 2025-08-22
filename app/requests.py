@@ -94,7 +94,7 @@ async def delete_channel_messages(channel_id: int):
             raise Exception(f"Ошибка удаления сообщений канала: {e}")
 
 
-async def save_birthday(content, display_name, user_id):
+async def save_birthday(content, display_name, name, user_id):
     """
     Сохраняет дату рождения пользователя.
     Формат команды: !birthday YYYY-MM-DD
@@ -116,11 +116,12 @@ async def save_birthday(content, display_name, user_id):
             birthday_entry = result.scalar()
             if birthday_entry:
                 birthday_entry.birthday = birthday
-                birthday_entry.name = display_name  # обновим на всякий случай
+                birthday_entry.name = display_name
             else:
                 birthday_entry = Birthday(
                     user_id=user_id,
-                    name=display_name,
+                    display_name=display_name,
+                    name=name,
                     birthday=birthday
                 )
                 session.add(birthday_entry)
