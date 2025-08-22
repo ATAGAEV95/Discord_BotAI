@@ -110,7 +110,7 @@ async def save_birthday(content, display_name, name, user_id):
         try:
             # Пробуем обновить дату, если она уже есть
             query = select(Birthday).where(Birthday.user_id == user_id)
-            result = await session.execute(query)
+            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
             birthday_entry = result.scalar()
             if birthday_entry:
                 birthday_entry.birthday = birthday
