@@ -209,6 +209,7 @@ async def ai_generate(text: str, user_id: int, name: str):
         print(f"Ошибка при вызове OpenAI API: {e}")
         return "Произошла ошибка. Пожалуйста, попробуйте позже."
 
+
 SYSTEM_BIRTHDAY_PROMPT = """
     Ты — веселый Discord-бот. 
     Придумай уникальное, короткое (2-3 предложения) поздравление с днём рождения для пользователя, 
@@ -218,6 +219,7 @@ SYSTEM_BIRTHDAY_PROMPT = """
         - rikka71, это Рикка, у него сильные скиллы в шутерах
         - atagaev, это Арби, создатель бота
     """
+
 
 async def ai_generate_birthday_congrats(display_name, name):
     prompt = [
