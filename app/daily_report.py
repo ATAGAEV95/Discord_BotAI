@@ -1,12 +1,13 @@
-import os
 import asyncio
+import os
 from datetime import datetime, timedelta
-import tiktoken
-from openai import AsyncOpenAI
-from dotenv import load_dotenv
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
-from app.requests import save_channel_message, get_channel_messages, delete_channel_messages
 
+import tiktoken
+from dotenv import load_dotenv
+from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+
+from app.requests import delete_channel_messages, get_channel_messages, save_channel_message
 
 load_dotenv()
 
@@ -27,19 +28,17 @@ ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
 def count_tokens(text: str) -> int:
-    """
-    Подсчитывает количество токенов текста на основе заданной модели."""
+    """Подсчитывает количество токенов текста на основе заданной модели."""
     return len(ENCODING.encode(text))
 
 
 class ReportGenerator:
+    """Класс ReportGenerator используется для накопления сообщений в Discord-канале и автоматической отправки
+    отчета о содержимом канала после 60 минут без активности, при достижении порогового количества сообщений.
     """
-    Класс ReportGenerator используется для накопления сообщений в Discord-канале и автоматической отправки
-    отчета о содержимом канала после 60 минут без активности, при достижении порогового количества сообщений."""
 
     def __init__(self, bot):
-        """
-        Инициализация экземпляра ReportGenerator.
+        """Инициализация экземпляра ReportGenerator.
 
         Аргументы:
           bot (DiscordBot): Объект бота для доступа к Discord API.
@@ -48,8 +47,7 @@ class ReportGenerator:
         self.channel_data = {}
 
     async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
-        """
-        Добавляет сообщение в историю канала и обновляет время последней активности.
+        """Добавляет сообщение в историю канала и обновляет время последней активности.
         При достижении или превышении количества 15 сообщений запускается задача на отправку отчета через 60 минут.
 
         Аргументы:
@@ -61,7 +59,6 @@ class ReportGenerator:
         Возвращает:
           None
         """
-
         try:
             await save_channel_message(channel_id, message_id, author, message)
         except Exception as e:
@@ -104,8 +101,7 @@ class ReportGenerator:
             )
 
     async def start_report_timer(self, channel_id: int):
-        """
-        Запускает задачу, которая ожидает 60 минут. Если после последнего сообщения прошло
+        """Запускает задачу, которая ожидает 60 минут. Если после последнего сообщения прошло
         не менее 60 минут без активности, то генерируется и отправляется аналитический отчет.
 
         Аргументы:
@@ -131,8 +127,7 @@ class ReportGenerator:
             print(f"Ошибка в таймере для канала {channel_id}: {e}")
 
     async def generate_and_send_report(self, channel_id: int):
-        """
-        Генерирует аналитический отчет на основе накопленных сообщений с использованием GPT-модели
+        """Генерирует аналитический отчет на основе накопленных сообщений с использованием GPT-модели
         и отправляет его в канал.
 
         Аргументы:

@@ -1,10 +1,12 @@
+from datetime import datetime
+
+import discord
 import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime
 from sqlalchemy import select
-from app.models import Birthday, async_session
-import discord
+
 from app.handlers import ai_generate_birthday_congrats
+from app.models import Birthday, async_session
 
 
 async def get_today_birthday_users(timezone='Europe/Moscow'):

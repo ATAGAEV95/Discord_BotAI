@@ -6,12 +6,12 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from app.requests import save_user_context, get_user_context, delete_user_context
+from app.requests import delete_user_context, get_user_context, save_user_context
 
 load_dotenv()
 
-AI_TOKEN = os.getenv('AI_TOKEN')
-AI_TOKEN1 = os.getenv('AI_TOKEN1')
+AI_TOKEN = os.getenv("AI_TOKEN")
+AI_TOKEN1 = os.getenv("AI_TOKEN1")
 
 SYSTEM_PROMPT = """
 Ты — Discord бот, дерзкий, немного грубый и остроумный. Твои задачи:
@@ -42,7 +42,7 @@ ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
 async def clean_text(text):
-    cleaned_text = re.sub(r'(\*\*|\*|__|_|###|##|#)', '', text)
+    cleaned_text = re.sub(r"(\*\*|\*|__|_|###|##|#)", "", text)
     return cleaned_text
 
 
@@ -54,7 +54,7 @@ async def clear_user_history(user_id):
     try:
         del user_history[user_id]
     except KeyError:
-        print('Такого ключа нет')
+        print("Такого ключа нет")
 
 
 def count_tokens(text):
@@ -65,54 +65,45 @@ def count_tokens(text):
 
 async def summarize_contexts(contexts: list) -> str:
     """Суммаризирует список контекстных сообщений в одну строку."""
-    context_text = "\n".join(
-        msg['content'] for msg in contexts
-    )
+    context_text = "\n".join(msg["content"] for msg in contexts)
 
     prompt = [
         ChatCompletionSystemMessageParam(
             role="system",
             content="""Ты компрессор контекстных сводок. Объедини несколько контекстных сводок 
                     в одну КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя самую важную информацию. 
-                    Игнорируй отметки 'КОНТЕКСТ:'"""
+                    Игнорируй отметки 'КОНТЕКСТ:'""",
         ),
         ChatCompletionUserMessageParam(
-            role="user",
-            content=f"Суммаризируй эти контексты:\n\n{context_text}"
-        )
+            role="user", content=f"Суммаризируй эти контексты:\n\n{context_text}"
+        ),
     ]
 
     try:
         completion = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=prompt,
-            max_tokens=300,
-            temperature=0.1
+            model="gpt-4o-mini", messages=prompt, max_tokens=300, temperature=0.1
         )
         return completion.choices[0].message.content
     except Exception as e:
         print(f"Ошибка суммаризации контекстов: {e}")
         return "[Не удалось создать сводку контекстов]"
 
+
 async def summarize_chunk(messages: list) -> str:
     """Создает суммаризацию для набора сообщений"""
-    conversation = "\n".join(
-        f"{msg['role']}: {msg['content']}"
-        for msg in messages
-    )
+    conversation = "\n".join(f"{msg['role']}: {msg['content']}" for msg in messages)
 
     summary_prompt = [
         ChatCompletionSystemMessageParam(
             role="system",
             content="Ты компрессор диалогов. Создай КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя:"
-                    "\n1. Основные темы общения"
-                    "\n2. Ключевые факты и решения"
-                    "\n3. Игнорируй приветствия, прощания и пустые реплики"
+            "\n1. Основные темы общения"
+            "\n2. Ключевые факты и решения"
+            "\n3. Игнорируй приветствия, прощания и пустые реплики",
         ),
         ChatCompletionUserMessageParam(
-            role="user",
-            content=f"Суммаризируй этот диалог:\n\n{conversation}"
-        )
+            role="user", content=f"Суммаризируй этот диалог:\n\n{conversation}"
+        ),
     ]
 
     try:
@@ -121,7 +112,7 @@ async def summarize_chunk(messages: list) -> str:
             # model="gpt-4.1-mini",
             messages=summary_prompt,
             max_tokens=300,
-            temperature=0.1
+            temperature=0.1,
         )
         return completion.choices[0].message.content
     except Exception as e:
@@ -160,19 +151,16 @@ async def ai_generate(text: str, user_id: int, name: str):
 
         if len(context_messages) == 3:
             summary_of_contexts = await summarize_contexts(context_messages)
-            context_messages = [
-                {"role": "system", "content": f"КОНТЕКСТ: {summary_of_contexts}"}
-            ]
+            context_messages = [{"role": "system", "content": f"КОНТЕКСТ: {summary_of_contexts}"}]
 
         new_history = [
             messages[0],
             *context_messages,
-            {"role": "system", "content": f"КОНТЕКСТ: {summary_text}"}
+            {"role": "system", "content": f"КОНТЕКСТ: {summary_text}"},
         ]
         new_history.extend(to_keep)
 
         messages = new_history
-
 
     try:
         completion = await client.chat.completions.create(
@@ -186,7 +174,7 @@ async def ai_generate(text: str, user_id: int, name: str):
             top_p=0.95,  # Шире выборка слов
             frequency_penalty=0.3,  # Поощряет новые формулировки
             presence_penalty=0.4,  # Поощряет новые темы
-            max_tokens=3500
+            max_tokens=3500,
         )
 
         response_text = completion.choices[0].message.content
@@ -223,14 +211,11 @@ SYSTEM_BIRTHDAY_PROMPT = """
 
 async def ai_generate_birthday_congrats(display_name, name):
     prompt = [
-        ChatCompletionSystemMessageParam(
-            role="system",
-            content=SYSTEM_BIRTHDAY_PROMPT.strip()
-        ),
+        ChatCompletionSystemMessageParam(role="system", content=SYSTEM_BIRTHDAY_PROMPT.strip()),
         ChatCompletionUserMessageParam(
-            role="user",
-            content=f"Сгенерируй креативное поздравление с днем рождения для {name}."
-        )]
+            role="user", content=f"Сгенерируй креативное поздравление с днем рождения для {name}."
+        ),
+    ]
 
     try:
         completion = await client.chat.completions.create(
@@ -240,7 +225,7 @@ async def ai_generate_birthday_congrats(display_name, name):
             top_p=0.95,  # Шире выборка слов
             frequency_penalty=0.3,  # Поощряет новые формулировки
             presence_penalty=0.4,  # Поощряет новые темы
-            max_tokens=200
+            max_tokens=200,
         )
         text = completion.choices[0].message.content.strip()
         text = await clean_text(text)

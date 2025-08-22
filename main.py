@@ -1,14 +1,15 @@
 import os
+from typing import Optional
+
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from typing import Optional
 
 from app import handlers
 from app.daily_report import ReportGenerator
 from app.models import init_models
-from app.scheduler import start_scheduler
 from app.requests import save_birthday
+from app.scheduler import start_scheduler
 
 load_dotenv()
 
@@ -54,7 +55,7 @@ async def on_message(message):
                 message.author.display_name,
                 message.author.name,
                 message.author.id)
-            await message.channel.send(f"Дата рождения сохранена.")
+            await message.channel.send("Дата рождения сохранена.")
         except ValueError as ve:
             await message.channel.send(str(ve))
         except Exception as e:
