@@ -9,7 +9,7 @@ from sqlalchemy import select
 from app.handlers import ai_generate_birthday_congrats
 from app.models import Birthday, async_session
 
-DB_TIMEOUT = 10  # Добавлен таймаут по аналогии с requests.py
+DB_TIMEOUT = 10
 
 async def get_today_birthday_users(timezone='Europe/Moscow'):
     today = datetime.now(pytz.timezone(timezone)).date()
@@ -53,6 +53,6 @@ async def send_birthday_congratulations(bot: discord.Client):
 
 def start_scheduler(bot: discord.Client):
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
-    # scheduler.add_job(send_birthday_congratulations, 'cron', hour=9, minute=0, args=[bot])
-    scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов
+    scheduler.add_job(send_birthday_congratulations, 'cron', hour=9, minute=0, args=[bot])
+    # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов
     scheduler.start()

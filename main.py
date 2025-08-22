@@ -38,6 +38,11 @@ async def on_message(message):
     if message.author.bot:
         return
 
+    if len(message.content) > 1000:
+        if message.content.startswith("!"):
+            await message.channel.send(f"Сообщение слишком длинное: {len(message.content)} символов! Максимальная длина - 1000 символов.")
+        return
+
     if not message.content.startswith("!"):
         if report_generator is not None:
             await report_generator.add_message(
@@ -78,7 +83,7 @@ async def on_message(message):
         return
 
     response = await handlers.ai_generate(message.content, message.author.id, message.author)
-    await message.channel.send(response)
+    await message.channel.send(f"{message.author.mention} {response}")
 
 
 bot.run(TOKEN)
