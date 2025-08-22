@@ -208,3 +208,41 @@ async def ai_generate(text: str, user_id: int, name: str):
     except Exception as e:
         print(f"Ошибка при вызове OpenAI API: {e}")
         return "Произошла ошибка. Пожалуйста, попробуйте позже."
+
+SYSTEM_BIRTHDAY_PROMPT = """
+    Ты — веселый Discord-бот. 
+    Придумай уникальное, короткое (2-3 предложения) поздравление с днём рождения для пользователя, 
+    не повторяйся, используй неформальный стиль, уместный юмор и эмодзи.
+    Информация по пользователям с name:
+        - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
+        - rikka71, это Рикка, у него сильные скиллы в шутерах
+        - atagaev, это Арби, создатель бота
+    """
+
+async def ai_generate_birthday_congrats(display_name, name):
+    prompt = [
+        ChatCompletionSystemMessageParam(
+            role="system",
+            content=SYSTEM_BIRTHDAY_PROMPT.strip()
+        ),
+        ChatCompletionUserMessageParam(
+            role="user",
+            content=f"Сгенерируй креативное поздравление с днем рождения для {name}."
+        )]
+
+    try:
+        completion = await client.chat.completions.create(
+            model="gpt-5-chat",
+            messages=prompt,
+            temperature=0.85,  # Оптимальный баланс креативности/когерентности
+            top_p=0.95,  # Шире выборка слов
+            frequency_penalty=0.3,  # Поощряет новые формулировки
+            presence_penalty=0.4,  # Поощряет новые темы
+            max_tokens=200
+        )
+        text = completion.choices[0].message.content.strip()
+        text = await clean_text(text)
+        return text
+    except Exception as e:
+        print(f"[Ошибка генерации поздравления]: {e}")
+        return f"Поздравляем {display_name} с днём рождения! 🎉"

@@ -8,7 +8,8 @@ DB_TIMEOUT = 10
 
 
 async def get_user_context(user_id: int):
-    """Извлекает контекст пользователя из базы данных."""
+    """
+    Извлекает контекст пользователя из базы данных."""
     async with async_session() as session:
         try:
             query = select(User).where(User.user_id == user_id).order_by(User.id.desc()).limit(1)
@@ -25,7 +26,8 @@ async def get_user_context(user_id: int):
 
 
 async def save_user_context(user_id: int, name: str, context: list):
-    """Сохраняет контекст пользователя в базе данных."""
+    """
+    Сохраняет контекст пользователя в базе данных."""
     async with async_session() as session:
         try:
             new_user = User(user_id=user_id, name=str(name), context=context[1:])
@@ -38,7 +40,8 @@ async def save_user_context(user_id: int, name: str, context: list):
 
 
 async def delete_user_context(user_id: int):
-    """Удаляет контекст пользователя из базы данных."""
+    """
+    Удаляет контекст пользователя из базы данных."""
     async with async_session() as session:
         try:
             query = delete(User).where(User.user_id == user_id)
@@ -51,7 +54,8 @@ async def delete_user_context(user_id: int):
 
 
 async def save_channel_message(channel_id: int, message_id: int, author: str, content: str):
-    """Сохраняет сообщение канала в базы данных."""
+    """
+    Сохраняет сообщение канала в базы данных."""
     async with async_session() as session:
         try:
             new_message = ChannelMessage(
@@ -69,7 +73,8 @@ async def save_channel_message(channel_id: int, message_id: int, author: str, co
 
 
 async def get_channel_messages(channel_id: int):
-    """Извлекает сообщения канала из базы данных."""
+    """
+    Извлекает сообщения канала из базы данных."""
     async with async_session() as session:
         try:
             query = select(ChannelMessage).where(ChannelMessage.channel_id == channel_id)
@@ -82,7 +87,8 @@ async def get_channel_messages(channel_id: int):
 
 
 async def delete_channel_messages(channel_id: int):
-    """Удаляет сообщения канала из базы данных."""
+    """
+    Удаляет сообщения канала из базы данных."""
     async with async_session() as session:
         try:
             query = delete(ChannelMessage).where(ChannelMessage.channel_id == channel_id)
@@ -96,12 +102,9 @@ async def delete_channel_messages(channel_id: int):
 
 async def save_birthday(content, display_name, name, user_id):
     """
-    Сохраняет дату рождения пользователя.
-    Формат команды: !birthday YYYY-MM-DD
-    """
+    Сохраняет дату рождения пользователя."""
     try:
         args = content[len("!birthday"):].strip()
-        # Проверяем корректность формата даты (YYYY-MM-DD)
         if not re.match(r"^\d{2}\.\d{2}\.\d{4}$", args):
             raise ValueError("Некорректный формат даты. Используйте DD.MM.YYYY.")
         birthday = datetime.strptime(args, "%d.%m.%Y")
