@@ -6,3 +6,5 @@ discord~=2.3.2
 SQLAlchemy~=2.0.42
 pytz~=2025.2
 APScheduler~=3.11.0
+discord.py~=2.5.2
+asyncpg~=0.30.0
