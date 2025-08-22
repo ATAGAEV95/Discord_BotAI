@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, BigInteger, String, Text, Integer
+from sqlalchemy import Column, DateTime, BigInteger, String, Text, Integer, Date
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase
@@ -57,7 +57,7 @@ class Birthday(Base):
     __tablename__ = 'birthday'
     user_id = Column(BigInteger, primary_key=True, nullable=False)
     name = Column(String(50), nullable=False)
-    birthday = Column(DateTime, nullable=False)
+    birthday = Column(Date, nullable=False)
     datetime_insert = Column(DateTime, default=func.now())
 
 

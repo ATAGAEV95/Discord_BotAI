@@ -15,6 +15,7 @@ load_dotenv()
 TOKEN = os.getenv("DC_TOKEN")
 
 intents = discord.Intents.default()
+intents.members = True
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -51,6 +52,7 @@ async def on_message(message):
                 message.content,
                 message.author.display_name,
                 message.author.id)
+        await message.channel.send(f"Дата рождения сохранена.")
         return
 
     if message.content.startswith("!reset"):
@@ -63,8 +65,8 @@ async def on_message(message):
         await message.channel.send(
             "Команды бота:\n"
             "!reset - очистка истории чата\n"
-            "!help - справка по командам"
-            "!birthday YYYY-MM-DD - команда чтобы добавить свое день рождение"
+            "!help - справка по командам\n"
+            "!birthday DD.MM.YYYY - команда чтобы добавить свое день рождение"
         )
         return
 

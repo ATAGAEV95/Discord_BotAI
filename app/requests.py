@@ -102,11 +102,11 @@ async def save_birthday(content, display_name, user_id):
     try:
         args = content[len("!birthday"):].strip()
         # Проверяем корректность формата даты (YYYY-MM-DD)
-        if not re.match(r"^\d{4}-\d{2}-\d{2}$", args):
-            raise ValueError("Некорректный формат даты. Используйте YYYY-MM-DD.")
-        birthday = datetime.strptime(args, "%Y-%m-%d")
+        if not re.match(r"^\d{2}\.\d{2}\.\d{4}$", args):
+            raise ValueError("Некорректный формат даты. Используйте DD.MM.YYYY.")
+        birthday = datetime.strptime(args, "%d.%m.%Y")
     except Exception:
-        raise ValueError("Некорректный формат даты. Используйте YYYY-MM-DD.")
+        raise ValueError("Некорректный формат даты. Используйте DD.MM.YYYY.")
 
     async with async_session() as session:
         try:

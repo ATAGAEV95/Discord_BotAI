@@ -12,7 +12,6 @@ async def get_today_birthday_users(timezone='Europe/Moscow'):
         stmt = select(Birthday).where(Birthday.birthday != None)
         result = await session.execute(stmt)
         users = result.scalars().all()
-        # Проверяем только по дню и месяцу, год — не берем в расчет!
         birthday_users = [u for u in users if u.birthday and u.birthday.month == today.month and u.birthday.day == today.day]
         return birthday_users
 
@@ -21,8 +20,7 @@ async def send_birthday_congratulations(bot: discord.Client):
     guilds = bot.guilds
     users = await get_today_birthday_users()
     for guild in guilds:
-        # Ищем первый текстовый канал
-        channel = discord.utils.get(guild.text_channels, position=0)
+        channel = guild.text_channels[0] if guild.text_channels else None
         if not channel:
             continue
         for user in users:
@@ -33,6 +31,6 @@ async def send_birthday_congratulations(bot: discord.Client):
 
 def start_scheduler(bot: discord.Client):
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
-    # Каждый день в 9:00
-    scheduler.add_job(send_birthday_congratulations, 'cron', hour=9, minute=0, args=[bot])
+    # scheduler.add_job(send_birthday_congratulations, 'cron', hour=9, minute=0, args=[bot])
+    scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot])
     scheduler.start()
