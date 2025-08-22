@@ -119,7 +119,8 @@ async def save_birthday(content, display_name, name, user_id):
             birthday_entry = result.scalar()
             if birthday_entry:
                 birthday_entry.birthday = birthday
-                birthday_entry.name = display_name
+                birthday_entry.display_name = display_name
+                birthday_entry.name = name
             else:
                 birthday_entry = Birthday(
                     user_id=user_id,

@@ -34,5 +34,5 @@ async def send_birthday_congratulations(bot: discord.Client):
 def start_scheduler(bot: discord.Client):
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
     scheduler.add_job(send_birthday_congratulations, 'cron', hour=9, minute=0, args=[bot])
-    # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot])
+    # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов
     scheduler.start()
