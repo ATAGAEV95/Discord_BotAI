@@ -45,6 +45,12 @@ class ReportGenerator:
         """
         self.bot = bot
         self.channel_data = {}
+        self.locks = {}
+
+    def get_lock(self, channel_id):
+        if channel_id not in self.locks:
+            self.locks[channel_id] = asyncio.Lock()
+        return self.locks[channel_id]
 
     async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
         """Добавляет сообщение в историю канала и обновляет время последней активности.
@@ -59,46 +65,47 @@ class ReportGenerator:
         Возвращает:
           None
         """
-        try:
-            await save_channel_message(channel_id, message_id, author, message)
-        except Exception as e:
-            print(f"Ошибка при сохранении сообщения в канал {channel_id}: {e}")
-
-        if channel_id not in self.channel_data:
-            self.channel_data[channel_id] = {
-                'messages': [],
-                'timer': None,
-                'last_message_time': datetime.now()
-            }
-
-        self.channel_data[channel_id]['messages'].append({
-            'id': message_id,
-            'content': message,
-            'author': author,
-            'timestamp': datetime.now()
-        })
-
-        self.channel_data[channel_id]['last_message_time'] = datetime.now()
-        if self.channel_data[channel_id]['timer'] and not self.channel_data[channel_id]['timer'].done():
+        lock = self.get_lock(channel_id)
+        async with lock:
             try:
-                self.channel_data[channel_id]['timer'].cancel()
+                await save_channel_message(channel_id, message_id, author, message)
             except Exception as e:
-                print(f"Ошибка при отмене таймера для канала {channel_id}: {e}")
+                print(f"Ошибка при сохранении сообщения в канал {channel_id}: {e}")
 
+            if channel_id not in self.channel_data:
+                self.channel_data[channel_id] = {
+                    'messages': [],
+                    'timer': None,
+                    'last_message_time': datetime.now()
+                }
 
-        try:
-            db_messages = await get_channel_messages(channel_id)
-        except Exception as e:
-            print(f"Ошибка при получении сообщений из канала {channel_id}: {e}")
-            db_messages = []
+            self.channel_data[channel_id]['messages'].append({
+                'id': message_id,
+                'content': message,
+                'author': author,
+                'timestamp': datetime.now()
+            })
 
-        cache_count = len(self.channel_data[channel_id]['messages'])
-        db_count = len(db_messages)
+            self.channel_data[channel_id]['last_message_time'] = datetime.now()
+            if self.channel_data[channel_id]['timer'] and not self.channel_data[channel_id]['timer'].done():
+                try:
+                    self.channel_data[channel_id]['timer'].cancel()
+                except Exception as e:
+                    print(f"Ошибка при отмене таймера для канала {channel_id}: {e}")
 
-        if cache_count >= 15 or db_count >= 15:
-            self.channel_data[channel_id]['timer'] = asyncio.create_task(
-                self.start_report_timer(channel_id)
-            )
+            try:
+                db_messages = await get_channel_messages(channel_id)
+            except Exception as e:
+                print(f"Ошибка при получении сообщений из канала {channel_id}: {e}")
+                db_messages = []
+
+            cache_count = len(self.channel_data[channel_id]['messages'])
+            db_count = len(db_messages)
+
+            if cache_count >= 15 or db_count >= 15:
+                self.channel_data[channel_id]['timer'] = asyncio.create_task(
+                    self.start_report_timer(channel_id)
+                )
 
     async def start_report_timer(self, channel_id: int):
         """Запускает задачу, которая ожидает 60 минут. Если после последнего сообщения прошло
@@ -110,9 +117,9 @@ class ReportGenerator:
         Возвращает:
           None
         """
-        try:
-            await asyncio.sleep(3600)
-
+        await asyncio.sleep(3600)
+        lock = self.get_lock(channel_id)
+        async with lock:
             if channel_id not in self.channel_data:
                 return
 
@@ -120,11 +127,7 @@ class ReportGenerator:
             if (datetime.now() - last_time) < timedelta(minutes=60):
                 return
 
-            await self.generate_and_send_report(channel_id)
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            print(f"Ошибка в таймере для канала {channel_id}: {e}")
+        await self.generate_and_send_report(channel_id)
 
     async def generate_and_send_report(self, channel_id: int):
         """Генерирует аналитический отчет на основе накопленных сообщений с использованием GPT-модели
@@ -136,95 +139,97 @@ class ReportGenerator:
         Возвращает:
           None
         """
-        try:
-            messages = await get_channel_messages(channel_id)
-        except Exception as e:
-            print(f"Ошибка при получении сообщений для генерации отчета в канале {channel_id}: {e}")
-            return
+        lock = self.get_lock(channel_id)
+        async with lock:
+            try:
+                messages = await get_channel_messages(channel_id)
+            except Exception as e:
+                print(f"Ошибка при получении сообщений для генерации отчета в канале {channel_id}: {e}")
+                return
 
-        if not messages or len(messages) < 15:
-            return
+            if not messages or len(messages) < 15:
+                return
 
-        messages_text = "\n".join(
-            f"[ID:{msg.message_id}] {msg.author}: {msg.content}"
-            for msg in messages
-        )
-
-        UPDATED_REPORT_PROMPT = """
-        Ты аналитик дискорд-сервера. Проанализируй сообщения и выдели ОСНОВНЫЕ темы обсуждения. 
-        Жесткие правила:
-        0. Игнорировать темы если они состоят из 1-2 сообщений пользователей
-        1. СТРОГО ИГНОРИРУЙ:
-           - Технические реплики ("опа", "нормально так", "ага", "спс")
-           - Уточняющие вопросы ("что?", "когда?", "где?")
-           - Формальные приветствия/прощания
-           - Повторы одной мысли разными пользователями
-        2. Группировка тем. Объединяй сообщения в одну тему, если они:
-           - Относятся к одному корневому контенту (трейлер, новость, мем)
-           - Обсуждают один объект (игра, персонаж, событие)
-           - Развивается одна ключевая идея (критика, сравнение, совет)
-        3. Не выделяй подтемы, если сообщения развивают или уточняют основную тему
-        4. Объединяй сообщения, если они касаются одного объекта, события или идеи, даже если есть небольшие различия.
-        5. Для КАЖДОЙ темы укажи ID первого сообщения в формате [ID:123456789]
-        6. Объем: очень кратко (в двух словах) для удобства чтения в чате
-
-        Пример структуры:
-        - [тема] [ID:123456789]
-        - [тема] [ID:987654321]
-
-        Ключевые принципы группировки:
-        • Сообщения = ответы на один стимул → ОДНА тема
-        • Разные аспекты одного объекта → ОДНА тема
-        • Реакции + мнения + шутки по одной теме → ОДНА тема
-        """
-
-        message = [
-            ChatCompletionSystemMessageParam(
-                role="system",
-                content=UPDATED_REPORT_PROMPT,
-            ),
-            ChatCompletionUserMessageParam(
-                role="user",
-                content=f"Сообщения из канала:\n{messages_text}"
+            messages_text = "\n".join(
+                f"[ID:{msg.message_id}] {msg.author}: {msg.content}"
+                for msg in messages
             )
-        ]
 
+            UPDATED_REPORT_PROMPT = """
+            Ты аналитик дискорд-сервера. Проанализируй сообщения и выдели ОСНОВНЫЕ темы обсуждения. 
+            Жесткие правила:
+            0. Игнорировать темы если они состоят из 1-2 сообщений пользователей
+            1. СТРОГО ИГНОРИРУЙ:
+               - Технические реплики ("опа", "нормально так", "ага", "спс")
+               - Уточняющие вопросы ("что?", "когда?", "где?")
+               - Формальные приветствия/прощания
+               - Повторы одной мысли разными пользователями
+            2. Группировка тем. Объединяй сообщения в одну тему, если они:
+               - Относятся к одному корневому контенту (трейлер, новость, мем)
+               - Обсуждают один объект (игра, персонаж, событие)
+               - Развивается одна ключевая идея (критика, сравнение, совет)
+            3. Не выделяй подтемы, если сообщения развивают или уточняют основную тему
+            4. Объединяй сообщения, если они касаются одного объекта, события или идеи, даже если есть небольшие различия.
+            5. Для КАЖДОЙ темы укажи ID первого сообщения в формате [ID:123456789]
+            6. Объем: очень кратко (в двух словах) для удобства чтения в чате
+    
+            Пример структуры:
+            - [тема] [ID:123456789]
+            - [тема] [ID:987654321]
+    
+            Ключевые принципы группировки:
+            • Сообщения = ответы на один стимул → ОДНА тема
+            • Разные аспекты одного объекта → ОДНА тема
+            • Реакции + мнения + шутки по одной теме → ОДНА тема
+            """
 
-        try:
-            response = await report_client.chat.completions.create(
-                model="gpt-4.1",
-                # model="gpt-4.1-mini",
-                messages=message,
-                temperature=0.0,
-                top_p=0.01,
-                max_tokens=500
-            )
-            report = response.choices[0].message.content
-        except Exception as e:
-            print(f"Ошибка генерации отчета: {e}")
-            report = "Ошибка генерации отчета"
+            message = [
+                ChatCompletionSystemMessageParam(
+                    role="system",
+                    content=UPDATED_REPORT_PROMPT,
+                ),
+                ChatCompletionUserMessageParam(
+                    role="user",
+                    content=f"Сообщения из канала:\n{messages_text}"
+                )
+            ]
 
-        if "ID:" in report:
-            channel = self.bot.get_channel(channel_id)
-            guild_id = channel.guild.id if channel and hasattr(channel, 'guild') else "UNKNOWN"
+            try:
+                response = await report_client.chat.completions.create(
+                    model="gpt-4.1",
+                    messages=message,
+                    temperature=0.0,
+                    top_p=0.01,
+                    max_tokens=500
+                )
+                report = response.choices[0].message.content
+            except Exception as e:
+                print(f"Ошибка генерации отчета: {e}")
+                report = "Ошибка генерации отчета"
 
-            for msg in messages:
-                msg_id = str(msg.message_id)
-                if f"[ID:{msg_id}]" in report:
-                    link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
-                    report = report.replace(f"[ID:{msg_id}]", f"[ссылка]({link})")
+            if "ID:" in report:
+                channel = self.bot.get_channel(channel_id)
+                guild_id = channel.guild.id if channel and hasattr(channel, 'guild') else "UNKNOWN"
 
-        try:
-            channel = self.bot.get_channel(channel_id)
-            if channel:
-                await channel.send(report)
-        except Exception as e:
-            print(f"Ошибка отправки отчета в канал {channel_id}: {e}")
+                for msg in messages:
+                    msg_id = str(msg.message_id)
+                    if f"[ID:{msg_id}]" in report:
+                        link = f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
+                        report = report.replace(f"[ID:{msg_id}]", f"[ссылка]({link})")
 
-        try:
-            await delete_channel_messages(channel_id)
-        except Exception as e:
-            print(f"Ошибка при удалении сообщений из канала {channel_id}: {e}")
+            try:
+                channel = self.bot.get_channel(channel_id)
+                if channel:
+                    await channel.send(report)
+            except Exception as e:
+                print(f"Ошибка отправки отчета в канал {channel_id}: {e}")
 
-        if channel_id in self.channel_data:
-            del self.channel_data[channel_id]
+            try:
+                await delete_channel_messages(channel_id)
+            except Exception as e:
+                print(f"Ошибка при удалении сообщений из канала {channel_id}: {e}")
+
+            if channel_id in self.channel_data:
+                del self.channel_data[channel_id]
+                if channel_id in self.locks:
+                    del self.locks[channel_id]

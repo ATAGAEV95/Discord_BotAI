@@ -21,13 +21,14 @@ async def get_today_birthday_users(timezone='Europe/Moscow'):
             birthday_users = [u for u in users if u.birthday and u.birthday.month == today.month and u.birthday.day == today.day]
             return birthday_users
         except asyncio.TimeoutError:
-            raise Exception("Таймаут при получении дней рождения из базы данных.")
+            print("Таймаут при получении дней рождения из базы данных.")
+            return []
         except Exception as e:
-            raise Exception(f"Ошибка доступа к базе данных (дни рождения): {e}")
+            print(f"Ошибка доступа к базе данных (дни рождения): {e}")
+            return []
 
 
 async def send_birthday_congratulations(bot: discord.Client):
-    print("Фукнция send_birthday_congratulations запущена")
     try:
         users = await get_today_birthday_users()
 
