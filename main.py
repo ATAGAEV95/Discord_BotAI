@@ -7,8 +7,9 @@ from dotenv import load_dotenv
 from app import handlers
 from app.daily_report import ReportGenerator
 from app.models import init_models
-from app.requests import save_birthday, contains_only_urls
+from app.request import save_birthday, contains_only_urls
 from app.scheduler import start_scheduler
+from app.weather_agent import WeatherAgent
 
 load_dotenv()
 
@@ -20,6 +21,7 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 report_generator: ReportGenerator | None = None
+weather_agent = WeatherAgent()
 
 
 @bot.event
@@ -100,8 +102,18 @@ async def on_message(message):
         await message.channel.send("Бот работает только на серверах.")
         return
 
-    response = await handlers.ai_generate(message.content, server_id, message.author)
-    await message.channel.send(f"{message.author.mention} {response}")
+    is_weather, city = await weather_agent.should_handle_weather(message.content)
+    if is_weather:
+        if city:
+            weather_info = weather_agent.get_weather(city)
+            await message.channel.send(weather_info)
+        else:
+            await message.channel.send("Какой город интересует?")
+        return
+
+    await message.channel.send(f"Не получилось")
+    # response = await handlers.ai_generate(message.content, server_id, message.author)
+    # await message.channel.send(f"{message.author.mention} {response}")
 
 
 bot.run(TOKEN)

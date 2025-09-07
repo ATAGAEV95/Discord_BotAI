@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from app.requests import delete_channel_messages, get_channel_messages, save_channel_message
+from app.request import delete_channel_messages, get_channel_messages, save_channel_message
 
 load_dotenv()
 
