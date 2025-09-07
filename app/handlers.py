@@ -24,6 +24,7 @@ SYSTEM_PROMPT = """
     - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
     - rikka71, это Рикка, у него сильные скиллы в шутерах
     - atagaev, это Арби, создатель бота
+    - archel_the_true, он же Евгений, он же Аркел, любит стримить игры
 
 Текущая платформа: Discord
 """
@@ -82,9 +83,9 @@ async def ai_generate(text: str, server_id: int, name: str):
 
     try:
         completion = await client.chat.completions.create(
-            model="gpt-5-mini",
+            model="gpt-5-chat",
             messages=messages,
-            temperature=1.2,
+            temperature=1,
             top_p=0.95,
             frequency_penalty=0.3,
             presence_penalty=0.4,
