@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -20,7 +19,7 @@ intents.members = True
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-report_generator: Optional[ReportGenerator] = None
+report_generator: ReportGenerator | None = None
 
 
 @bot.event
@@ -41,7 +40,9 @@ async def on_message(message):
 
     if len(message.content) > 1000:
         if message.content.startswith("!"):
-            await message.channel.send(f"Сообщение слишком длинное: {len(message.content)} символов! Максимальная длина - 1000 символов.")
+            await message.channel.send(
+                f"Сообщение слишком длинное: {len(message.content)} символов! Максимальная длина - 1000 символов."
+            )
         return
 
     if not message.content.startswith("!"):
@@ -56,7 +57,7 @@ async def on_message(message):
                 message.channel.id,
                 message.content,
                 message.author.display_name,
-                message.id
+                message.id,
             )
         return
 
@@ -66,12 +67,15 @@ async def on_message(message):
                 message.content,
                 message.author.display_name,
                 message.author.name,
-                message.author.id)
+                message.author.id,
+            )
             await message.channel.send("Дата рождения сохранена.")
         except ValueError as ve:
             await message.channel.send(str(ve))
         except Exception as e:
-            await message.channel.send(f"Произошла ошибка при сохранении даты рождения: {e}")
+            await message.channel.send(
+                f"Произошла ошибка при сохранении даты рождения: {e}"
+            )
         return
 
     if message.content.startswith("!reset"):
