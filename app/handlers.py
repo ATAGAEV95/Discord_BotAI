@@ -48,16 +48,6 @@ async def clean_text(text):
     return cleaned_text
 
 
-# async def clear_user_history(user_id):
-#     try:
-#         await delete_user_context(user_id)
-#     except Exception as e:
-#         print(f"[Ошибка] Удаление контекста: {e}")
-#     try:
-#         del user_history[user_id]
-#     except KeyError:
-#         print("Такого ключа нет")
-
 async def clear_user_history(user_id):
     try:
         await delete_user_context(user_id)
@@ -92,63 +82,6 @@ def count_tokens(text):
     return len(ENCODING.encode(text))
 
 
-async def summarize_contexts(contexts: list) -> str:
-    """Суммаризирует список контекстных сообщений в одну строку."""
-    context_text = "\n".join(msg["content"] for msg in contexts)
-
-    prompt = [
-        ChatCompletionSystemMessageParam(
-            role="system",
-            content="""Ты компрессор контекстных сводок. Объедини несколько контекстных сводок 
-                    в одну КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя самую важную информацию. 
-                    Игнорируй отметки 'КОНТЕКСТ:'""",
-        ),
-        ChatCompletionUserMessageParam(
-            role="user", content=f"Суммаризируй эти контексты:\n\n{context_text}"
-        ),
-    ]
-
-    try:
-        completion = await client.chat.completions.create(
-            model="gpt-4o-mini", messages=prompt, max_tokens=300, temperature=0.1
-        )
-        return completion.choices[0].message.content
-    except Exception as e:
-        print(f"Ошибка суммаризации контекстов: {e}")
-        return "[Не удалось создать сводку контекстов]"
-
-
-async def summarize_chunk(messages: list) -> str:
-    """Создает суммаризацию для набора сообщений"""
-    conversation = "\n".join(f"{msg['role']}: {msg['content']}" for msg in messages)
-
-    summary_prompt = [
-        ChatCompletionSystemMessageParam(
-            role="system",
-            content="Ты компрессор диалогов. Создай КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя:"
-            "\n1. Основные темы общения"
-            "\n2. Ключевые факты и решения"
-            "\n3. Игнорируй приветствия, прощания и пустые реплики",
-        ),
-        ChatCompletionUserMessageParam(
-            role="user", content=f"Суммаризируй этот диалог:\n\n{conversation}"
-        ),
-    ]
-
-    try:
-        completion = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            # model="gpt-4.1-mini",
-            messages=summary_prompt,
-            max_tokens=300,
-            temperature=0.1,
-        )
-        return completion.choices[0].message.content
-    except Exception as e:
-        print(f"Ошибка суммаризации: {e}")
-        return "[Не удалось создать сводку]"
-
-
 async def ai_generate(text: str, user_id: int, name: str):
     # Получаем системный промпт
     messages = [{"role": "system", "content": SYSTEM_PROMPT.strip()}]
@@ -170,9 +103,10 @@ async def ai_generate(text: str, user_id: int, name: str):
 
     try:
         completion = await client.chat.completions.create(
-            model="gpt-5-chat",
+            model="gpt-5-mini",
+            # model="gpt-5-chat",
             messages=messages,
-            temperature=0.95,
+            temperature=1.2,
             top_p=0.95,
             frequency_penalty=0.3,
             presence_penalty=0.4,
