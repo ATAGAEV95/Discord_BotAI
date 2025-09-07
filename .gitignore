@@ -1,3 +1,4 @@
 /.env
 /.continue
 /.python-version
+/chroma_db
