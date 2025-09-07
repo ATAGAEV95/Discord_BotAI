@@ -7,8 +7,10 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.requests import delete_user_context, get_user_context, save_user_context
+from app.llama_integration import LlamaIndexManager
 
 load_dotenv()
+llama_manager = LlamaIndexManager()
 
 AI_TOKEN = os.getenv("AI_TOKEN")
 AI_TOKEN1 = os.getenv("AI_TOKEN1")
@@ -19,7 +21,7 @@ SYSTEM_PROMPT = """
 2. Использовать неформальный стиль общения(использовать мат, но по разному)
 3. Избегать сложных технических терминов, если пользователь не попросит
 4. Отвечать кратко (2-3 предложения) для удобства чтения в чате
-5. Информация по пользователям с user_id, но не упоминать об этом постоянно:
+5. Информация по пользователям с name(они должны совпадать по буквено, иначе это другой юзер), но не упоминать об этом постоянно:
     - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
     - rikka71, это Рикка, у него сильные скиллы в шутерах
     - atagaev, это Арби, создатель бота
@@ -46,6 +48,16 @@ async def clean_text(text):
     return cleaned_text
 
 
+# async def clear_user_history(user_id):
+#     try:
+#         await delete_user_context(user_id)
+#     except Exception as e:
+#         print(f"[Ошибка] Удаление контекста: {e}")
+#     try:
+#         del user_history[user_id]
+#     except KeyError:
+#         print("Такого ключа нет")
+
 async def clear_user_history(user_id):
     try:
         await delete_user_context(user_id)
@@ -55,6 +67,23 @@ async def clear_user_history(user_id):
         del user_history[user_id]
     except KeyError:
         print("Такого ключа нет")
+
+    # Очистка индекса LlamaIndex
+    try:
+        # Получаем коллекцию пользователя
+        collection = llama_manager.get_user_collection(user_id)
+
+        # Получаем все ID документов в коллекции
+        results = collection.get()
+        if results and 'ids' in results and results['ids']:
+            # Удаляем все документы по их ID
+            collection.delete(ids=results['ids'])
+            print(f"Удалено {len(results['ids'])} документов из индекса пользователя {user_id}")
+        else:
+            print(f"Индекс пользователя {user_id} уже пуст")
+
+    except Exception as e:
+        print(f"Ошибка очистки индекса LlamaIndex: {e}")
 
 
 def count_tokens(text):
@@ -121,77 +150,48 @@ async def summarize_chunk(messages: list) -> str:
 
 
 async def ai_generate(text: str, user_id: int, name: str):
-    global user_history
-    context_messages = []
-    messages = user_history.get(user_id, [])
+    # Получаем системный промпт
+    messages = [{"role": "system", "content": SYSTEM_PROMPT.strip()}]
 
-    if not messages:
-        messages.append({"role": "system", "content": SYSTEM_PROMPT.strip()})
-        try:
-            context = await get_user_context(user_id)
-            if isinstance(context, list):
-                messages.extend(context)
-        except Exception as e:
-            print(f"[Ошибка] Загрузка контекста: {e}")
+    # Поиск релевантного контекста с помощью LlamaIndex
+    relevant_contexts = await llama_manager.query_relevant_context(user_id, text, limit=8)
 
+    # Добавление релевантного контекста к сообщениям
+    if relevant_contexts:
+        context_message = {
+            "role": "system",
+            "content": f"Релевантный контекст из истории:\n" + "\n".join(relevant_contexts)
+        }
+        messages.append(context_message)
+
+    # Добавляем текущее сообщение пользователя
     user_msg = {"role": "user", "content": f"[Пользователь: {name}] {text}"}
     messages.append(user_msg)
-
-    dialog_messages = [msg for msg in messages if msg["role"] != "system"]
-
-    if len(dialog_messages) >= 20:
-        to_summarize = dialog_messages[:-9]
-        to_keep = dialog_messages[-9:]
-        context_messages.clear()
-        system_messages = [msg for msg in messages if msg["role"] == "system"]
-        if len(system_messages) > 1:
-            context_messages.extend(system_messages[1:])
-
-        summary_text = await summarize_chunk(to_summarize)
-
-        if len(context_messages) == 3:
-            summary_of_contexts = await summarize_contexts(context_messages)
-            context_messages = [{"role": "system", "content": f"КОНТЕКСТ: {summary_of_contexts}"}]
-
-        new_history = [
-            messages[0],
-            *context_messages,
-            {"role": "system", "content": f"КОНТЕКСТ: {summary_text}"},
-        ]
-        new_history.extend(to_keep)
-
-        messages = new_history
 
     try:
         completion = await client.chat.completions.create(
             model="gpt-5-chat",
-            # model = "gpt-4o",
-            # model="gpt-4.1-mini",
-            # model="gpt-4.1",
-            # model="gemma-3n-e4b",
             messages=messages,
-            temperature=0.85,  # Оптимальный баланс креативности/когерентности
-            top_p=0.95,  # Шире выборка слов
-            frequency_penalty=0.3,  # Поощряет новые формулировки
-            presence_penalty=0.4,  # Поощряет новые темы
+            temperature=0.95,
+            top_p=0.95,
+            frequency_penalty=0.3,
+            presence_penalty=0.4,
             max_tokens=3500,
         )
 
         response_text = completion.choices[0].message.content
-        messages.append({"role": "assistant", "content": response_text})
         cleaned_response_text = await clean_text(response_text)
 
-        user_history[user_id] = messages
-        # print(user_history)
-        # print(context_messages)
-        # print(len(context_messages))
-        # print(f'Токены ответа {count_tokens(response_text)}')
-        # print(f'Токены вопроса {count_tokens(messages)}')
-        # print(f'Количество сообщений {len(dialog_messages)}')
-        try:
-            await save_user_context(user_id, name, user_history[user_id])
-        except Exception as e:
-            print(f"[Ошибка] Сохранение контекста: {e}")
+        # Индексация нового сообщения и ответа
+        messages_to_index = [
+            {"role": "user", "content": text},
+            {"role": "assistant", "content": response_text}
+        ]
+        await llama_manager.index_messages(user_id, messages_to_index)
+        print(f"Релевантный {relevant_contexts}")
+        print(count_tokens(relevant_contexts))
+        print(f"Сообщения {messages}")
+        print(count_tokens(messages))
         return cleaned_response_text
     except Exception as e:
         print(f"Ошибка при вызове OpenAI API: {e}")
