@@ -5,6 +5,10 @@ from langchain_openai import ChatOpenAI
 from langchain.schema import SystemMessage
 import requests
 import json
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 class WeatherAgent:
@@ -36,20 +40,30 @@ class WeatherAgent:
 
     def get_weather(self, city: str) -> str:
         """Функция для получения погоды через API"""
-        # Реализуйте здесь вызов API погоды
-        # Например, используя OpenWeatherMap или другой сервис
-        api_key = os.getenv("WEATHER_API_KEY")
-        url = f"http://api.weatherapi.com/v1/forecast.json?key={api_key}&q={city}&days=1"
+        api_key = os.getenv("OPENWEATHERMAP_API_KEY")
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru"
 
         try:
             response = requests.get(url)
-            print(response)
             data = response.json()
-            print(data)
-            # Обработка и форматирование данных о погоде
-            return f"Погода в {city}: {data['current']['temp_c']}°C, {data['current']['condition']['text']}"
+
+            if data['cod'] != 200:
+                return f"Не удалось получить погоду для {city}"
+
+            # Извлекаем данные о погоде
+            description = data['weather'][0]['description']
+            temp = data['main']['temp']
+            feels_like = data['main']['feels_like']
+            humidity = data['main']['humidity']
+            wind_speed = data['wind']['speed']
+
+            return (f"Погода в {city}: {description}\n"
+                    f"Температура: {temp}°C (ощущается как {feels_like}°C)\n"
+                    f"Влажность: {humidity}%\n"
+                    f"Скорость ветра: {wind_speed} м/с")
+
         except Exception as e:
-            return f"Ошибка получения погоды: {str(e)}"
+            return f"Ошибка при получении погоды: {str(e)}"
 
     async def should_handle_weather(self, message: str):
         """Определяет, относится ли сообщение к запросу погоды"""
