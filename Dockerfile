@@ -1,4 +1,4 @@
-FROM python:3.12-alpine
+FROM python:3.13-slim
 RUN pip install --upgrade pip
 ENV PYTHONUNBUFFERED=1
 WORKDIR /python-app
