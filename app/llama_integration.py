@@ -14,29 +14,24 @@ load_dotenv()
 
 class LlamaIndexManager:
     def __init__(self):
-        # Создаем кастомный клиент OpenAI для вашего провайдера
         self.custom_client = AsyncOpenAI(
             api_key=os.getenv("AI_TOKEN1"),
             base_url="https://api.aitunnel.ru/v1/",
         )
 
-        # Настройка LLM с использованием кастомного клиента
         self.llm = OpenAI(
             api_key=os.getenv("AI_TOKEN1"),
             api_base="https://api.aitunnel.ru/v1/",
             model="gpt-5-chat"
         )
 
-        # Настройка embedding модели с использованием кастомного клиента
         self.embed_model = OpenAIEmbedding(
             api_key=os.getenv("AI_TOKEN1"),
             api_base="https://api.aitunnel.ru/v1/",
-            # model="text-embedding-3-small"
             model="text-embedding-3-large"
         )
 
-        # Настройка парсера документов
-        self.node_parser = SimpleNodeParser.from_defaults(chunk_size=512)
+        self.node_parser = SimpleNodeParser.from_defaults(chunk_size=650)
 
         # Инициализация ChromaDB
         self.db = chromadb.PersistentClient(path="./chroma_db")
