@@ -24,9 +24,7 @@ SYSTEM_PROMPT = """
     - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
     - rikka71, это Рикка, у него сильные скиллы в шутерах
     - atagaev, это Арби, создатель бота
-    - archel_the_true, он же Евгений, он же Аркел, любит стримить игры
-
-Текущая платформа: Discord
+    - archel_the_true, он же Евгений, позывной Аркел, любит стримить игры
 """
 
 
@@ -82,9 +80,22 @@ async def ai_generate(text: str, server_id: int, name: str):
     messages.append(user_msg)
 
     try:
+        openai_messages = []
+        for msg in messages:
+            if msg["role"] == "system":
+                openai_messages.append(ChatCompletionSystemMessageParam(
+                    role="system",
+                    content=msg["content"]
+                ))
+            elif msg["role"] == "user":
+                openai_messages.append(ChatCompletionUserMessageParam(
+                    role="user",
+                    content=msg["content"]
+                ))
+
         completion = await client.chat.completions.create(
             model="gpt-5-chat",
-            messages=messages,
+            messages=openai_messages,
             temperature=1,
             top_p=0.95,
             frequency_penalty=0.3,
@@ -118,7 +129,7 @@ SYSTEM_BIRTHDAY_PROMPT = """
     - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
     - rikka71, это Рикка, у него сильные скиллы в шутерах
     - atagaev, это Арби, создатель бота
-    - archel_the_true, он же Евгений, он же Аркел, любит стримить игры
+    - archel_the_true, он же Евгений, позывной Аркел, любит стримить игры
     """
 
 

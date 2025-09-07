@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from app import handlers
 from app.daily_report import ReportGenerator
 from app.models import init_models
-from app.requests import save_birthday
+from app.requests import save_birthday, contains_only_urls
 from app.scheduler import start_scheduler
 
 load_dotenv()
@@ -45,6 +45,12 @@ async def on_message(message):
         return
 
     if not message.content.startswith("!"):
+        if not message.content.strip():
+            return
+
+        if contains_only_urls(message.content):
+            return
+
         if report_generator is not None:
             await report_generator.add_message(
                 message.channel.id,

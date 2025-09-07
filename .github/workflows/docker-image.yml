@@ -49,7 +49,9 @@ jobs:
             docker load -i ~/deploy/image_dc.tar
             docker stop dcchatbot || true
             docker rm dcchatbot || true
+            docker volume create chroma_data || true
             docker run -d --name dcchatbot \
+              -v chroma_data:/chroma_db \
               -e DC_TOKEN="${{ secrets.DC_TOKEN }}" \
               -e AI_TOKEN="${{ secrets.AI_TOKEN }}" \
               -e AI_TOKEN1="${{ secrets.AI_TOKEN1 }}" \
