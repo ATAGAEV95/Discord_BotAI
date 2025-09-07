@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from app.requests import delete_user_context, get_user_context, save_user_context
 from app.llama_integration import LlamaIndexManager
 
 load_dotenv()
@@ -25,8 +24,7 @@ SYSTEM_PROMPT = """
     - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
     - rikka71, это Рикка, у него сильные скиллы в шутерах
     - atagaev, это Арби, создатель бота
-
-Текущая платформа: Discord
+    - archel_the_true, он же Евгений, позывной Аркел, любит стримить игры
 """
 
 
@@ -39,7 +37,6 @@ client = AsyncOpenAI(
     # base_url='http://localhost:1234/v1/'
 )
 
-user_history = {}
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
@@ -48,40 +45,15 @@ async def clean_text(text):
     return cleaned_text
 
 
-# async def clear_user_history(user_id):
-#     try:
-#         await delete_user_context(user_id)
-#     except Exception as e:
-#         print(f"[Ошибка] Удаление контекста: {e}")
-#     try:
-#         del user_history[user_id]
-#     except KeyError:
-#         print("Такого ключа нет")
-
-async def clear_user_history(user_id):
+async def clear_server_history(server_id):
     try:
-        await delete_user_context(user_id)
-    except Exception as e:
-        print(f"[Ошибка] Удаление контекста: {e}")
-    try:
-        del user_history[user_id]
-    except KeyError:
-        print("Такого ключа нет")
-
-    # Очистка индекса LlamaIndex
-    try:
-        # Получаем коллекцию пользователя
-        collection = llama_manager.get_user_collection(user_id)
-
-        # Получаем все ID документов в коллекции
+        collection = llama_manager.get_server_collection(server_id)  # Изменяем на серверную коллекцию
         results = collection.get()
         if results and 'ids' in results and results['ids']:
-            # Удаляем все документы по их ID
             collection.delete(ids=results['ids'])
-            print(f"Удалено {len(results['ids'])} документов из индекса пользователя {user_id}")
+            return f"Удалено {len(results['ids'])} документов из индекса сервера {server_id}"
         else:
-            print(f"Индекс пользователя {user_id} уже пуст")
-
+            return f"Индекс сервера {server_id} уже пуст"
     except Exception as e:
         print(f"Ошибка очистки индекса LlamaIndex: {e}")
 
@@ -92,87 +64,39 @@ def count_tokens(text):
     return len(ENCODING.encode(text))
 
 
-async def summarize_contexts(contexts: list) -> str:
-    """Суммаризирует список контекстных сообщений в одну строку."""
-    context_text = "\n".join(msg["content"] for msg in contexts)
-
-    prompt = [
-        ChatCompletionSystemMessageParam(
-            role="system",
-            content="""Ты компрессор контекстных сводок. Объедини несколько контекстных сводок 
-                    в одну КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя самую важную информацию. 
-                    Игнорируй отметки 'КОНТЕКСТ:'""",
-        ),
-        ChatCompletionUserMessageParam(
-            role="user", content=f"Суммаризируй эти контексты:\n\n{context_text}"
-        ),
-    ]
-
-    try:
-        completion = await client.chat.completions.create(
-            model="gpt-4o-mini", messages=prompt, max_tokens=300, temperature=0.1
-        )
-        return completion.choices[0].message.content
-    except Exception as e:
-        print(f"Ошибка суммаризации контекстов: {e}")
-        return "[Не удалось создать сводку контекстов]"
-
-
-async def summarize_chunk(messages: list) -> str:
-    """Создает суммаризацию для набора сообщений"""
-    conversation = "\n".join(f"{msg['role']}: {msg['content']}" for msg in messages)
-
-    summary_prompt = [
-        ChatCompletionSystemMessageParam(
-            role="system",
-            content="Ты компрессор диалогов. Создай КРАТКУЮ сводку (2-3 предложения) на русском, сохраняя:"
-            "\n1. Основные темы общения"
-            "\n2. Ключевые факты и решения"
-            "\n3. Игнорируй приветствия, прощания и пустые реплики",
-        ),
-        ChatCompletionUserMessageParam(
-            role="user", content=f"Суммаризируй этот диалог:\n\n{conversation}"
-        ),
-    ]
-
-    try:
-        completion = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            # model="gpt-4.1-mini",
-            messages=summary_prompt,
-            max_tokens=300,
-            temperature=0.1,
-        )
-        return completion.choices[0].message.content
-    except Exception as e:
-        print(f"Ошибка суммаризации: {e}")
-        return "[Не удалось создать сводку]"
-
-
-async def ai_generate(text: str, user_id: int, name: str):
-    # Получаем системный промпт
+async def ai_generate(text: str, server_id: int, name: str):
     messages = [{"role": "system", "content": SYSTEM_PROMPT.strip()}]
 
-    # Поиск релевантного контекста с помощью LlamaIndex
-    relevant_contexts = await llama_manager.query_relevant_context(user_id, text, limit=8)
+    relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=8)
 
-    # Добавление релевантного контекста к сообщениям
     if relevant_contexts:
         context_message = {
             "role": "system",
-            "content": f"Релевантный контекст из истории:\n" + "\n".join(relevant_contexts)
+            "content": f"Релевантный контекст из истории сервера:\n" + "\n".join(relevant_contexts)
         }
         messages.append(context_message)
 
-    # Добавляем текущее сообщение пользователя
     user_msg = {"role": "user", "content": f"[Пользователь: {name}] {text}"}
     messages.append(user_msg)
 
     try:
+        openai_messages = []
+        for msg in messages:
+            if msg["role"] == "system":
+                openai_messages.append(ChatCompletionSystemMessageParam(
+                    role="system",
+                    content=msg["content"]
+                ))
+            elif msg["role"] == "user":
+                openai_messages.append(ChatCompletionUserMessageParam(
+                    role="user",
+                    content=msg["content"]
+                ))
+
         completion = await client.chat.completions.create(
             model="gpt-5-chat",
-            messages=messages,
-            temperature=0.95,
+            messages=openai_messages,
+            temperature=1,
             top_p=0.95,
             frequency_penalty=0.3,
             presence_penalty=0.4,
@@ -182,12 +106,11 @@ async def ai_generate(text: str, user_id: int, name: str):
         response_text = completion.choices[0].message.content
         cleaned_response_text = await clean_text(response_text)
 
-        # Индексация нового сообщения и ответа
         messages_to_index = [
-            {"role": "user", "content": text},
+            {"role": "user", "content": f"[Пользователь: {name}] {text}"},
             {"role": "assistant", "content": response_text}
         ]
-        await llama_manager.index_messages(user_id, messages_to_index)
+        await llama_manager.index_messages(server_id, messages_to_index)
         print(f"Релевантный {relevant_contexts}")
         print(count_tokens(relevant_contexts))
         print(f"Сообщения {messages}")
@@ -203,9 +126,10 @@ SYSTEM_BIRTHDAY_PROMPT = """
     Придумай уникальное, короткое (2-3 предложения) поздравление с днём рождения для пользователя, 
     не повторяйся, используй неформальный стиль, уместный юмор и эмодзи.
     Информация по пользователям с name:
-        - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
-        - rikka71, это Рикка, у него сильные скиллы в шутерах
-        - atagaev, это Арби, создатель бота
+    - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
+    - rikka71, это Рикка, у него сильные скиллы в шутерах
+    - atagaev, это Арби, создатель бота
+    - archel_the_true, он же Евгений, позывной Аркел, любит стримить игры
     """
 
 

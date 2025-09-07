@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from app import handlers
 from app.daily_report import ReportGenerator
 from app.models import init_models
-from app.requests import save_birthday
+from app.requests import save_birthday, contains_only_urls
 from app.scheduler import start_scheduler
 
 load_dotenv()
@@ -33,6 +33,7 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     global report_generator
+    server_id = message.guild.id if message.guild else None
 
     if message.author.bot:
         return
@@ -45,6 +46,12 @@ async def on_message(message):
         return
 
     if not message.content.startswith("!"):
+        if not message.content.strip():
+            return
+
+        if contains_only_urls(message.content):
+            return
+
         if report_generator is not None:
             await report_generator.add_message(
                 message.channel.id,
@@ -72,11 +79,12 @@ async def on_message(message):
         return
 
     if message.content.startswith("!reset"):
-        user_id = message.author.id
-        await handlers.clear_user_history(user_id)
-        await message.channel.send(
-            f"История переписки для {message.author} успешно очищена."
-        )
+        if server_id is None:
+            await message.channel.send("Эта команда доступна только на сервере.")
+            return
+
+        answer = await handlers.clear_server_history(server_id)
+        await message.channel.send(answer)
         return
 
     if message.content.startswith("!help"):
@@ -88,9 +96,11 @@ async def on_message(message):
         )
         return
 
-    response = await handlers.ai_generate(
-        message.content, message.author.id, message.author
-    )
+    if server_id is None:
+        await message.channel.send("Бот работает только на серверах.")
+        return
+
+    response = await handlers.ai_generate(message.content, server_id, message.author)
     await message.channel.send(f"{message.author.mention} {response}")
 
 

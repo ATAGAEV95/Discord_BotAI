@@ -129,3 +129,10 @@ async def save_birthday(content, display_name, name, user_id):
             raise Exception("Таймаут при сохранении даты рождения.")
         except Exception as e:
             raise Exception(f"Ошибка при сохранении даты рождения: {e}")
+
+
+def contains_only_urls(text):
+    """Проверяет, содержит ли текст только ссылки (и пробелы между ними)"""
+    url_pattern = re.compile(r'https?://\S+|www\.\S+')
+    text_without_urls = url_pattern.sub('', text)
+    return not text_without_urls.strip()

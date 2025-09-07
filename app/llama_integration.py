@@ -46,20 +46,18 @@ class LlamaIndexManager:
         Settings.embed_model = self.embed_model
         Settings.node_parser = self.node_parser
 
-    def get_user_collection(self, user_id: int):
-        """Получить или создать коллекцию для пользователя"""
-        collection_name = f"user_{user_id}_messages"
+    def get_server_collection(self, server_id: int):
+        """Получить или создать коллекцию для сервера"""
+        collection_name = f"server_{server_id}_messages"
         try:
             collection = self.db.get_collection(collection_name)
         except:
             collection = self.db.create_collection(collection_name)
-
         return collection
 
-    async def index_messages(self, user_id: int, messages: List[Dict[str, Any]]):
-        """Индексировать сообщения пользователя"""
+    async def index_messages(self, server_id: int, messages: List[Dict[str, Any]]):
+        """Индексировать сообщения сервера"""
         try:
-            # Преобразование сообщений в документы
             documents = []
             for msg in messages:
                 if msg.get('role') in ['user', 'assistant']:
@@ -69,8 +67,7 @@ class LlamaIndexManager:
             if not documents:
                 return
 
-            # Создание индекса
-            collection = self.get_user_collection(user_id)
+            collection = self.get_server_collection(server_id)
             vector_store = ChromaVectorStore(chroma_collection=collection)
             storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
@@ -79,24 +76,21 @@ class LlamaIndexManager:
                 storage_context=storage_context,
                 show_progress=False
             )
-
             return index
         except Exception as e:
             print(f"Ошибка индексации сообщений: {e}")
             return None
 
-    async def query_relevant_context(self, user_id: int, query: str, limit: int = 8) -> List[str]:
-        """Найти релевантный контекст для запроса"""
+    async def query_relevant_context(self, server_id: int, query: str, limit: int = 8) -> List[str]:
+        """Найти релевантный контекст для запроса на сервере"""
         try:
-            collection = self.get_user_collection(user_id)
+            collection = self.get_server_collection(server_id)
             vector_store = ChromaVectorStore(chroma_collection=collection)
             index = VectorStoreIndex.from_vector_store(vector_store)
 
-            # Используем retriever вместо query_engine, чтобы избежать использования LLM
             retriever = index.as_retriever(similarity_top_k=limit)
             nodes = retriever.retrieve(query)
 
-            # Извлечение релевантных фрагментов
             relevant_contexts = [node.text for node in nodes]
             return relevant_contexts
         except Exception as e:
