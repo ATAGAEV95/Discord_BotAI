@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import delete, select
 
-from app.models import Birthday, ChannelMessage, User, async_session
+from app.data.models import Birthday, ChannelMessage, User, async_session
 
 DB_TIMEOUT = 10
 

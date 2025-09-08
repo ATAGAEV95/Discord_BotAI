@@ -14,6 +14,7 @@ AI_TOKEN1 = os.getenv("AI_TOKEN1")
 
 class WeatherAgent:
     def __init__(self):
+        self.api_key = os.getenv("OPENWEATHERMAP_API_KEY")
         self.model = init_chat_model(
             "gpt-5-nano",
             model_provider="openai",
@@ -24,12 +25,11 @@ class WeatherAgent:
 
     def get_weather(self, city: str, flag: bool) -> str:
         """Функция для получения погоды через API"""
-        api_key = os.getenv("OPENWEATHERMAP_API_KEY")
 
         if flag:
-            url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={api_key}&units=metric&lang=ru"
+            url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={self.api_key}&units=metric&lang=ru"
         else:
-            url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru"
+            url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={self.api_key}&units=metric&lang=ru"
 
         try:
             response = requests.get(url)
@@ -88,10 +88,10 @@ class WeatherAgent:
 
         try:
             response = await self.model.ainvoke([HumanMessage(prompt)])
-            print(response)
             output = response.content
             result = json.loads(output)
-            print(result)
+            # print(response)
+            # print(result)
             return result["is_weather"], result["city"]
         except Exception as e:
             print(f"Ошибка при работе агента погоды: {e}")

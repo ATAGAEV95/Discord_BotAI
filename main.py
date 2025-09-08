@@ -4,12 +4,12 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from app import handlers
-from app.daily_report import ReportGenerator
-from app.models import init_models
-from app.request import contains_only_urls, save_birthday
-from app.scheduler import start_scheduler
-from app.weather_agent import WeatherAgent
+from app.core import handlers
+from app.services.daily_report import ReportGenerator
+from app.data.models import init_models
+from app.data.request import contains_only_urls, save_birthday
+from app.core.scheduler import start_scheduler
+from app.services.weather_agent import WeatherAgent
 
 load_dotenv()
 
