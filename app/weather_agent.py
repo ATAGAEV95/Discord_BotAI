@@ -1,11 +1,11 @@
-import os
-from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage
-import requests
 import json
-from dotenv import load_dotenv
+import os
 from datetime import datetime, timedelta
 
+import requests
+from dotenv import load_dotenv
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage
 
 load_dotenv()
 
@@ -14,11 +14,13 @@ AI_TOKEN1 = os.getenv("AI_TOKEN1")
 
 class WeatherAgent:
     def __init__(self):
-        self.model = init_chat_model("gpt-5-nano",
-                                model_provider="openai",
-                                api_key=AI_TOKEN1,
-                                base_url="https://api.aitunnel.ru/v1/",
-                                temperature=0)
+        self.model = init_chat_model(
+            "gpt-5-nano",
+            model_provider="openai",
+            api_key=AI_TOKEN1,
+            base_url="https://api.aitunnel.ru/v1/",
+            temperature=0,
+        )
 
     def get_weather(self, city: str, flag: bool) -> str:
         """Функция для получения погоды через API"""
@@ -34,40 +36,44 @@ class WeatherAgent:
             data = response.json()
 
             if flag:
-                if data['cod'] != '200':
+                if data["cod"] != "200":
                     return f"Не удалось получить погоду для {city}"
 
                 tomorrow = (datetime.now() + timedelta(days=1)).date()
                 tomorrow_forecasts = [
-                    forecast for forecast in data['list']
-                    if datetime.fromtimestamp(forecast['dt']).date() == tomorrow
+                    forecast
+                    for forecast in data["list"]
+                    if datetime.fromtimestamp(forecast["dt"]).date() == tomorrow
                 ]
 
                 if not tomorrow_forecasts:
                     return f"Нет данных на завтра для {city}"
 
-                midday_forecast = min(tomorrow_forecasts,
-                                      key=lambda x: abs(datetime.fromtimestamp(x['dt']).hour - 12))
+                midday_forecast = min(
+                    tomorrow_forecasts, key=lambda x: abs(datetime.fromtimestamp(x["dt"]).hour - 12)
+                )
                 weather_data = midday_forecast
                 prefix = f"Прогноз на завтра в {city}:\n"
             else:
-                if data['cod'] != 200:
+                if data["cod"] != 200:
                     return f"Не удалось получить погоду для {city}"
 
                 weather_data = data
                 prefix = f"Погода в {city}: "
 
-            description = weather_data['weather'][0]['description']
-            temp = weather_data['main']['temp']
-            feels_like = weather_data['main']['feels_like']
-            humidity = weather_data['main']['humidity']
-            wind_speed = weather_data['wind']['speed']
+            description = weather_data["weather"][0]["description"]
+            temp = weather_data["main"]["temp"]
+            feels_like = weather_data["main"]["feels_like"]
+            humidity = weather_data["main"]["humidity"]
+            wind_speed = weather_data["wind"]["speed"]
 
-            return (f"{prefix}"
-                    f"{description}\n"
-                    f"Температура: {temp}°C (ощущается как {feels_like}°C)\n"
-                    f"Влажность: {humidity}%\n"
-                    f"Скорость ветра: {wind_speed} м/с")
+            return (
+                f"{prefix}"
+                f"{description}\n"
+                f"Температура: {temp}°C (ощущается как {feels_like}°C)\n"
+                f"Влажность: {humidity}%\n"
+                f"Скорость ветра: {wind_speed} м/с"
+            )
 
         except Exception as e:
             return f"Ошибка при получении погоды: {str(e)}"

@@ -9,18 +9,19 @@ from sqlalchemy.sql import func
 
 load_dotenv()
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-SCHEMA = 'public'
+DATABASE_URL = os.getenv("DATABASE_URL")
+SCHEMA = "public"
+
 
 def get_engine(schema: str) -> create_async_engine:
     """Создает и возвращает асинхронный движок SQLAlchemy с указанной схемой."""
     return create_async_engine(
-        DATABASE_URL,
-        connect_args={"server_settings": {"search_path": schema}})
+        DATABASE_URL, connect_args={"server_settings": {"search_path": schema}}
+    )
 
 
-if SCHEMA is None or SCHEMA == '':
-    engine = get_engine('public')
+if SCHEMA is None or SCHEMA == "":
+    engine = get_engine("public")
 else:
     engine = get_engine(SCHEMA)
 async_session = async_sessionmaker(engine)
@@ -33,7 +34,7 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(BigInteger, nullable=False)
@@ -43,7 +44,7 @@ class User(Base):
 
 
 class ChannelMessage(Base):
-    __tablename__ = 'channel_messages'
+    __tablename__ = "channel_messages"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     channel_id = Column(BigInteger, nullable=False)
@@ -54,7 +55,7 @@ class ChannelMessage(Base):
 
 
 class Birthday(Base):
-    __tablename__ = 'birthday'
+    __tablename__ = "birthday"
     user_id = Column(BigInteger, primary_key=True, nullable=False)
     display_name = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)

@@ -1,8 +1,8 @@
+import asyncio
 from datetime import datetime
 
 import discord
 import pytz
-import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import select
 
@@ -11,16 +11,21 @@ from app.models import Birthday, async_session
 
 DB_TIMEOUT = 10
 
-async def get_today_birthday_users(timezone='Europe/Moscow'):
+
+async def get_today_birthday_users(timezone="Europe/Moscow"):
     today = datetime.now(pytz.timezone(timezone)).date()
     async with async_session() as session:
         try:
             stmt = select(Birthday).where(Birthday.birthday != None)
             result = await asyncio.wait_for(session.execute(stmt), timeout=DB_TIMEOUT)
             users = result.scalars().all()
-            birthday_users = [u for u in users if u.birthday and u.birthday.month == today.month and u.birthday.day == today.day]
+            birthday_users = [
+                u
+                for u in users
+                if u.birthday and u.birthday.month == today.month and u.birthday.day == today.day
+            ]
             return birthday_users
-        except asyncio.TimeoutError:
+        except TimeoutError:
             print("Таймаут при получении дней рождения из базы данных.")
             return []
         except Exception as e:
@@ -53,7 +58,7 @@ async def send_birthday_congratulations(bot: discord.Client):
 
 
 def start_scheduler(bot: discord.Client):
-    scheduler = AsyncIOScheduler(timezone=pytz.timezone('Europe/Moscow'))
-    scheduler.add_job(send_birthday_congratulations, 'cron', hour=9, minute=0, args=[bot])
+    scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
+    scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
     # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов
     scheduler.start()

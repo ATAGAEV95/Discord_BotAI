@@ -11,8 +11,8 @@ from app.request import delete_channel_messages, get_channel_messages, save_chan
 
 load_dotenv()
 
-AI_TOKEN = os.getenv('AI_TOKEN')
-AI_TOKEN1 = os.getenv('AI_TOKEN1')
+AI_TOKEN = os.getenv("AI_TOKEN")
+AI_TOKEN1 = os.getenv("AI_TOKEN1")
 
 report_client = AsyncOpenAI(
     api_key=AI_TOKEN1,
@@ -74,22 +74,22 @@ class ReportGenerator:
 
             if channel_id not in self.channel_data:
                 self.channel_data[channel_id] = {
-                    'messages': [],
-                    'timer': None,
-                    'last_message_time': datetime.now()
+                    "messages": [],
+                    "timer": None,
+                    "last_message_time": datetime.now(),
                 }
 
-            self.channel_data[channel_id]['messages'].append({
-                'id': message_id,
-                'content': message,
-                'author': author,
-                'timestamp': datetime.now()
-            })
+            self.channel_data[channel_id]["messages"].append(
+                {"id": message_id, "content": message, "author": author, "timestamp": datetime.now()}
+            )
 
-            self.channel_data[channel_id]['last_message_time'] = datetime.now()
-            if self.channel_data[channel_id]['timer'] and not self.channel_data[channel_id]['timer'].done():
+            self.channel_data[channel_id]["last_message_time"] = datetime.now()
+            if (
+                self.channel_data[channel_id]["timer"]
+                and not self.channel_data[channel_id]["timer"].done()
+            ):
                 try:
-                    self.channel_data[channel_id]['timer'].cancel()
+                    self.channel_data[channel_id]["timer"].cancel()
                 except Exception as e:
                     print(f"Ошибка при отмене таймера для канала {channel_id}: {e}")
 
@@ -99,11 +99,11 @@ class ReportGenerator:
                 print(f"Ошибка при получении сообщений из канала {channel_id}: {e}")
                 db_messages = []
 
-            cache_count = len(self.channel_data[channel_id]['messages'])
+            cache_count = len(self.channel_data[channel_id]["messages"])
             db_count = len(db_messages)
 
             if cache_count >= 15 or db_count >= 15:
-                self.channel_data[channel_id]['timer'] = asyncio.create_task(
+                self.channel_data[channel_id]["timer"] = asyncio.create_task(
                     self.start_report_timer(channel_id)
                 )
 
@@ -123,7 +123,7 @@ class ReportGenerator:
             if channel_id not in self.channel_data:
                 return
 
-            last_time = self.channel_data[channel_id]['last_message_time']
+            last_time = self.channel_data[channel_id]["last_message_time"]
             if (datetime.now() - last_time) < timedelta(minutes=60):
                 return
 
@@ -144,15 +144,16 @@ class ReportGenerator:
             try:
                 messages = await get_channel_messages(channel_id)
             except Exception as e:
-                print(f"Ошибка при получении сообщений для генерации отчета в канале {channel_id}: {e}")
+                print(
+                    f"Ошибка при получении сообщений для генерации отчета в канале {channel_id}: {e}"
+                )
                 return
 
             if not messages or len(messages) < 15:
                 return
 
             messages_text = "\n".join(
-                f"[ID:{msg.message_id}] {msg.author}: {msg.content}"
-                for msg in messages
+                f"[ID:{msg.message_id}] {msg.author}: {msg.content}" for msg in messages
             )
 
             UPDATED_REPORT_PROMPT = """
@@ -185,18 +186,13 @@ class ReportGenerator:
                     content=UPDATED_REPORT_PROMPT,
                 ),
                 ChatCompletionUserMessageParam(
-                    role="user",
-                    content=f"Сообщения из канала:\n{messages_text}"
-                )
+                    role="user", content=f"Сообщения из канала:\n{messages_text}"
+                ),
             ]
 
             try:
                 response = await report_client.chat.completions.create(
-                    model="gpt-4.1",
-                    messages=message,
-                    temperature=0.0,
-                    top_p=0.01,
-                    max_tokens=500
+                    model="gpt-4.1", messages=message, temperature=0.0, top_p=0.01, max_tokens=500
                 )
                 report = response.choices[0].message.content
             except Exception as e:
@@ -205,7 +201,7 @@ class ReportGenerator:
 
             if "ID:" in report:
                 channel = self.bot.get_channel(channel_id)
-                guild_id = channel.guild.id if channel and hasattr(channel, 'guild') else "UNKNOWN"
+                guild_id = channel.guild.id if channel and hasattr(channel, "guild") else "UNKNOWN"
 
                 for msg in messages:
                     msg_id = str(msg.message_id)

@@ -1,12 +1,12 @@
 import os
-from typing import List, Dict, Any
-from llama_index.core import VectorStoreIndex, Document, StorageContext, Settings
+from typing import Any
+
+import chromadb
+from dotenv import load_dotenv
+from llama_index.core import Document, Settings, StorageContext, VectorStoreIndex
 from llama_index.core.node_parser import SimpleNodeParser
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.llms.openai import OpenAI
-import chromadb
-from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
 load_dotenv()
@@ -19,25 +19,15 @@ class LlamaIndexManager:
             base_url="https://api.aitunnel.ru/v1/",
         )
 
-        self.llm = OpenAI(
-            api_key=os.getenv("AI_TOKEN1"),
-            api_base="https://api.aitunnel.ru/v1/",
-            model="gpt-5-chat"
-        )
-
         self.embed_model = OpenAIEmbedding(
             api_key=os.getenv("AI_TOKEN1"),
             api_base="https://api.aitunnel.ru/v1/",
-            model="text-embedding-3-large"
+            model="text-embedding-3-large",
         )
 
-        self.node_parser = SimpleNodeParser.from_defaults(chunk_size=650)
-
-        # Инициализация ChromaDB
+        self.node_parser = SimpleNodeParser.from_defaults(chunk_size=512)
         self.db = chromadb.PersistentClient(path="./chroma_db")
 
-        # Глобальные настройки
-        Settings.llm = self.llm
         Settings.embed_model = self.embed_model
         Settings.node_parser = self.node_parser
 
@@ -50,12 +40,12 @@ class LlamaIndexManager:
             collection = self.db.create_collection(collection_name)
         return collection
 
-    async def index_messages(self, server_id: int, messages: List[Dict[str, Any]]):
+    async def index_messages(self, server_id: int, messages: list[dict[str, Any]]):
         """Индексировать сообщения сервера"""
         try:
             documents = []
             for msg in messages:
-                if msg.get('role') in ['user', 'assistant']:
+                if msg.get("role") in ["user", "assistant"]:
                     content = f"{msg['role']}: {msg['content']}"
                     documents.append(Document(text=content))
 
@@ -67,16 +57,14 @@ class LlamaIndexManager:
             storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
             index = VectorStoreIndex.from_documents(
-                documents,
-                storage_context=storage_context,
-                show_progress=False
+                documents, storage_context=storage_context, show_progress=False
             )
             return index
         except Exception as e:
             print(f"Ошибка индексации сообщений: {e}")
             return None
 
-    async def query_relevant_context(self, server_id: int, query: str, limit: int = 8) -> List[str]:
+    async def query_relevant_context(self, server_id: int, query: str, limit: int = 8) -> list[str]:
         """Найти релевантный контекст для запроса на сервере"""
         try:
             collection = self.get_server_collection(server_id)
