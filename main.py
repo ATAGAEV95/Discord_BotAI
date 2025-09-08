@@ -1,5 +1,4 @@
 import os
-from sys import flags
 
 import discord
 from discord.ext import commands
@@ -8,7 +7,7 @@ from dotenv import load_dotenv
 from app import handlers
 from app.daily_report import ReportGenerator
 from app.models import init_models
-from app.request import save_birthday, contains_only_urls
+from app.request import contains_only_urls, save_birthday
 from app.scheduler import start_scheduler
 from app.weather_agent import WeatherAgent
 
@@ -76,9 +75,7 @@ async def on_message(message):
         except ValueError as ve:
             await message.channel.send(str(ve))
         except Exception as e:
-            await message.channel.send(
-                f"Произошла ошибка при сохранении даты рождения: {e}"
-            )
+            await message.channel.send(f"Произошла ошибка при сохранении даты рождения: {e}")
         return
 
     if message.content.startswith("!reset"):
