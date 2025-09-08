@@ -56,4 +56,5 @@ jobs:
               -e AI_TOKEN="${{ secrets.AI_TOKEN }}" \
               -e AI_TOKEN1="${{ secrets.AI_TOKEN1 }}" \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e OPENWEATHERMAP_API_KEY="${{ secrets.OPENWEATHERMAP_API_KEY }}" \
               discordchatbot:latest
