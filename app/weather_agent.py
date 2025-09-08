@@ -1,8 +1,6 @@
 import os
-from langchain.agents import AgentType, initialize_agent
-from langchain.tools import Tool
-from langchain_openai import ChatOpenAI
-from langchain.schema import SystemMessage
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage
 import requests
 import json
 from dotenv import load_dotenv
@@ -10,33 +8,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+AI_TOKEN1 = os.getenv("AI_TOKEN1")
+
 
 class WeatherAgent:
     def __init__(self):
-        self.llm = ChatOpenAI(
-            api_key=os.getenv("AI_TOKEN1"),
-            base_url="https://api.aitunnel.ru/v1/",
-            model="gpt-5-nano",
-            temperature=0
-        )
-
-        self.tools = [
-            Tool(
-                name="get_weather",
-                func=self.get_weather,
-                description="Получение погоды для указанного города"
-            )
-        ]
-
-        self.agent = initialize_agent(
-            tools=self.tools,
-            llm=self.llm,
-            agent=AgentType.OPENAI_FUNCTIONS,
-            agent_kwargs={
-                'system_message': SystemMessage(
-                    content="Ты помогаешь определять, нужно ли получать погоду из API или использовать общую модель. Отвечай только JSON.")
-            }
-        )
+        self.model = init_chat_model("gpt-5-nano",
+                                model_provider="openai",
+                                api_key=AI_TOKEN1,
+                                base_url="https://api.aitunnel.ru/v1/",
+                                temperature=0)
 
     def get_weather(self, city: str) -> str:
         """Функция для получения погоды через API"""
@@ -50,7 +31,6 @@ class WeatherAgent:
             if data['cod'] != 200:
                 return f"Не удалось получить погоду для {city}"
 
-            # Извлекаем данные о погоде
             description = data['weather'][0]['description']
             temp = data['main']['temp']
             feels_like = data['main']['feels_like']
@@ -73,9 +53,9 @@ class WeatherAgent:
         """
 
         try:
-            response = await self.agent.ainvoke({"input": prompt})
+            response = await self.model.ainvoke([HumanMessage(prompt)])
             print(response)
-            output = response.get("output", "")
+            output = response.content
             result = json.loads(output)
             print(result)
             return result["is_weather"], result["city"]
