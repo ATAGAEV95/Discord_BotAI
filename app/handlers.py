@@ -60,7 +60,7 @@ ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
 async def clean_text(text):
-    cleaned_text = re.sub(r"(\*\*|\*|__|_|###|##|#)", "", text)
+    cleaned_text = re.sub(r"(\*\*|\*|__|###|##|#)", "", text)
     return cleaned_text
 
 
