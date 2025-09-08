@@ -1,4 +1,5 @@
 import os
+from sys import flags
 
 import discord
 from discord.ext import commands
@@ -102,18 +103,21 @@ async def on_message(message):
         await message.channel.send("Бот работает только на серверах.")
         return
 
-    is_weather, city = await weather_agent.should_handle_weather(message.content)
-    if is_weather:
-        if city:
-            weather_info = weather_agent.get_weather(city)
-            await message.channel.send(weather_info)
-        else:
-            await message.channel.send("Какой город интересует?")
-        return
+    if "погода" in message.content.lower() and len(message.content.split()) > 1:
+        flag = "завтра" in message.content.lower()
+        is_weather, city = await weather_agent.should_handle_weather(message.content)
 
-    await message.channel.send(f"Не получилось")
-    # response = await handlers.ai_generate(message.content, server_id, message.author)
-    # await message.channel.send(f"{message.author.mention} {response}")
+        if is_weather:
+            if city:
+                weather_info = weather_agent.get_weather(city, flag)
+                await message.channel.send(weather_info)
+            else:
+                response = await handlers.ai_generate(message.content, server_id, message.author)
+                await message.channel.send(f"{message.author.mention} {response}")
+            return
+
+    response = await handlers.ai_generate(message.content, server_id, message.author)
+    await message.channel.send(f"{message.author.mention} {response}")
 
 
 bot.run(TOKEN)

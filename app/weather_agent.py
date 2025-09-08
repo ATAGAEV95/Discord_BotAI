@@ -4,6 +4,7 @@ from langchain_core.messages import HumanMessage
 import requests
 import json
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 
 load_dotenv()
@@ -19,25 +20,51 @@ class WeatherAgent:
                                 base_url="https://api.aitunnel.ru/v1/",
                                 temperature=0)
 
-    def get_weather(self, city: str) -> str:
+    def get_weather(self, city: str, flag: bool) -> str:
         """Функция для получения погоды через API"""
         api_key = os.getenv("OPENWEATHERMAP_API_KEY")
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru"
+
+        if flag:
+            url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={api_key}&units=metric&lang=ru"
+        else:
+            url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=ru"
 
         try:
             response = requests.get(url)
             data = response.json()
 
-            if data['cod'] != 200:
-                return f"Не удалось получить погоду для {city}"
+            if flag:
+                if data['cod'] != '200':
+                    return f"Не удалось получить погоду для {city}"
 
-            description = data['weather'][0]['description']
-            temp = data['main']['temp']
-            feels_like = data['main']['feels_like']
-            humidity = data['main']['humidity']
-            wind_speed = data['wind']['speed']
+                tomorrow = (datetime.now() + timedelta(days=1)).date()
+                tomorrow_forecasts = [
+                    forecast for forecast in data['list']
+                    if datetime.fromtimestamp(forecast['dt']).date() == tomorrow
+                ]
 
-            return (f"Погода в {city}: {description}\n"
+                if not tomorrow_forecasts:
+                    return f"Нет данных на завтра для {city}"
+
+                midday_forecast = min(tomorrow_forecasts,
+                                      key=lambda x: abs(datetime.fromtimestamp(x['dt']).hour - 12))
+                weather_data = midday_forecast
+                prefix = f"Прогноз на завтра в {city}:\n"
+            else:
+                if data['cod'] != 200:
+                    return f"Не удалось получить погоду для {city}"
+
+                weather_data = data
+                prefix = f"Погода в {city}: "
+
+            description = weather_data['weather'][0]['description']
+            temp = weather_data['main']['temp']
+            feels_like = weather_data['main']['feels_like']
+            humidity = weather_data['main']['humidity']
+            wind_speed = weather_data['wind']['speed']
+
+            return (f"{prefix}"
+                    f"{description}\n"
                     f"Температура: {temp}°C (ощущается как {feels_like}°C)\n"
                     f"Влажность: {humidity}%\n"
                     f"Скорость ветра: {wind_speed} м/с")
@@ -49,6 +76,7 @@ class WeatherAgent:
         """Определяет, относится ли сообщение к запросу погоды"""
         prompt = f"""
         Определи, является ли этот запрос вопросом о погоде: "{message}".
+        Если город не указан то пустую строку написать.
         Ответь в формате JSON: {{"is_weather": true/false, "city": "название города"}}
         """
 
