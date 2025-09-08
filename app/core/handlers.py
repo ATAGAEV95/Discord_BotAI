@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from app.llama_integration import LlamaIndexManager
+from app.services.llama_integration import LlamaIndexManager
 
 load_dotenv()
 llama_manager = LlamaIndexManager()

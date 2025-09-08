@@ -6,8 +6,8 @@ import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import select
 
-from app.handlers import ai_generate_birthday_congrats
-from app.models import Birthday, async_session
+from app.core.handlers import ai_generate_birthday_congrats
+from app.data.models import Birthday, async_session
 
 DB_TIMEOUT = 10
 
