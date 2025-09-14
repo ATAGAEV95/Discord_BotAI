@@ -36,6 +36,8 @@ async def get_today_birthday_users(timezone="Europe/Moscow"):
 async def send_birthday_congratulations(bot: discord.Client):
     try:
         users = await get_today_birthday_users()
+        if not users:
+            return
 
         for guild in bot.guilds:
             channel = guild.text_channels[0] if guild.text_channels else None
@@ -52,7 +54,6 @@ async def send_birthday_congratulations(bot: discord.Client):
                     await channel.send(f"{member.mention} {congrats_text}")
                 except Exception as e:
                     print(f"[Ошибка] при отправке поздравления для {user.name}: {e}")
-
     except Exception as e:
         print(f"[Ошибка] в задаче send_birthday_congratulations: {e}")
 

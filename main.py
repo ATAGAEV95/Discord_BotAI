@@ -10,6 +10,7 @@ from app.data.models import init_models
 from app.data.request import contains_only_urls, save_birthday
 from app.core.scheduler import start_scheduler
 from app.services.weather_agent import WeatherAgent
+from app.services.telegram_notifier import telegram_notifier
 
 load_dotenv()
 
@@ -30,6 +31,18 @@ async def on_ready():
     global report_generator
     report_generator = ReportGenerator(bot)
     start_scheduler(bot)
+    print("Бот успешно подключился к Discord")
+
+
+@bot.event
+async def on_disconnect():
+    print("Бот отключился от Discord")
+    await telegram_notifier.send_message("⚠️ <b>Discord бот отключился</b>\nСоединение с Discord потеряно")
+
+@bot.event
+async def on_resumed():
+    print("Соединение с Discord восстановлено")
+    await telegram_notifier.send_message("✅ <b>Discord бот восстановил соединение</b>\nРабота продолжается")
 
 
 @bot.event

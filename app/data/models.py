@@ -16,7 +16,8 @@ SCHEMA = "public"
 def get_engine(schema: str) -> create_async_engine:
     """Создает и возвращает асинхронный движок SQLAlchemy с указанной схемой."""
     return create_async_engine(
-        DATABASE_URL, connect_args={"server_settings": {"search_path": schema}}
+        DATABASE_URL, connect_args={"server_settings": {"search_path": schema}},
+        pool_pre_ping=True,
     )
 
 
