@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, String, Text, Index
+from sqlalchemy import BigInteger, Column, Date, DateTime, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -16,7 +16,8 @@ SCHEMA = "public"
 def get_engine(schema: str) -> create_async_engine:
     """Создает и возвращает асинхронный движок SQLAlchemy с указанной схемой."""
     return create_async_engine(
-        DATABASE_URL, connect_args={"server_settings": {"search_path": schema}},
+        DATABASE_URL,
+        connect_args={"server_settings": {"search_path": schema}},
         pool_pre_ping=True,
     )
 
@@ -73,8 +74,8 @@ class UserMessageStats(Base):
     last_updated = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 
     __table_args__ = (
-        Index('idx_guild_message_count', 'guild_id', 'message_count'),
-        Index('idx_user_activity', 'last_updated'),
+        Index("idx_guild_message_count", "guild_id", "message_count"),
+        Index("idx_user_activity", "last_updated"),
     )
 
 

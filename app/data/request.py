@@ -2,9 +2,9 @@ import asyncio
 import re
 from datetime import datetime
 
-from sqlalchemy import delete, select, update, func
+from sqlalchemy import delete, func, select, update
 
-from app.data.models import Birthday, ChannelMessage, User, async_session, UserMessageStats
+from app.data.models import Birthday, ChannelMessage, User, UserMessageStats, async_session
 from app.tools.utils import get_rang_description
 
 DB_TIMEOUT = 10
@@ -128,24 +128,16 @@ async def save_birthday(content, display_name, name, user_id):
 async def update_message_count(user_id: int, guild_id: int):
     try:
         async with async_session() as session:
-            stmt = update(UserMessageStats) \
-                .where(
-                UserMessageStats.user_id == user_id,
-                UserMessageStats.guild_id == guild_id
-            ) \
-                .values(
-                message_count=UserMessageStats.message_count + 1,
-                last_updated=func.now()
+            stmt = (
+                update(UserMessageStats)
+                .where(UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id)
+                .values(message_count=UserMessageStats.message_count + 1, last_updated=func.now())
             )
 
             result = await asyncio.wait_for(session.execute(stmt), timeout=DB_TIMEOUT)
 
             if result.rowcount == 0:
-                new_stat = UserMessageStats(
-                    user_id=user_id,
-                    guild_id=guild_id,
-                    message_count=1
-                )
+                new_stat = UserMessageStats(user_id=user_id, guild_id=guild_id, message_count=1)
                 session.add(new_stat)
 
             await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
@@ -160,8 +152,7 @@ async def get_rang(user_id: int, guild_id: int) -> str:
     async with async_session() as session:
         try:
             query = select(UserMessageStats.message_count).where(
-                UserMessageStats.user_id == user_id,
-                UserMessageStats.guild_id == guild_id
+                UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
             )
             result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
             stats = result.scalar_one_or_none()

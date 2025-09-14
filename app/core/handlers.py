@@ -5,8 +5,8 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.services.llama_integration import LlamaIndexManager
-from app.tools.prompt import SYSTEM_PROMPT, SYSTEM_BIRTHDAY_PROMPT
-from app.tools.utils import clean_text, replace_emojis, count_tokens
+from app.tools.prompt import SYSTEM_BIRTHDAY_PROMPT, SYSTEM_PROMPT
+from app.tools.utils import clean_text, count_tokens, replace_emojis
 
 load_dotenv()
 llama_manager = LlamaIndexManager()
@@ -27,9 +27,7 @@ client = AsyncOpenAI(
 
 async def clear_server_history(server_id):
     try:
-        collection = llama_manager.get_server_collection(
-            server_id
-        )
+        collection = llama_manager.get_server_collection(server_id)
         results = collection.get()
         if results and "ids" in results and results["ids"]:
             collection.delete(ids=results["ids"])

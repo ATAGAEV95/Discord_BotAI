@@ -1,7 +1,7 @@
-import aiohttp
 import os
-from dotenv import load_dotenv
 
+import aiohttp
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -13,7 +13,9 @@ class TelegramNotifier:
         self.enabled = bool(self.bot_token and self.chat_id)
 
         if not self.enabled:
-            print("Telegram уведомления отключены: отсутствуют TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID")
+            print(
+                "Telegram уведомления отключены: отсутствуют TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID"
+            )
 
     async def send_message(self, message: str) -> bool:
         """Отправляет сообщение в Telegram"""
@@ -21,11 +23,7 @@ class TelegramNotifier:
             return False
 
         url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
-        payload = {
-            "chat_id": self.chat_id,
-            "text": message,
-            "parse_mode": "HTML"
-        }
+        payload = {"chat_id": self.chat_id, "text": message, "parse_mode": "HTML"}
 
         try:
             async with aiohttp.ClientSession() as session:

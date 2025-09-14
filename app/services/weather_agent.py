@@ -25,7 +25,6 @@ class WeatherAgent:
 
     def get_weather(self, city: str, flag: bool) -> str:
         """Функция для получения погоды через API"""
-
         if flag:
             url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={self.api_key}&units=metric&lang=ru"
         else:

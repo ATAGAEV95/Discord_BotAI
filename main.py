@@ -5,12 +5,12 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from app.core import handlers
-from app.services.daily_report import ReportGenerator
-from app.data.models import init_models
-from app.data.request import save_birthday, update_message_count, get_rang
 from app.core.scheduler import start_scheduler
-from app.services.weather_agent import WeatherAgent
+from app.data.models import init_models
+from app.data.request import get_rang, save_birthday, update_message_count
+from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
+from app.services.weather_agent import WeatherAgent
 from app.tools.utils import contains_only_urls
 
 load_dotenv()
@@ -38,12 +38,17 @@ async def on_ready():
 @bot.event
 async def on_disconnect():
     print("Бот отключился от Discord")
-    await telegram_notifier.send_message("⚠️ <b>Discord бот отключился</b>\nСоединение с Discord потеряно")
+    await telegram_notifier.send_message(
+        "⚠️ <b>Discord бот отключился</b>\nСоединение с Discord потеряно"
+    )
+
 
 @bot.event
 async def on_resumed():
     print("Соединение с Discord восстановлено")
-    await telegram_notifier.send_message("✅ <b>Discord бот восстановил соединение</b>\nРабота продолжается")
+    await telegram_notifier.send_message(
+        "✅ <b>Discord бот восстановил соединение</b>\nРабота продолжается"
+    )
 
 
 @bot.event
@@ -63,7 +68,7 @@ async def on_message(message):
 
     if not message.content.startswith("!"):
         try:
-            await update_message_count(message.author.id ,server_id)
+            await update_message_count(message.author.id, server_id)
         except Exception as e:
             print(f"Произошла ошибка при обновлении статистики: {e}")
 
@@ -84,14 +89,13 @@ async def on_message(message):
 
     if message.content.startswith("!rang"):
         try:
-            response = await get_rang(message.author.id ,server_id)
+            response = await get_rang(message.author.id, server_id)
             await message.channel.send(f"{message.author.mention} {response}")
         except ValueError as ve:
             await message.channel.send(str(ve))
         except Exception as e:
             await message.channel.send(f"Произошла ошибка при получении статистики: {e}")
         return
-
 
     if message.content.startswith("!birthday"):
         try:

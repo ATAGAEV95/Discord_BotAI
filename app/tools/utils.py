@@ -4,7 +4,6 @@ import tiktoken
 
 from app.tools.prompt import EMOJI_MAPPING
 
-
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
