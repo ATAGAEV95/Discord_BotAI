@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, String, Text
+from sqlalchemy import BigInteger, Column, Date, DateTime, Integer, String, Text, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -62,6 +62,20 @@ class Birthday(Base):
     name = Column(String(50), nullable=False)
     birthday = Column(Date, nullable=False)
     datetime_insert = Column(DateTime, default=func.now())
+
+
+class UserMessageStats(Base):
+    __tablename__ = "user_message_stats"
+
+    user_id = Column(BigInteger, primary_key=True, nullable=False)
+    guild_id = Column(BigInteger, primary_key=True, nullable=False)
+    message_count = Column(Integer, default=0, nullable=False)
+    last_updated = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index('idx_guild_message_count', 'guild_id', 'message_count'),
+        Index('idx_user_activity', 'last_updated'),
+    )
 
 
 async def init_models() -> None:

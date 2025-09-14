@@ -2,9 +2,10 @@ import asyncio
 import re
 from datetime import datetime
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update, func
 
-from app.data.models import Birthday, ChannelMessage, User, async_session
+from app.data.models import Birthday, ChannelMessage, User, async_session, UserMessageStats
+from app.tools.utils import get_rang_description
 
 DB_TIMEOUT = 10
 
@@ -105,7 +106,6 @@ async def save_birthday(content, display_name, name, user_id):
 
     async with async_session() as session:
         try:
-            # Пробуем обновить дату, если она уже есть
             query = select(Birthday).where(Birthday.user_id == user_id)
             result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
             birthday_entry = result.scalar()
@@ -125,8 +125,51 @@ async def save_birthday(content, display_name, name, user_id):
             raise Exception(f"Ошибка при сохранении даты рождения: {e}")
 
 
-def contains_only_urls(text):
-    """Проверяет, содержит ли текст только ссылки (и пробелы между ними)"""
-    url_pattern = re.compile(r"https?://\S+|www\.\S+")
-    text_without_urls = url_pattern.sub("", text)
-    return not text_without_urls.strip()
+async def update_message_count(user_id: int, guild_id: int):
+    try:
+        async with async_session() as session:
+            stmt = update(UserMessageStats) \
+                .where(
+                UserMessageStats.user_id == user_id,
+                UserMessageStats.guild_id == guild_id
+            ) \
+                .values(
+                message_count=UserMessageStats.message_count + 1,
+                last_updated=func.now()
+            )
+
+            result = await asyncio.wait_for(session.execute(stmt), timeout=DB_TIMEOUT)
+
+            if result.rowcount == 0:
+                new_stat = UserMessageStats(
+                    user_id=user_id,
+                    guild_id=guild_id,
+                    message_count=1
+                )
+                session.add(new_stat)
+
+            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
+    except TimeoutError:
+        raise Exception("Таймаут при сохранении статистики сообщений.")
+    except Exception as e:
+        raise Exception(f"Ошибка при сохранении статистики сообщений: {e}")
+
+
+async def get_rang(user_id: int, guild_id: int) -> str:
+    """Получает количество сообщений пользователя на сервере."""
+    async with async_session() as session:
+        try:
+            query = select(UserMessageStats.message_count).where(
+                UserMessageStats.user_id == user_id,
+                UserMessageStats.guild_id == guild_id
+            )
+            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
+            stats = result.scalar_one_or_none()
+
+            count = stats if stats is not None else 0
+            result = get_rang_description(int(count))
+            return result
+        except TimeoutError:
+            raise Exception("Таймаут при получении статистики сообщений.")
+        except Exception as e:
+            raise Exception(f"Ошибка при получении статистики сообщений: {e}")

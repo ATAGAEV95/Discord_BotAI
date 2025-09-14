@@ -7,10 +7,11 @@ from dotenv import load_dotenv
 from app.core import handlers
 from app.services.daily_report import ReportGenerator
 from app.data.models import init_models
-from app.data.request import contains_only_urls, save_birthday
+from app.data.request import save_birthday, update_message_count, get_rang
 from app.core.scheduler import start_scheduler
 from app.services.weather_agent import WeatherAgent
 from app.services.telegram_notifier import telegram_notifier
+from app.tools.utils import contains_only_urls
 
 load_dotenv()
 
@@ -61,6 +62,11 @@ async def on_message(message):
         return
 
     if not message.content.startswith("!"):
+        try:
+            await update_message_count(message.author.id ,server_id)
+        except Exception as e:
+            print(f"Произошла ошибка при обновлении статистики: {e}")
+
         if not message.content.strip():
             return
 
@@ -75,6 +81,17 @@ async def on_message(message):
                 message.id,
             )
         return
+
+    if message.content.startswith("!rang"):
+        try:
+            response = await get_rang(message.author.id ,server_id)
+            await message.channel.send(f"{message.author.mention} {response}")
+        except ValueError as ve:
+            await message.channel.send(str(ve))
+        except Exception as e:
+            await message.channel.send(f"Произошла ошибка при получении статистики: {e}")
+        return
+
 
     if message.content.startswith("!birthday"):
         try:
@@ -105,6 +122,7 @@ async def on_message(message):
             "Команды бота:\n"
             "!reset - очистка истории чата\n"
             "!help - справка по командам\n"
+            "!rang - узнать свой ранг\n"
             "!birthday DD.MM.YYYY - команда чтобы добавить свое день рождение\n"
             "Напиши 'погода [город]' для получения текущей погоды\n"
             "Или 'погода [город] завтра' для прогноза на завтра"

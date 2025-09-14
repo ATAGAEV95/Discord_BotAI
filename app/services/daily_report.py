@@ -2,12 +2,12 @@ import asyncio
 import os
 from datetime import datetime, timedelta
 
-import tiktoken
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.data.request import delete_channel_messages, get_channel_messages, save_channel_message
+from app.tools.prompt import UPDATED_REPORT_PROMPT
 
 load_dotenv()
 
@@ -22,14 +22,6 @@ report_client = AsyncOpenAI(
     # api_key='google/gemma-3n-e4b',
     # base_url='http://localhost:1234/v1/'
 )
-
-
-ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
-
-
-def count_tokens(text: str) -> int:
-    """Подсчитывает количество токенов текста на основе заданной модели."""
-    return len(ENCODING.encode(text))
 
 
 class ReportGenerator:
@@ -155,30 +147,6 @@ class ReportGenerator:
             messages_text = "\n".join(
                 f"[ID:{msg.message_id}] {msg.author}: {msg.content}" for msg in messages
             )
-
-            UPDATED_REPORT_PROMPT = """
-            Ты аналитик дискорд-сервера. Проанализируй сообщения и выдели ОСНОВНЫЕ темы обсуждения. 
-            Жесткие правила:
-            1. СТРОГО ИГНОРИРУЙ СООБЩЕНИЯ, ЕСЛИ:
-               - Технические реплики ("опа", "нормально так", "ага", "спс")
-               - Это уточняющие вопросы вне контекста ("что?", "когда?").
-               - Сообщение состоит только из ссылки или медиафайла без текстового обсуждения.
-            2. КРИТЕРИЙ ЗНАЧИМОСТИ ТЕМЫ: Тема считается значимой, если она соответствует ДВУМ условиям:
-               - В ней участвовало минимум 2-3 разных пользователя**.
-               - По ней было не менее 4-5 релевантных сообщений**, образующих диалог или последовательные высказывания.
-            2. ГРУППИРОВКА ТЕМ (САМОЕ ВАЖНОЕ):
-               - ОБЪЕДИНЯЙ ВСЕ СООБЩЕНИЯ, КАСАЮЩИЕСЯ ОДНОГО КЛЮЧЕВОГО ОБЪЕКТА (ИГРЫ, ФИЛЬМА, СОБЫТИЯ) В ОДНУ ТЕМУ.
-               - Не разбивай тему на подтемы по аспектам (персонажи, концовки, локации).
-               - Если обсуждение одного объекта плавно перетекает в смежную тему 
-                    (обсудили игру, потом её студию, потом другую игру от этой студии) 
-                    это все еще может быть одна тема, если диалог непрерывен.
-            3. Для КАЖДОЙ темы укажи ID первого сообщения в формате [ID:123456789]
-            4. Объем: очень кратко (в двух словах) для удобства чтения в чате
-    
-            Пример структуры:
-            - [тема] [ID:123456789]
-            - [тема] [ID:987654321]
-            """
 
             message = [
                 ChatCompletionSystemMessageParam(

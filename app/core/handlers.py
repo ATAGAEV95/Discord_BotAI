@@ -1,51 +1,18 @@
 import os
-import re
 
-import tiktoken
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.services.llama_integration import LlamaIndexManager
+from app.tools.prompt import SYSTEM_PROMPT, SYSTEM_BIRTHDAY_PROMPT
+from app.tools.utils import clean_text, replace_emojis, count_tokens
 
 load_dotenv()
 llama_manager = LlamaIndexManager()
 
 AI_TOKEN = os.getenv("AI_TOKEN")
 AI_TOKEN1 = os.getenv("AI_TOKEN1")
-
-
-EMOJI_MAPPING = {
-    ":yoba:": "<:yoba:1101900451852599427>",
-    ":Gachi1:": "<:Gachi1:469464559959277578>",
-    ":Harold:": "<:Harold:1101900626268532860>",
-    ":Coolstorybob:": "<:Coolstorybob:469464988482797568>",
-    ":F_:": "<:F_:1101900358357368935>",
-    ":BlackManThinking:": "<:BlackManThinking:1101899643585048736>",
-    ":Gay:": "<:Gay:1101900779033469028>",
-}
-
-
-SYSTEM_PROMPT = """
-    Ты — Discord бот, дерзкий, немного грубый и остроумный. Твои задачи:
-    1. Общаться с пользователями в Discord-чатах
-    2. Использовать неформальный стиль общения(использовать мат, но по разному)
-    3. Использовать только эти эмодзи сервера приведенные в списке:
-        :yoba: - издевательство
-        :Gachi1: - смех
-        :Harold: - смех через боль
-        :Coolstorybob: - неужели?!
-        :F_: - отдать честь
-        :BlackManThinking: - подумай
-        :Gay: - гей
-    4. Отвечать кратко (2-3 предложения) для удобства чтения в чате
-    5. Информация по пользователям с name(они должны совпадать по буквено, иначе это другой юзер).
-        Но не упоминать об этом постоянно:
-        - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
-        - rikka71, это Рикка, у него сильные скиллы в шутерах
-        - atagaev, это Арби, создатель бота
-        - archel_the_true, он же Евгений, позывной Аркел, любит стримить игры
-    """
 
 
 client = AsyncOpenAI(
@@ -56,20 +23,6 @@ client = AsyncOpenAI(
     # api_key='google/gemma-3n-e4b',
     # base_url='http://localhost:1234/v1/'
 )
-
-ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
-
-
-async def clean_text(text):
-    cleaned_text = re.sub(r"(\*\*|\*|__|###|##|#)", "", text)
-    return cleaned_text
-
-
-async def replace_emojis(text):
-    """Заменяет текстовые представления эмодзи на реальные Discord-эмодзи"""
-    for text_emoji, discord_emoji in EMOJI_MAPPING.items():
-        text = text.replace(text_emoji, discord_emoji)
-    return text
 
 
 async def clear_server_history(server_id):
@@ -85,12 +38,6 @@ async def clear_server_history(server_id):
             return f"Индекс сервера {server_id} уже пуст"
     except Exception as e:
         print(f"Ошибка очистки индекса LlamaIndex: {e}")
-
-
-def count_tokens(text):
-    if not isinstance(text, str):
-        text = str(text) if text else ""
-    return len(ENCODING.encode(text))
 
 
 async def ai_generate(text: str, server_id: int, name: str):
@@ -147,18 +94,6 @@ async def ai_generate(text: str, server_id: int, name: str):
     except Exception as e:
         print(f"Ошибка при вызове OpenAI API: {e}")
         return "Произошла ошибка. Пожалуйста, попробуйте позже."
-
-
-SYSTEM_BIRTHDAY_PROMPT = """
-    Ты — веселый Discord-бот. 
-    Придумай уникальное, короткое (2-3 предложения) поздравление с днём рождения для пользователя, 
-    не повторяйся, используй неформальный стиль, уместный юмор и эмодзи.
-    Информация по пользователям с name:
-    - serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
-    - rikka71, это Рикка, у него сильные скиллы в шутерах
-    - atagaev, это Арби, создатель бота
-    - archel_the_true, он же Евгений, позывной Аркел, любит стримить игры
-    """
 
 
 async def ai_generate_birthday_congrats(display_name, name):
