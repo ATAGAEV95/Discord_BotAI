@@ -12,7 +12,7 @@ from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
 from app.services.weather_agent import WeatherAgent
 from app.services.youtube_notifier import YouTubeNotifier
-from app.tools.utils import contains_only_urls
+from app.tools.utils import contains_only_urls, all_ranges
 
 load_dotenv()
 
@@ -116,6 +116,9 @@ async def on_message(message):
         return
 
     if message.content.startswith("!rang"):
+        if message.content == "!rang list":
+            await message.channel.send(all_ranges)
+            return
         try:
             response = await get_rang(message.author.id, server_id)
             await message.channel.send(f"{message.author.mention} {response}")

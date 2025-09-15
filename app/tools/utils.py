@@ -31,20 +31,26 @@ async def replace_emojis(text):
         text = text.replace(text_emoji, discord_emoji)
     return text
 
+rang01 = "Человек <:Harold:1101900626268532860>"
+rang02 = "Начинающий бич <:Gay:1101900779033469028>"
+rang03 = "Радужный бич <:ScreamingFinka:444039191865851915>"
+rang04 = "Бич <:Gachi1:469464559959277578>"
+rang05 = "Босс бичей <:Illuminati:469465507179790336>"
+rang06 = "Бич-император <:Gachi2:469464898620096512>"
+all_ranges = f"{rang01}\n{rang02}\n{rang03}\n{rang04}\n{rang05}\n{rang06}"
+
 
 def get_rang_description(message_count: int) -> str:
     """Возвращает ранг в стиле Гачи в зависимости от количества сообщений."""
     if message_count == 0:
-        return "Начинающий гачи-кун ♂️ (0 сообщений)"
-    elif message_count < 10:
-        return f"Ученик гачи-мастера ♂️ ({message_count} сообщений)"
+        return f"{rang01} (0 сообщений)"
     elif message_count < 50:
-        return f"Опытный гачи-боец ♂️ ({message_count} сообщений)"
+        return f"{rang02} ({message_count} сообщений)"
     elif message_count < 100:
-        return f"Мастер гачи-движений ♂️ ({message_count} сообщений)"
+        return f"{rang03} ({message_count} сообщений)"
     elif message_count < 200:
-        return f"Легенда гачи-клуба ♂️ ({message_count} сообщений)"
+        return f"{rang04} ({message_count} сообщений)"
     elif message_count < 500:
-        return f"Бог гачи-мира ♂️ ({message_count} сообщений)"
+        return f"{rang05} ({message_count} сообщений)"
     else:
-        return f"Император вселенной гачи ♂️ ({message_count} сообщений)"
+        return f"{rang06} ({message_count} сообщений)"
