@@ -11,6 +11,7 @@ from app.data.request import get_rang, save_birthday, update_message_count
 from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
 from app.services.weather_agent import WeatherAgent
+from app.services.youtube_notifier import YouTubeNotifier
 from app.tools.utils import contains_only_urls
 
 load_dotenv()
@@ -24,6 +25,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 report_generator: ReportGenerator | None = None
 weather_agent = WeatherAgent()
+youtube_notifier = YouTubeNotifier(bot)
 
 
 @bot.event
@@ -87,6 +89,32 @@ async def on_message(message):
             )
         return
 
+    if message.content.startswith("!add_youtube"):
+        if not message.author.guild_permissions.administrator:
+            await message.channel.send("Эта команда доступна только администраторам.")
+            return
+
+        try:
+            args = message.content.split()
+            if len(args) < 4:
+                await message.channel.send(
+                    "Использование: !add_youtube <youtube_channel_id> <discord_channel_id> <название_канала>"
+                )
+                return
+
+            youtube_id = args[1]
+            discord_channel_id = int(args[2])
+            name = " ".join(args[3:])
+
+            success = await youtube_notifier.add_channel(youtube_id, discord_channel_id, name)
+            if success:
+                await message.channel.send("✅ Канал добавлен для отслеживания")
+            else:
+                await message.channel.send("❌ Ошибка при добавлении канала")
+        except Exception as e:
+            await message.channel.send(f"❌ Ошибка: {e}")
+        return
+
     if message.content.startswith("!rang"):
         try:
             response = await get_rang(message.author.id, server_id)
@@ -128,6 +156,7 @@ async def on_message(message):
             "!help - справка по командам\n"
             "!rang - узнать свой ранг\n"
             "!birthday DD.MM.YYYY - команда чтобы добавить свое день рождение\n"
+            "!add_youtube - добавить YouTube канал для отслеживания (только для админов)\n"
             "Напиши 'погода [город]' для получения текущей погоды\n"
             "Или 'погода [город] завтра' для прогноза на завтра"
         )

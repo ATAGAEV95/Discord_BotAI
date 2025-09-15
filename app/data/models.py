@@ -80,6 +80,26 @@ class UserMessageStats(Base):
     )
 
 
+class YouTubeChannel(Base):
+    __tablename__ = "youtube_channels"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    channel_id = Column(String(50), unique=True, nullable=False)
+    discord_channel_id = Column(BigInteger, nullable=False)
+    name = Column(String(100), nullable=False)
+    last_checked = Column(DateTime, default=func.now())
+
+
+class YouTubeVideo(Base):
+    __tablename__ = "youtube_videos"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    video_id = Column(String(50), unique=True, nullable=False)
+    channel_id = Column(String(50), nullable=False)
+    title = Column(String(255), nullable=False)
+    published_at = Column(DateTime, nullable=False)
+
+
 async def init_models() -> None:
     """Создает таблицы в базе данных, если они не существуют."""
     async with engine.begin() as conn:

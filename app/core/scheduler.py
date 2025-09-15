@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from app.core.handlers import ai_generate_birthday_congrats
 from app.data.models import Birthday, async_session
+from app.services.youtube_notifier import YouTubeNotifier
 
 DB_TIMEOUT = 10
 
@@ -62,4 +63,6 @@ def start_scheduler(bot: discord.Client):
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
     # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов
+    youtube_notifier = YouTubeNotifier(bot)
+    scheduler.add_job(youtube_notifier.check_new_videos, "interval", minutes=1, id="youtube_check")
     scheduler.start()

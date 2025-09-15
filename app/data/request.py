@@ -137,7 +137,9 @@ async def update_message_count(user_id: int, name: str, guild_id: int):
             result = await asyncio.wait_for(session.execute(stmt), timeout=DB_TIMEOUT)
 
             if result.rowcount == 0:
-                new_stat = UserMessageStats(user_id=user_id, name=name, guild_id=guild_id, message_count=1)
+                new_stat = UserMessageStats(
+                    user_id=user_id, name=name, guild_id=guild_id, message_count=1
+                )
                 session.add(new_stat)
 
             await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
