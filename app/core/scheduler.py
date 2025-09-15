@@ -64,5 +64,5 @@ def start_scheduler(bot: discord.Client):
     scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
     # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов
     youtube_notifier = YouTubeNotifier(bot)
-    scheduler.add_job(youtube_notifier.check_new_videos, "interval", minutes=1, id="youtube_check")
+    scheduler.add_job(youtube_notifier.check_new_videos, "interval", minutes=60, id="youtube_check")
     scheduler.start()
