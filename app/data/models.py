@@ -70,6 +70,7 @@ class UserMessageStats(Base):
 
     user_id = Column(BigInteger, primary_key=True, nullable=False)
     guild_id = Column(BigInteger, primary_key=True, nullable=False)
+    name = Column(String(50), nullable=False)
     message_count = Column(Integer, default=0, nullable=False)
     last_updated = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
 

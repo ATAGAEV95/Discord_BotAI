@@ -68,7 +68,7 @@ async def on_message(message):
 
     if not message.content.startswith("!"):
         try:
-            await update_message_count(message.author.id, server_id)
+            await update_message_count(message.author.id, message.author.name, server_id)
         except Exception as e:
             print(f"Произошла ошибка при обновлении статистики: {e}")
 
