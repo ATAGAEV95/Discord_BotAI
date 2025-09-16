@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 import requests
 
-from app.tools.utils import rang01, rang02, rang03, rang04, rang05, rang06
+from app.tools.utils import rang01, rang02, rang03, rang04, rang05, rang06, darken_color
 
 
 def create_help_embed():
@@ -176,12 +176,6 @@ def create_rang_list_embed():
 
     embed.set_footer(text="Пишите сообщения, чтобы повысить свой ранг!")
     return embed
-
-
-def darken_color(rgb, factor=0.75):
-    """Уменьшает яркость цвета RGB — делает его темнее.
-    factor < 1 = темнее, factor > 1 = светлее."""
-    return tuple(max(0, min(255, int(c * factor))) for c in rgb)
 
 
 def create_image_with_text(

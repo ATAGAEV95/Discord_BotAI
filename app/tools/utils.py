@@ -60,3 +60,9 @@ def get_rang_description(message_count: int) -> str:
         return rang05
     else:
         return rang06
+
+
+def darken_color(rgb, factor=0.75):
+    """Уменьшает яркость цвета RGB — делает его темнее.
+    factor < 1 = темнее, factor > 1 = светлее."""
+    return tuple(max(0, min(255, int(c * factor))) for c in rgb)
