@@ -1,7 +1,7 @@
 import re
 
-import tiktoken
 import discord
+import tiktoken
 
 from app.tools.prompt import EMOJI_MAPPING
 
@@ -13,6 +13,13 @@ def contains_only_urls(text):
     url_pattern = re.compile(r"https?://\S+|www\.\S+")
     text_without_urls = url_pattern.sub("", text)
     return not text_without_urls.strip()
+
+
+def darken_color(rgb, factor=0.75):
+    """Уменьшает яркость цвета RGB — делает его темнее.
+    factor < 1 = темнее, factor > 1 = светлее.
+    """
+    return tuple(max(0, min(255, int(c * factor))) for c in rgb)
 
 
 def count_tokens(text):
@@ -33,22 +40,6 @@ async def replace_emojis(text):
     return text
 
 
-rang01 = "Человек"
-rang02 = "Начинающий бич"
-rang03 = "Радужный бич"
-rang04 = "Бич"
-rang05 = "Босс бичей"
-rang06 = "Бич-император"
-all_ranges = f"{rang01}\n{rang02}\n{rang03}\n{rang04}\n{rang05}\n{rang06}"
-
-
-def darken_color(rgb, factor=0.75):
-    """Уменьшает яркость цвета RGB — делает его темнее.
-    factor < 1 = темнее, factor > 1 = светлее.
-    """
-    return tuple(max(0, min(255, int(c * factor))) for c in rgb)
-
-
 def get_rank_description(message_count):
     rank_designs = [
         {  # 0 сообщений
@@ -57,7 +48,7 @@ def get_rank_description(message_count):
             "rank_level": 0,
             "text_color": (130, 130, 130),
             "bg_filename": "rang0.jpg",
-            "description": rang01
+            "description": "Человек",
         },
         {  # 1-49
             "color": discord.Color.green(),
@@ -65,7 +56,7 @@ def get_rank_description(message_count):
             "rank_level": 1,
             "text_color": (44, 255, 109),
             "bg_filename": "rang1.png",
-            "description": rang02
+            "description": "Начинающий бич",
         },
         {  # 50-99
             "color": discord.Color.blue(),
@@ -73,7 +64,7 @@ def get_rank_description(message_count):
             "rank_level": 2,
             "text_color": (76, 142, 255),
             "bg_filename": "rang2.png",
-            "description": rang03
+            "description": "Радужный бич",
         },
         {  # 100-199
             "color": discord.Color.gold(),
@@ -81,7 +72,7 @@ def get_rank_description(message_count):
             "rank_level": 3,
             "text_color": (255, 215, 0),
             "bg_filename": "rang3.jpg",
-            "description": rang04
+            "description": "Бич",
         },
         {  # 200-499
             "color": discord.Color.purple(),
@@ -89,7 +80,7 @@ def get_rank_description(message_count):
             "rank_level": 4,
             "text_color": (197, 94, 255),
             "bg_filename": "rang4.jpg",
-            "description": rang05
+            "description": "Босс бичей",
         },
         {  # 500+
             "color": discord.Color.red(),
@@ -97,7 +88,7 @@ def get_rank_description(message_count):
             "rank_level": 5,
             "text_color": (255, 73, 73),
             "bg_filename": "rang5.jpg",
-            "description": rang06
+            "description": "Бич-император",
         },
     ]
 

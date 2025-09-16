@@ -130,8 +130,7 @@ async def update_message_count(user_id: int, name: str, guild_id: int):
     try:
         async with async_session() as session:
             query = select(UserMessageStats).where(
-                UserMessageStats.user_id == user_id,
-                UserMessageStats.guild_id == guild_id
+                UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
             )
             result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
             user_stats = result.scalar_one_or_none()
@@ -139,30 +138,26 @@ async def update_message_count(user_id: int, name: str, guild_id: int):
             if user_stats:
                 old_count = user_stats.message_count
                 old_rank = get_rank_description(old_count)
-                new_count = old_count["rank_level"] + 1
+                new_count = old_count + 1
                 new_rank = get_rank_description(new_count)
 
                 stmt = (
                     update(UserMessageStats)
-                    .where(UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id)
-                    .values(
-                        message_count=new_count,
-                        last_updated=func.now()
+                    .where(
+                        UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
                     )
+                    .values(message_count=new_count, last_updated=func.now())
                 )
                 await asyncio.wait_for(session.execute(stmt), timeout=DB_TIMEOUT)
 
                 rank_up = new_rank["rank_level"] > old_rank["rank_level"]
             else:
-                old_rank = 0
+                old_rank = get_rank_description(0)
                 new_count = 1
                 new_rank = get_rank_description(new_count)
 
                 new_stat = UserMessageStats(
-                    user_id=user_id,
-                    name=name,
-                    guild_id=guild_id,
-                    message_count=new_count
+                    user_id=user_id, name=name, guild_id=guild_id, message_count=new_count
                 )
                 session.add(new_stat)
 
@@ -171,10 +166,10 @@ async def update_message_count(user_id: int, name: str, guild_id: int):
             await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
 
             return {
-                'rank_up': rank_up,
-                'old_rank': old_rank["rank_level"],
-                'new_rank': new_rank["rank_level"],
-                'message_count': new_count
+                "rank_up": rank_up,
+                "old_rank": old_rank["rank_level"],
+                "new_rank": new_rank["rank_level"],
+                "message_count": new_count,
             }
 
     except TimeoutError:

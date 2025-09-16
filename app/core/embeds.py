@@ -5,7 +5,7 @@ import requests
 from discord import File
 from PIL import Image, ImageDraw, ImageFont
 
-from app.tools.utils import darken_color, rang01, rang02, rang03, rang04, rang05, rang06, get_rank_description
+from app.tools.utils import darken_color, get_rank_description
 
 
 def create_help_embed():
@@ -79,31 +79,31 @@ def create_rang_list_embed():
         description="Все возможные ранги и условия их получения:",
     )
 
-    embed.add_field(name=rang01, value="0 сообщений", inline=False)
+    embed.add_field(name="Человек", value="0 сообщений", inline=False)
 
-    embed.add_field(name=rang02, value="1-49 сообщений", inline=False)
+    embed.add_field(name="Начинающий бич", value="1-49 сообщений", inline=False)
 
-    embed.add_field(name=rang03, value="50-99 сообщений", inline=False)
+    embed.add_field(name="Радужный бич", value="50-99 сообщений", inline=False)
 
-    embed.add_field(name=rang04, value="100-199 сообщений", inline=False)
+    embed.add_field(name="Бич", value="100-199 сообщений", inline=False)
 
-    embed.add_field(name=rang05, value="200-499 сообщений", inline=False)
+    embed.add_field(name="Босс бичей", value="200-499 сообщений", inline=False)
 
-    embed.add_field(name=rang06, value="500+ сообщений", inline=False)
+    embed.add_field(name="Бич-император", value="500+ сообщений", inline=False)
 
     embed.set_footer(text="Пишите сообщения, чтобы повысить свой ранг!")
     return embed
 
 
 def create_image_with_text(
-        display_name,
-        rang_description,
-        progress_bar,
-        exp_title,
-        rank_level,
-        text_color=(44, 255, 109),
-        bg_filename="rang0.jpg",
-        avatar_url=None,
+    display_name,
+    rang_description,
+    progress_bar,
+    exp_title,
+    rank_level,
+    text_color=(44, 255, 109),
+    bg_filename="rang0.jpg",
+    avatar_url=None,
 ):
     # Загрузка фонового изображения
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
@@ -172,7 +172,7 @@ def create_image_with_text(
     except Exception:
         main_font = aux_font = aux_value_font = ImageFont.load_default()
 
-    def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gap=10):
+    def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gapp=10):
         """Отрисовка блока текста с вертикальным выравниванием по центру"""
         # Вычисляем общую высоту блока
         heights = []
@@ -180,15 +180,15 @@ def create_image_with_text(
             bbox = draw.textbbox((0, 0), text, font=font)
             heights.append(bbox[3] - bbox[1])
 
-        total_height = sum(heights) + gap * (len(heights) - 1)
-        current_y = center_y - total_height // 2
+        total_heights = sum(heights) + gapp * (len(heights) - 1)
+        current_y = center_y - total_heights // 2
 
         # Отрисовываем каждый текст
         for (text, font, color), text_height in zip(texts_fonts_colors, heights):
             bbox = draw.textbbox((0, 0), text, font=font)
             text_width = bbox[2] - bbox[0]
             draw.text((center_x - text_width // 2, current_y), text, font=font, fill=color)
-            current_y += text_height + gap
+            current_y += text_height + gapp
 
     # ------ ВЫРАВНИВАНИЕ A ------
     # Отступ слева для текста: если есть аватар — после картинки, иначе обычный отступ
@@ -215,19 +215,23 @@ def create_image_with_text(
     b_cx = b_left + (b_right - b_left) // 2
     b_cy = b_top + (b_bottom - b_top) // 2
 
-    draw_centered_text_block([
-        ("LEVEL", aux_font, main_dark_color),
-        (str(rank_level), aux_value_font, text_color)
-    ], b_cx, b_cy, gap=12)
+    draw_centered_text_block(
+        [("LEVEL", aux_font, main_dark_color), (str(rank_level), aux_value_font, text_color)],
+        b_cx,
+        b_cy,
+        gapp=12,
+    )
 
     # ------ ВЫРАВНИВАНИЕ C ------
     c_cx = c_left + (c_right - c_left) // 2
     c_cy = c_top + (c_bottom - c_top) // 2
 
-    draw_centered_text_block([
-        (exp_title, aux_font, main_dark_color),
-        (progress_bar, aux_value_font, text_color)
-    ], c_cx, c_cy, gap=12)
+    draw_centered_text_block(
+        [(exp_title, aux_font, main_dark_color), (progress_bar, aux_value_font, text_color)],
+        c_cx,
+        c_cy,
+        gapp=12,
+    )
 
     # Собираем картинку
     background = Image.alpha_composite(background, overlay)
