@@ -31,12 +31,18 @@ async def replace_emojis(text):
         text = text.replace(text_emoji, discord_emoji)
     return text
 
-rang01 = "Человек <:Harold:1101900626268532860>"
-rang02 = "Начинающий бич <:Gay:1101900779033469028>"
-rang03 = "Радужный бич <:ScreamingFinka:444039191865851915>"
-rang04 = "Бич <:Gachi1:469464559959277578>"
-rang05 = "Босс бичей <:Illuminati:469465507179790336>"
-rang06 = "Бич-император <:Gachi2:469464898620096512>"
+# rang01 = "Человек <:Harold:1101900626268532860>"
+# rang02 = "Начинающий бич <:Gay:1101900779033469028>"
+# rang03 = "Радужный бич <:ScreamingFinka:444039191865851915>"
+# rang04 = "Бич <:Gachi1:469464559959277578>"
+# rang05 = "Босс бичей <:Illuminati:469465507179790336>"
+# rang06 = "Бич-император <:Gachi2:469464898620096512>"
+rang01 = "Человек"
+rang02 = "Начинающий бич"
+rang03 = "Радужный бич"
+rang04 = "Бич"
+rang05 = "Босс бичей"
+rang06 = "Бич-император"
 all_ranges = f"{rang01}\n{rang02}\n{rang03}\n{rang04}\n{rang05}\n{rang06}"
 
 
