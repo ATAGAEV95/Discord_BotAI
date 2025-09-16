@@ -127,10 +127,13 @@ async def on_message(message):
             response = get_rang_description(int(result))
             message_count = await get_rang(message.author.id, server_id)
 
+            avatar_url = message.author.avatar.url if message.author.avatar else message.author.default_avatar.url
+
             embed, file = EM.create_rang_embed(
                 message.author.display_name,
                 message_count,
-                response
+                response,
+                avatar_url
             )
             await message.channel.send(embed=embed, file=file)
         except ValueError as ve:
