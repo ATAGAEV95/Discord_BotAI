@@ -1,10 +1,11 @@
+import io
+
 import discord
+import requests
 from discord import File
 from PIL import Image, ImageDraw, ImageFont
-import io
-import requests
 
-from app.tools.utils import rang01, rang02, rang03, rang04, rang05, rang06, darken_color
+from app.tools.utils import darken_color, rang01, rang02, rang03, rang04, rang05, rang06
 
 
 def create_help_embed():
@@ -12,7 +13,7 @@ def create_help_embed():
     embed = discord.Embed(
         title="📋 Справка по командам бота",
         color=discord.Color.blue(),
-        description="Все доступные команды и их использование:"
+        description="Все доступные команды и их использование:",
     )
 
     embed.add_field(
@@ -24,7 +25,7 @@ def create_help_embed():
             "`!rang list` - показать все возможные ранги\n"
             "`!birthday DD.MM.YYYY` - добавить/обновить дату рождения"
         ),
-        inline=False
+        inline=False,
     )
 
     embed.add_field(
@@ -33,16 +34,13 @@ def create_help_embed():
             "`!add_youtube` - добавить YouTube канал для отслеживания\n"
             "*(только для администраторов)*"
         ),
-        inline=False
+        inline=False,
     )
 
     embed.add_field(
         name="🌤️ Погода",
-        value=(
-            "`погода [город]` - текущая погода\n"
-            "`погода [город] завтра` - прогноз на завтра"
-        ),
-        inline=False
+        value=("`погода [город]` - текущая погода\n`погода [город] завтра` - прогноз на завтра"),
+        inline=False,
     )
     return embed
 
@@ -117,10 +115,10 @@ def create_rang_embed(display_name: str, message_count: int, rang_description: s
         rang_description,
         progress_bar,
         exp_title,
-        rank['rank_level'],
-        text_color=rank['text_color'],
-        bg_filename=rank['bg_filename'],
-        avatar_url=avatar_url
+        rank["rank_level"],
+        text_color=rank["text_color"],
+        bg_filename=rank["bg_filename"],
+        avatar_url=avatar_url,
     )
     file = File(image_buffer, filename="rang_with_text.png")
 
@@ -135,44 +133,20 @@ def create_rang_list_embed():
     embed = discord.Embed(
         title="🎖️ Система рангов",
         color=discord.Color.blurple(),
-        description="Все возможные ранги и условия их получения:"
+        description="Все возможные ранги и условия их получения:",
     )
 
-    embed.add_field(
-        name=rang01,
-        value="0 сообщений",
-        inline=False
-    )
+    embed.add_field(name=rang01, value="0 сообщений", inline=False)
 
-    embed.add_field(
-        name=rang02,
-        value="1-49 сообщений",
-        inline=False
-    )
+    embed.add_field(name=rang02, value="1-49 сообщений", inline=False)
 
-    embed.add_field(
-        name=rang03,
-        value="50-99 сообщений",
-        inline=False
-    )
+    embed.add_field(name=rang03, value="50-99 сообщений", inline=False)
 
-    embed.add_field(
-        name=rang04,
-        value="100-199 сообщений",
-        inline=False
-    )
+    embed.add_field(name=rang04, value="100-199 сообщений", inline=False)
 
-    embed.add_field(
-        name=rang05,
-        value="200-499 сообщений",
-        inline=False
-    )
+    embed.add_field(name=rang05, value="200-499 сообщений", inline=False)
 
-    embed.add_field(
-        name=rang06,
-        value="500+ сообщений",
-        inline=False
-    )
+    embed.add_field(name=rang06, value="500+ сообщений", inline=False)
 
     embed.set_footer(text="Пишите сообщения, чтобы повысить свой ранг!")
     return embed
@@ -272,7 +246,9 @@ def create_image_with_text(
 
     # Текст: display_name и rang_description
     draw.text((a_text_left, top_block), display_name, font=main_font, fill=main_dark_color)
-    draw.text((a_text_left, top_block + dn_height + gap), rang_description, font=main_font, fill=text_color)
+    draw.text(
+        (a_text_left, top_block + dn_height + gap), rang_description, font=main_font, fill=text_color
+    )
 
     # ------ ВЫРАВНИВАНИЕ B ------
     b_cx = b_left + (b_right - b_left) // 2
@@ -291,7 +267,12 @@ def create_image_with_text(
     b_top_block = b_cy - total_height_b // 2
 
     draw.text((b_cx - lvl_width // 2, b_top_block), lvl_text, font=aux_font, fill=main_dark_color)
-    draw.text((b_cx - rk_width // 2, b_top_block + lvl_height + gap_b), rk_text, font=aux_value_font, fill=text_color)
+    draw.text(
+        (b_cx - rk_width // 2, b_top_block + lvl_height + gap_b),
+        rk_text,
+        font=aux_value_font,
+        fill=text_color,
+    )
 
     # ------ ВЫРАВНИВАНИЕ C ------
     c_cx = c_left + (c_right - c_left) // 2
@@ -308,11 +289,16 @@ def create_image_with_text(
     c_top_block = c_cy - total_height_c // 2
 
     draw.text((c_cx - exp_width // 2, c_top_block), exp_title, font=aux_font, fill=main_dark_color)
-    draw.text((c_cx - bar_width // 2, c_top_block + exp_height + gap_c), progress_bar, font=aux_value_font, fill=text_color)
+    draw.text(
+        (c_cx - bar_width // 2, c_top_block + exp_height + gap_c),
+        progress_bar,
+        font=aux_value_font,
+        fill=text_color,
+    )
 
     # Собираем картинку
     background = Image.alpha_composite(background, overlay)
     img_buffer = io.BytesIO()
-    background.save(img_buffer, format='PNG')
+    background.save(img_buffer, format="PNG")
     img_buffer.seek(0)
     return img_buffer

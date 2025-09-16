@@ -31,6 +31,7 @@ async def replace_emojis(text):
         text = text.replace(text_emoji, discord_emoji)
     return text
 
+
 # rang01 = "Человек <:Harold:1101900626268532860>"
 # rang02 = "Начинающий бич <:Gay:1101900779033469028>"
 # rang03 = "Радужный бич <:ScreamingFinka:444039191865851915>"
@@ -64,5 +65,6 @@ def get_rang_description(message_count: int) -> str:
 
 def darken_color(rgb, factor=0.75):
     """Уменьшает яркость цвета RGB — делает его темнее.
-    factor < 1 = темнее, factor > 1 = светлее."""
+    factor < 1 = темнее, factor > 1 = светлее.
+    """
     return tuple(max(0, min(255, int(c * factor))) for c in rgb)

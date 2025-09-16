@@ -4,8 +4,8 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from app.core import handlers
 import app.core.embeds as EM
+from app.core import handlers
 from app.core.scheduler import start_scheduler
 from app.data.models import init_models
 from app.data.request import get_rang, save_birthday, update_message_count
@@ -13,7 +13,7 @@ from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
 from app.services.weather_agent import WeatherAgent
 from app.services.youtube_notifier import YouTubeNotifier
-from app.tools.utils import contains_only_urls, all_ranges, get_rang_description
+from app.tools.utils import contains_only_urls, get_rang_description
 
 load_dotenv()
 
@@ -127,13 +127,14 @@ async def on_message(message):
             response = get_rang_description(int(result))
             message_count = await get_rang(message.author.id, server_id)
 
-            avatar_url = message.author.avatar.url if message.author.avatar else message.author.default_avatar.url
+            avatar_url = (
+                message.author.avatar.url
+                if message.author.avatar
+                else message.author.default_avatar.url
+            )
 
             embed, file = EM.create_rang_embed(
-                message.author.display_name,
-                message_count,
-                response,
-                avatar_url
+                message.author.display_name, message_count, response, avatar_url
             )
             await message.channel.send(embed=embed, file=file)
         except ValueError as ve:
