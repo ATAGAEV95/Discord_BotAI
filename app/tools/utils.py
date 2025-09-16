@@ -1,6 +1,7 @@
 import re
 
 import tiktoken
+import discord
 
 from app.tools.prompt import EMOJI_MAPPING
 
@@ -32,12 +33,6 @@ async def replace_emojis(text):
     return text
 
 
-# rang01 = "Человек <:Harold:1101900626268532860>"
-# rang02 = "Начинающий бич <:Gay:1101900779033469028>"
-# rang03 = "Радужный бич <:ScreamingFinka:444039191865851915>"
-# rang04 = "Бич <:Gachi1:469464559959277578>"
-# rang05 = "Босс бичей <:Illuminati:469465507179790336>"
-# rang06 = "Бич-император <:Gachi2:469464898620096512>"
 rang01 = "Человек"
 rang02 = "Начинающий бич"
 rang03 = "Радужный бич"
@@ -47,24 +42,75 @@ rang06 = "Бич-император"
 all_ranges = f"{rang01}\n{rang02}\n{rang03}\n{rang04}\n{rang05}\n{rang06}"
 
 
-def get_rang_description(message_count: int) -> str:
-    """Возвращает ранг в стиле Гачи без количества сообщений."""
-    if message_count == 0:
-        return rang01
-    elif message_count < 50:
-        return rang02
-    elif message_count < 100:
-        return rang03
-    elif message_count < 200:
-        return rang04
-    elif message_count < 500:
-        return rang05
-    else:
-        return rang06
-
-
 def darken_color(rgb, factor=0.75):
     """Уменьшает яркость цвета RGB — делает его темнее.
     factor < 1 = темнее, factor > 1 = светлее.
     """
     return tuple(max(0, min(255, int(c * factor))) for c in rgb)
+
+
+def get_rank_description(message_count):
+    rank_designs = [
+        {  # 0 сообщений
+            "color": discord.Color.light_grey(),
+            "next_threshold": 50,
+            "rank_level": 0,
+            "text_color": (130, 130, 130),
+            "bg_filename": "rang0.jpg",
+            "description": rang01
+        },
+        {  # 1-49
+            "color": discord.Color.green(),
+            "next_threshold": 50,
+            "rank_level": 1,
+            "text_color": (44, 255, 109),
+            "bg_filename": "rang1.png",
+            "description": rang02
+        },
+        {  # 50-99
+            "color": discord.Color.blue(),
+            "next_threshold": 100,
+            "rank_level": 2,
+            "text_color": (76, 142, 255),
+            "bg_filename": "rang2.png",
+            "description": rang03
+        },
+        {  # 100-199
+            "color": discord.Color.gold(),
+            "next_threshold": 200,
+            "rank_level": 3,
+            "text_color": (255, 215, 0),
+            "bg_filename": "rang3.jpg",
+            "description": rang04
+        },
+        {  # 200-499
+            "color": discord.Color.purple(),
+            "next_threshold": 500,
+            "rank_level": 4,
+            "text_color": (197, 94, 255),
+            "bg_filename": "rang4.jpg",
+            "description": rang05
+        },
+        {  # 500+
+            "color": discord.Color.red(),
+            "next_threshold": 500,
+            "rank_level": 5,
+            "text_color": (255, 73, 73),
+            "bg_filename": "rang5.jpg",
+            "description": rang06
+        },
+    ]
+
+    if message_count == 0:
+        rank = rank_designs[0]
+    elif message_count < 50:
+        rank = rank_designs[1]
+    elif message_count < 100:
+        rank = rank_designs[2]
+    elif message_count < 200:
+        rank = rank_designs[3]
+    elif message_count < 500:
+        rank = rank_designs[4]
+    else:
+        rank = rank_designs[5]
+    return rank

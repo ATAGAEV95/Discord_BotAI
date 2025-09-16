@@ -5,7 +5,7 @@ import requests
 from discord import File
 from PIL import Image, ImageDraw, ImageFont
 
-from app.tools.utils import darken_color, rang01, rang02, rang03, rang04, rang05, rang06
+from app.tools.utils import darken_color, rang01, rang02, rang03, rang04, rang05, rang06, get_rank_description
 
 
 def create_help_embed():
@@ -47,64 +47,7 @@ def create_help_embed():
 
 def create_rang_embed(display_name: str, message_count: int, rang_description: str, avatar_url: str):
     """Создает embed для команды !rang с цветом и фоном в зависимости от ранга"""
-    # Цвета текста и фон для каждого ранга
-    rank_designs = [
-        {  # 0 сообщений
-            "color": discord.Color.light_grey(),
-            "next_threshold": 50,
-            "rank_level": 0,
-            "text_color": (130, 130, 130),
-            "bg_filename": "rang0.jpg",
-        },
-        {  # 1-49
-            "color": discord.Color.green(),
-            "next_threshold": 50,
-            "rank_level": 1,
-            "text_color": (44, 255, 109),
-            "bg_filename": "rang1.png",
-        },
-        {  # 50-99
-            "color": discord.Color.blue(),
-            "next_threshold": 100,
-            "rank_level": 2,
-            "text_color": (76, 142, 255),
-            "bg_filename": "rang2.png",
-        },
-        {  # 100-199
-            "color": discord.Color.gold(),
-            "next_threshold": 200,
-            "rank_level": 3,
-            "text_color": (255, 215, 0),
-            "bg_filename": "rang3.jpg",
-        },
-        {  # 200-499
-            "color": discord.Color.purple(),
-            "next_threshold": 500,
-            "rank_level": 4,
-            "text_color": (197, 94, 255),
-            "bg_filename": "rang4.jpg",
-        },
-        {  # 500+
-            "color": discord.Color.red(),
-            "next_threshold": 500,
-            "rank_level": 5,
-            "text_color": (255, 73, 73),
-            "bg_filename": "rang5.jpg",
-        },
-    ]
-
-    if message_count == 0:
-        rank = rank_designs[0]
-    elif message_count < 50:
-        rank = rank_designs[1]
-    elif message_count < 100:
-        rank = rank_designs[2]
-    elif message_count < 200:
-        rank = rank_designs[3]
-    elif message_count < 500:
-        rank = rank_designs[4]
-    else:
-        rank = rank_designs[5]
+    rank = get_rank_description(message_count)
 
     progress_bar = f"{message_count}/{rank['next_threshold']}"
     exp_title = "EXP"
