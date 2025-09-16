@@ -41,16 +41,16 @@ all_ranges = f"{rang01}\n{rang02}\n{rang03}\n{rang04}\n{rang05}\n{rang06}"
 
 
 def get_rang_description(message_count: int) -> str:
-    """Возвращает ранг в стиле Гачи в зависимости от количества сообщений."""
+    """Возвращает ранг в стиле Гачи без количества сообщений."""
     if message_count == 0:
-        return f"{rang01} (0 сообщений)"
+        return rang01
     elif message_count < 50:
-        return f"{rang02} ({message_count} сообщений)"
+        return rang02
     elif message_count < 100:
-        return f"{rang03} ({message_count} сообщений)"
+        return rang03
     elif message_count < 200:
-        return f"{rang04} ({message_count} сообщений)"
+        return rang04
     elif message_count < 500:
-        return f"{rang05} ({message_count} сообщений)"
+        return rang05
     else:
-        return f"{rang06} ({message_count} сообщений)"
+        return rang06

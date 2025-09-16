@@ -5,7 +5,6 @@ from datetime import datetime
 from sqlalchemy import delete, func, select, update
 
 from app.data.models import Birthday, ChannelMessage, User, UserMessageStats, async_session
-from app.tools.utils import get_rang_description
 
 DB_TIMEOUT = 10
 
@@ -149,7 +148,7 @@ async def update_message_count(user_id: int, name: str, guild_id: int):
         raise Exception(f"Ошибка при сохранении статистики сообщений: {e}")
 
 
-async def get_rang(user_id: int, guild_id: int) -> str:
+async def get_rang(user_id: int, guild_id: int) -> int:
     """Получает количество сообщений пользователя на сервере."""
     async with async_session() as session:
         try:
@@ -160,8 +159,7 @@ async def get_rang(user_id: int, guild_id: int) -> str:
             stats = result.scalar_one_or_none()
 
             count = stats if stats is not None else 0
-            result = get_rang_description(int(count))
-            return result
+            return int(count)
         except TimeoutError:
             raise Exception("Таймаут при получении статистики сообщений.")
         except Exception as e:

@@ -5,6 +5,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from app.core import handlers
+import app.core.embeds as EM
 from app.core.scheduler import start_scheduler
 from app.data.models import init_models
 from app.data.request import get_rang, save_birthday, update_message_count
@@ -12,7 +13,7 @@ from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
 from app.services.weather_agent import WeatherAgent
 from app.services.youtube_notifier import YouTubeNotifier
-from app.tools.utils import contains_only_urls, all_ranges
+from app.tools.utils import contains_only_urls, all_ranges, get_rang_description
 
 load_dotenv()
 
@@ -117,11 +118,21 @@ async def on_message(message):
 
     if message.content.startswith("!rang"):
         if message.content == "!rang list":
-            await message.channel.send(all_ranges)
+            embed = EM.create_rang_list_embed()
+            await message.channel.send(embed=embed)
             return
+
         try:
-            response = await get_rang(message.author.id, server_id)
-            await message.channel.send(f"{message.author.mention} {response}")
+            result = await get_rang(message.author.id, server_id)
+            response = get_rang_description(int(result))
+            message_count = await get_rang(message.author.id, server_id)
+
+            embed, file = EM.create_rang_embed(
+                message.author.display_name,
+                message_count,
+                response
+            )
+            await message.channel.send(embed=embed, file=file)
         except ValueError as ve:
             await message.channel.send(str(ve))
         except Exception as e:
@@ -153,16 +164,8 @@ async def on_message(message):
         return
 
     if message.content.startswith("!help"):
-        await message.channel.send(
-            "Команды бота:\n"
-            "!reset - очистка истории чата\n"
-            "!help - справка по командам\n"
-            "!rang - узнать свой ранг\n"
-            "!birthday DD.MM.YYYY - команда чтобы добавить свое день рождение\n"
-            "!add_youtube - добавить YouTube канал для отслеживания (только для админов)\n"
-            "Напиши 'погода [город]' для получения текущей погоды\n"
-            "Или 'погода [город] завтра' для прогноза на завтра"
-        )
+        embed = EM.create_help_embed()
+        await message.channel.send(embed=embed)
         return
 
     if server_id is None:
