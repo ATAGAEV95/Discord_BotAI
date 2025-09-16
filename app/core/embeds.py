@@ -39,7 +39,7 @@ def create_help_embed():
 
     embed.add_field(
         name="🌤️ Погода",
-        value=("`погода [город]` - текущая погода\n`погода [город] завтра` - прогноз на завтра"),
+        value="`погода [город]` - текущая погода\n`погода [город] завтра` - прогноз на завтра",
         inline=False,
     )
     return embed
@@ -153,14 +153,14 @@ def create_rang_list_embed():
 
 
 def create_image_with_text(
-    display_name,
-    rang_description,
-    progress_bar,
-    exp_title,
-    rank_level,
-    text_color=(44, 255, 109),
-    bg_filename="rang0.jpg",
-    avatar_url=None,
+        display_name,
+        rang_description,
+        progress_bar,
+        exp_title,
+        rank_level,
+        text_color=(44, 255, 109),
+        bg_filename="rang0.jpg",
+        avatar_url=None,
 ):
     # Загрузка фонового изображения
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
@@ -193,17 +193,17 @@ def create_image_with_text(
     c_right = b_right
     c_bottom = a_bottom
 
-    # --- АВАТАР ПОЛЬЗОВАТЕЛЯ ---
-    avatar_size = int((a_bottom - a_top) * 0.7)
-    avatar_margin = int(avatar_size * 0.08)
-    avatar_left = a_left + avatar_margin
-    avatar_top = a_top + ((a_bottom - a_top) - avatar_size) // 2
-    avatar_img = None
-
     # Сначала рисуем все прямоугольники
     draw.rounded_rectangle([a_left, a_top, a_right, a_bottom], radius, fill=rect_color)
     draw.rounded_rectangle([b_left, b_top, b_right, b_bottom], radius, fill=rect_color)
     draw.rounded_rectangle([c_left, c_top, c_right, c_bottom], radius, fill=rect_color)
+
+    # --- АВАТАР ПОЛЬЗОВАТЕЛЯ ---
+    avatar_size = int((a_bottom - a_top) * 0.7)
+    avatar_margin = int(avatar_size * 0.08)
+    avatar_left = a_left + avatar_margin + 20
+    avatar_top = a_top + ((a_bottom - a_top) - avatar_size) // 2
+    avatar_img = None
 
     if avatar_url:
         try:
@@ -229,9 +229,27 @@ def create_image_with_text(
     except Exception:
         main_font = aux_font = aux_value_font = ImageFont.load_default()
 
+    def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gap=10):
+        """Отрисовка блока текста с вертикальным выравниванием по центру"""
+        # Вычисляем общую высоту блока
+        heights = []
+        for text, font, _ in texts_fonts_colors:
+            bbox = draw.textbbox((0, 0), text, font=font)
+            heights.append(bbox[3] - bbox[1])
+
+        total_height = sum(heights) + gap * (len(heights) - 1)
+        current_y = center_y - total_height // 2
+
+        # Отрисовываем каждый текст
+        for (text, font, color), text_height in zip(texts_fonts_colors, heights):
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = bbox[2] - bbox[0]
+            draw.text((center_x - text_width // 2, current_y), text, font=font, fill=color)
+            current_y += text_height + gap
+
     # ------ ВЫРАВНИВАНИЕ A ------
     # Отступ слева для текста: если есть аватар — после картинки, иначе обычный отступ
-    a_text_left = avatar_left + avatar_size + avatar_margin if avatar_img else a_left + 10
+    a_text_left = avatar_left + avatar_size + avatar_margin + 20 if avatar_img else a_left + 10
     a_cy = a_top + (a_bottom - a_top) // 2
 
     # Размер display_name и rang_description
@@ -240,7 +258,7 @@ def create_image_with_text(
     rd_bbox = draw.textbbox((0, 0), rang_description, font=main_font)
     rd_height = rd_bbox[3] - rd_bbox[1]
 
-    gap = 12
+    gap = 15
     total_height = dn_height + gap + rd_height
     top_block = a_cy - total_height // 2
 
@@ -254,47 +272,19 @@ def create_image_with_text(
     b_cx = b_left + (b_right - b_left) // 2
     b_cy = b_top + (b_bottom - b_top) // 2
 
-    lvl_text = "LEVEL"
-    lvl_bbox = draw.textbbox((0, 0), lvl_text, font=aux_font)
-    lvl_width = lvl_bbox[2] - lvl_bbox[0]
-    lvl_height = lvl_bbox[3] - lvl_bbox[1]
-    rk_text = str(rank_level)
-    rk_bbox = draw.textbbox((0, 0), rk_text, font=aux_value_font)
-    rk_width = rk_bbox[2] - rk_bbox[0]
-    rk_height = rk_bbox[3] - rk_bbox[1]
-    gap_b = 10
-    total_height_b = lvl_height + gap_b + rk_height
-    b_top_block = b_cy - total_height_b // 2
-
-    draw.text((b_cx - lvl_width // 2, b_top_block), lvl_text, font=aux_font, fill=main_dark_color)
-    draw.text(
-        (b_cx - rk_width // 2, b_top_block + lvl_height + gap_b),
-        rk_text,
-        font=aux_value_font,
-        fill=text_color,
-    )
+    draw_centered_text_block([
+        ("LEVEL", aux_font, main_dark_color),
+        (str(rank_level), aux_value_font, text_color)
+    ], b_cx, b_cy, gap=12)
 
     # ------ ВЫРАВНИВАНИЕ C ------
     c_cx = c_left + (c_right - c_left) // 2
     c_cy = c_top + (c_bottom - c_top) // 2
 
-    exp_bbox = draw.textbbox((0, 0), exp_title, font=aux_font)
-    exp_width = exp_bbox[2] - exp_bbox[0]
-    exp_height = exp_bbox[3] - exp_bbox[1]
-    bar_bbox = draw.textbbox((0, 0), progress_bar, font=aux_value_font)
-    bar_width = bar_bbox[2] - bar_bbox[0]
-    bar_height = bar_bbox[3] - bar_bbox[1]
-    gap_c = 10
-    total_height_c = exp_height + gap_c + bar_height
-    c_top_block = c_cy - total_height_c // 2
-
-    draw.text((c_cx - exp_width // 2, c_top_block), exp_title, font=aux_font, fill=main_dark_color)
-    draw.text(
-        (c_cx - bar_width // 2, c_top_block + exp_height + gap_c),
-        progress_bar,
-        font=aux_value_font,
-        fill=text_color,
-    )
+    draw_centered_text_block([
+        (exp_title, aux_font, main_dark_color),
+        (progress_bar, aux_value_font, text_color)
+    ], c_cx, c_cy, gap=12)
 
     # Собираем картинку
     background = Image.alpha_composite(background, overlay)
