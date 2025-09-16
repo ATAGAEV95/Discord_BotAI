@@ -107,7 +107,7 @@ def create_image_with_text(
 ):
     # Загрузка фонового изображения
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
-    background = background.resize((1000, 250))
+    background = background.resize((1920, 480))
 
     width, height = background.size
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -166,9 +166,9 @@ def create_image_with_text(
 
     # --- Шрифты ---
     try:
-        main_font = ImageFont.truetype("./app/resource/arialbd.ttf", 40)
-        aux_font = ImageFont.truetype("./app/resource/arialbd.ttf", 23)
-        aux_value_font = ImageFont.truetype("./app/resource/arialbd.ttf", 23)
+        main_font = ImageFont.truetype("./app/resource/montserrat.ttf", 70)
+        aux_font = ImageFont.truetype("./app/resource/montserrat.ttf", 40)
+        aux_value_font = ImageFont.truetype("./app/resource/montserrat.ttf", 40)
     except Exception:
         main_font = aux_font = aux_value_font = ImageFont.load_default()
 
@@ -201,7 +201,7 @@ def create_image_with_text(
     rd_bbox = draw.textbbox((0, 0), rang_description, font=main_font)
     rd_height = rd_bbox[3] - rd_bbox[1]
 
-    gap = 15
+    gap = 20
     total_height = dn_height + gap + rd_height
     top_block = a_cy - total_height // 2
 
@@ -219,7 +219,7 @@ def create_image_with_text(
         [("LEVEL", aux_font, main_dark_color), (str(rank_level), aux_value_font, text_color)],
         b_cx,
         b_cy,
-        gapp=12,
+        gapp=20,
     )
 
     # ------ ВЫРАВНИВАНИЕ C ------
@@ -230,7 +230,7 @@ def create_image_with_text(
         [(exp_title, aux_font, main_dark_color), (progress_bar, aux_value_font, text_color)],
         c_cx,
         c_cy,
-        gapp=12,
+        gapp=20,
     )
 
     # Собираем картинку
