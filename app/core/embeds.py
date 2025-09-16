@@ -1,5 +1,7 @@
 import discord
 from discord import File
+from PIL import Image, ImageDraw, ImageFont
+import io
 
 from app.tools.utils import rang01, rang02, rang03, rang04, rang05, rang06
 
@@ -171,14 +173,10 @@ def create_rang_list_embed():
     )
 
     embed.set_footer(text="Пишите сообщения, чтобы повысить свой ранг!")
-
     return embed
 
 
 def create_image_with_text(display_name, rang_description, progress_bar, exp_title, rank_level, text_color=(44,255,109), bg_filename="rang0.jpg"):
-    from PIL import Image, ImageDraw, ImageFont
-    import io
-
     # Загрузка своего фона
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGB")
     background = background.resize((1000, 250))
@@ -225,38 +223,74 @@ def create_image_with_text(display_name, rang_description, progress_bar, exp_tit
     except Exception:
         main_font = aux_font = aux_value_font = ImageFont.load_default()
 
-    # Тексты
-    # A — центр прямоугольника A (имя и ранг_дескрипшн одинаковым размером)
+    # ------ ВЫРАВНИВАНИЕ A: display_name и rang_description ------
     a_cx = a_left + (a_right - a_left) // 2
     a_cy = a_top + (a_bottom - a_top) // 2
-    # Имя
-    dn_bbox = draw.textbbox((0, 0), display_name, font=main_font)
-    draw.text((a_cx - (dn_bbox[2] - dn_bbox[0]) // 2, a_cy - 28),
-              display_name, font=main_font, fill=text_color)
-    # Ранг дескрипшн
-    rd_bbox = draw.textbbox((0, 0), rang_description, font=main_font)
-    draw.text((a_cx - (rd_bbox[2] - rd_bbox[0]) // 2, a_cy + 22),
-              rang_description, font=main_font, fill=text_color)
 
-    # B — центр прямоугольника B (LEVEL и ранг, одинаковый размер, LEVEL чуть меньше чем раньше)
+    dn_bbox = draw.textbbox((0, 0), display_name, font=main_font)
+    dn_width = dn_bbox[2] - dn_bbox[0]
+    dn_height = dn_bbox[3] - dn_bbox[1]
+
+    rd_bbox = draw.textbbox((0, 0), rang_description, font=main_font)
+    rd_width = rd_bbox[2] - rd_bbox[0]
+    rd_height = rd_bbox[3] - rd_bbox[1]
+
+    gap = 12  # вертикальный отступ между строками
+    total_height = dn_height + gap + rd_height
+    top_block = a_cy - total_height // 2
+
+    dn_y = top_block
+    rd_y = dn_y + dn_height + gap
+
+    # Рисуем display_name и rang_description
+    draw.text((a_cx - dn_width // 2, dn_y), display_name, font=main_font, fill=text_color)
+    draw.text((a_cx - rd_width // 2, rd_y), rang_description, font=main_font, fill=text_color)
+
+    # ------ ВЫРАВНИВАНИЕ B: "LEVEL" и уровень ------
     b_cx = b_left + (b_right - b_left) // 2
     b_cy = b_top + (b_bottom - b_top) // 2
-    # LEVEL
-    lvl_bbox = draw.textbbox((0, 0), "LEVEL", font=aux_font)
-    draw.text((b_cx - (lvl_bbox[2] - lvl_bbox[0]) // 2, b_cy - 18), "LEVEL", font=aux_font, fill=text_color)
-    # цифра уровня (тоже aux_font)
-    rk_bbox = draw.textbbox((0, 0), str(rank_level), font=aux_value_font)
-    draw.text((b_cx - (rk_bbox[2] - rk_bbox[0]) // 2, b_cy + 8), str(rank_level), font=aux_value_font, fill=text_color)
 
-    # C — центр прямоугольника C (EXP и progress_bar, одинаковый размер, EXP чуть меньше)
+    lvl_text = "LEVEL"
+    lvl_bbox = draw.textbbox((0, 0), lvl_text, font=aux_font)
+    lvl_width = lvl_bbox[2] - lvl_bbox[0]
+    lvl_height = lvl_bbox[3] - lvl_bbox[1]
+
+    rk_text = str(rank_level)
+    rk_bbox = draw.textbbox((0, 0), rk_text, font=aux_value_font)
+    rk_width = rk_bbox[2] - rk_bbox[0]
+    rk_height = rk_bbox[3] - rk_bbox[1]
+
+    gap_b = 10  # отступ между надписями в B
+    total_height_b = lvl_height + gap_b + rk_height
+    b_top_block = b_cy - total_height_b // 2
+
+    lvl_y = b_top_block
+    rk_y = lvl_y + lvl_height + gap_b
+
+    draw.text((b_cx - lvl_width // 2, lvl_y), lvl_text, font=aux_font, fill=text_color)
+    draw.text((b_cx - rk_width // 2, rk_y), rk_text, font=aux_value_font, fill=text_color)
+
+    # ------ ВЫРАВНИВАНИЕ C: exp_title и progress_bar ------
     c_cx = c_left + (c_right - c_left) // 2
     c_cy = c_top + (c_bottom - c_top) // 2
-    # EXP
+
     exp_bbox = draw.textbbox((0, 0), exp_title, font=aux_font)
-    draw.text((c_cx - (exp_bbox[2] - exp_bbox[0]) // 2, c_cy - 18), exp_title, font=aux_font, fill=text_color)
-    # progress_bar (тоже aux_font)
+    exp_width = exp_bbox[2] - exp_bbox[0]
+    exp_height = exp_bbox[3] - exp_bbox[1]
+
     bar_bbox = draw.textbbox((0, 0), progress_bar, font=aux_value_font)
-    draw.text((c_cx - (bar_bbox[2] - bar_bbox[0]) // 2, c_cy + 8), progress_bar, font=aux_value_font, fill=text_color)
+    bar_width = bar_bbox[2] - bar_bbox[0]
+    bar_height = bar_bbox[3] - bar_bbox[1]
+
+    gap_c = 10  # отступ между надписями в C
+    total_height_c = exp_height + gap_c + bar_height
+    c_top_block = c_cy - total_height_c // 2
+
+    exp_y = c_top_block
+    bar_y = exp_y + exp_height + gap_c
+
+    draw.text((c_cx - exp_width // 2, exp_y), exp_title, font=aux_font, fill=text_color)
+    draw.text((c_cx - bar_width // 2, bar_y), progress_bar, font=aux_value_font, fill=text_color)
 
     background.paste(overlay, (0, 0), overlay)
     img_buffer = io.BytesIO()
