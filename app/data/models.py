@@ -1,7 +1,18 @@
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import BigInteger, Column, Date, DateTime, Index, Integer, String, Text
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -84,7 +95,8 @@ class YouTubeChannel(Base):
     __tablename__ = "youtube_channels"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    channel_id = Column(String(50), unique=True, nullable=False)
+    channel_id = Column(String(50), nullable=False)
+    guild_id = Column(BigInteger)
     discord_channel_id = Column(BigInteger, nullable=False)
     name = Column(String(100), nullable=False)
     last_checked = Column(DateTime, default=func.now())
@@ -94,10 +106,14 @@ class YouTubeVideo(Base):
     __tablename__ = "youtube_videos"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    video_id = Column(String(50), unique=True, nullable=False)
+    video_id = Column(String(50), nullable=False)
+    guild_id = Column(BigInteger, nullable=False)
     channel_id = Column(String(50), nullable=False)
     title = Column(String(255), nullable=False)
     published_at = Column(DateTime, nullable=False)
+    is_live = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (UniqueConstraint("video_id", "guild_id", name="uq_youtube_video_per_guild"),)
 
 
 async def init_models() -> None:

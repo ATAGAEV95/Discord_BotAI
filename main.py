@@ -127,7 +127,9 @@ async def on_message(message):
             discord_channel_id = int(args[2])
             name = " ".join(args[3:])
 
-            success = await youtube_notifier.add_channel(youtube_id, discord_channel_id, name)
+            success = await youtube_notifier.add_channel(
+                youtube_id, discord_channel_id, name, server_id
+            )
             if success:
                 await message.channel.send("✅ Канал добавлен для отслеживания")
             else:
