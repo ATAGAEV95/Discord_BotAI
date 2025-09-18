@@ -1,7 +1,8 @@
+import asyncio
 import io
 
+import aiohttp
 import discord
-import requests
 from discord import File
 from PIL import Image, ImageDraw, ImageFont
 
@@ -56,23 +57,71 @@ async def create_rang_embed(display_name: str, message_count: int, rang_descript
 
     server_rank = await get_user_rank(user_id, server_id)
 
-    image_buffer = create_image_with_text(
+    image_buffer = await create_image_with_text_async(
         display_name,
         rang_description,
         progress_bar,
         exp_title,
         server_rank,
-        rank["rank_level"],  # Оставляем как было
+        rank["rank_level"],
         text_color=rank["text_color"],
         bg_filename=rank["bg_filename"],
         avatar_url=avatar_url,
     )
     file = File(image_buffer, filename="rang_with_text.png")
 
-    embed = discord.Embed()
+    embed = discord.Embed(color=discord.Color.red())
     embed.set_image(url="attachment://rang_with_text.png")
 
     return embed, file
+
+
+async def download_avatar_async(avatar_url: str) -> Image.Image | None:
+    """Асинхронная загрузка аватара пользователя"""
+    if not avatar_url:
+        return None
+
+    try:
+        timeout = aiohttp.ClientTimeout(total=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(avatar_url) as response:
+                if response.status == 200:
+                    avatar_data = await response.read()
+                    avatar_img = Image.open(io.BytesIO(avatar_data)).convert("RGBA")
+                    return avatar_img
+    except Exception as e:
+        print(f"Ошибка загрузки аватара: {e}")
+
+    return None
+
+
+async def create_image_with_text_async(
+        display_name,
+        rang_description,
+        progress_bar,
+        exp_title,
+        server_rank,
+        rank_level,
+        text_color=(44, 255, 109),
+        bg_filename="rang0.jpg",
+        avatar_url=None,
+):
+    # Асинхронно загружаем аватар
+    avatar_img = await download_avatar_async(avatar_url)
+
+    # Остальную работу с PIL выполняем в отдельном потоке
+    return await asyncio.to_thread(
+        create_image_with_text,
+        display_name,
+        rang_description,
+        progress_bar,
+        exp_title,
+        server_rank,
+        rank_level,
+        text_color,
+        bg_filename,
+        avatar_img,
+    )
 
 
 def create_rang_list_embed():
@@ -108,7 +157,7 @@ def create_image_with_text(
         rank_level,
         text_color=(44, 255, 109),
         bg_filename="rang0.jpg",
-        avatar_url=None,
+        avatar_img=None,  # Уже загруженное изображение
 ):
     # Загрузка фонового изображения
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
@@ -120,7 +169,7 @@ def create_image_with_text(
     rect_color = (30, 30, 30, 180)
 
     # --- цвета для разных надписей ---
-    main_dark_color = darken_color(text_color, 0.75)  # более темный цвет для основных надписей
+    main_dark_color = darken_color(text_color, 0.75)
 
     # Отступы и параметры блоков
     margin_x = int(width * 0.035)
@@ -151,22 +200,25 @@ def create_image_with_text(
     avatar_margin = int(avatar_size * 0.08)
     avatar_left = a_left + avatar_margin + 20
     avatar_top = a_top + ((a_bottom - a_top) - avatar_size) // 2
-    avatar_img = None
 
-    if avatar_url:
+    # Обрабатываем аватар, если он был загружен
+    if avatar_img is not None:
         try:
-            resp = requests.get(avatar_url)
-            avatar_img = Image.open(io.BytesIO(resp.content)).convert("RGBA")
-            avatar_img = avatar_img.resize((avatar_size, avatar_size))
-            # Круглая маска
+            # Изменяем размер аватара
+            avatar_resized = avatar_img.resize((avatar_size, avatar_size))
+
+            # Создаем круглую маску
             mask = Image.new("L", (avatar_size, avatar_size), 0)
             mask_draw = ImageDraw.Draw(mask)
             mask_draw.ellipse((0, 0, avatar_size, avatar_size), fill=255)
-            avatar_img.putalpha(mask)
+
+            # Применяем маску к аватару
+            avatar_resized.putalpha(mask)
+
             # Вставляем аватар поверх прямоугольников
-            overlay.paste(avatar_img, (avatar_left, avatar_top), avatar_img)
+            overlay.paste(avatar_resized, (avatar_left, avatar_top), avatar_resized)
         except Exception as e:
-            print("Ошибка загрузки аватара:", e)
+            print(f"Ошибка обработки аватара: {e}")
             avatar_img = None
 
     # --- Шрифты ---
@@ -174,13 +226,12 @@ def create_image_with_text(
         main_font = ImageFont.truetype("./app/resource/montserrat.ttf", 70)
         aux_font = ImageFont.truetype("./app/resource/montserrat.ttf", 40)
         aux_value_font = ImageFont.truetype("./app/resource/montserrat.ttf", 40)
-        server_rank_font = ImageFont.truetype("./app/resource/montserrat.ttf", 50)  # Шрифт для server_rank
+        server_rank_font = ImageFont.truetype("./app/resource/montserrat.ttf", 50)
     except Exception:
         main_font = aux_font = aux_value_font = server_rank_font = ImageFont.load_default()
 
     def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gapp=10):
         """Отрисовка блока текста с вертикальным выравниванием по центру"""
-        # Вычисляем общую высоту блока
         heights = []
         for text, font, _ in texts_fonts_colors:
             bbox = draw.textbbox((0, 0), text, font=font)
@@ -189,7 +240,6 @@ def create_image_with_text(
         total_heights = sum(heights) + gapp * (len(heights) - 1)
         current_y = center_y - total_heights // 2
 
-        # Отрисовываем каждый текст
         for (text, font, color), text_height in zip(texts_fonts_colors, heights):
             bbox = draw.textbbox((0, 0), text, font=font)
             text_width = bbox[2] - bbox[0]
@@ -197,14 +247,12 @@ def create_image_with_text(
             current_y += text_height + gapp
 
     # ------ ВЫРАВНИВАНИЕ A ------
-    # Отступ слева для текста: если есть аватар — после картинки, иначе обычный отступ
-    a_text_left = avatar_left + avatar_size + avatar_margin + 20 if avatar_img else a_left + 10
+    a_text_left = avatar_left + avatar_size + avatar_margin + 20 if avatar_img is not None else a_left + 10
     a_cy = a_top + (a_bottom - a_top) // 2
 
-    # Подготавливаем тексты для равномерного распределения
     server_rank_text = f"Server rank #{server_rank}"
 
-    # Размеры всех трех текстов
+    # Размеры текстов
     dn_bbox = draw.textbbox((0, 0), display_name, font=main_font)
     dn_height = dn_bbox[3] - dn_bbox[1]
 
@@ -214,12 +262,12 @@ def create_image_with_text(
     sr_bbox = draw.textbbox((0, 0), server_rank_text, font=server_rank_font)
     sr_height = sr_bbox[3] - sr_bbox[1]
 
-    # Равномерное распределение трех элементов по вертикали
-    gap = 25  # Отступ между элементами
+    # Распределение по вертикали
+    gap = 25
     total_height = dn_height + rd_height + sr_height + 2 * gap
     top_block = a_cy - total_height // 2
 
-    # Отрисовка трех текстов с равномерными отступами
+    # Отрисовка текстов
     draw.text((a_text_left, top_block), display_name, font=main_font, fill=main_dark_color)
     draw.text((a_text_left, top_block + dn_height + gap), rang_description, font=main_font, fill=text_color)
     draw.text((a_text_left, top_block + dn_height + gap + rd_height + gap), server_rank_text, font=server_rank_font,
@@ -253,3 +301,4 @@ def create_image_with_text(
     background.save(img_buffer, format="PNG")
     img_buffer.seek(0)
     return img_buffer
+
