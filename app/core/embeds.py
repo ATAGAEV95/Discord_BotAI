@@ -5,6 +5,7 @@ import requests
 from discord import File
 from PIL import Image, ImageDraw, ImageFont
 
+from app.data.request import get_user_rank
 from app.tools.utils import darken_color, get_rank_description
 
 
@@ -45,20 +46,23 @@ def create_help_embed():
     return embed
 
 
-def create_rang_embed(display_name: str, message_count: int, rang_description: str, avatar_url: str):
+async def create_rang_embed(display_name: str, message_count: int, rang_description: str, avatar_url: str,
+                            server_id: int, user_id: int):
     """Создает embed для команды !rang с цветом и фоном в зависимости от ранга"""
     rank = get_rank_description(message_count)
 
     progress_bar = f"{message_count}/{rank['next_threshold']}"
     exp_title = "EXP"
 
-    # Передаем цвет текста и фон
+    server_rank = await get_user_rank(user_id, server_id)
+
     image_buffer = create_image_with_text(
         display_name,
         rang_description,
         progress_bar,
         exp_title,
-        rank["rank_level"],
+        server_rank,
+        rank["rank_level"],  # Оставляем как было
         text_color=rank["text_color"],
         bg_filename=rank["bg_filename"],
         avatar_url=avatar_url,
@@ -96,14 +100,15 @@ def create_rang_list_embed():
 
 
 def create_image_with_text(
-    display_name,
-    rang_description,
-    progress_bar,
-    exp_title,
-    rank_level,
-    text_color=(44, 255, 109),
-    bg_filename="rang0.jpg",
-    avatar_url=None,
+        display_name,
+        rang_description,
+        progress_bar,
+        exp_title,
+        server_rank,
+        rank_level,
+        text_color=(44, 255, 109),
+        bg_filename="rang0.jpg",
+        avatar_url=None,
 ):
     # Загрузка фонового изображения
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
@@ -169,8 +174,9 @@ def create_image_with_text(
         main_font = ImageFont.truetype("./app/resource/montserrat.ttf", 70)
         aux_font = ImageFont.truetype("./app/resource/montserrat.ttf", 40)
         aux_value_font = ImageFont.truetype("./app/resource/montserrat.ttf", 40)
+        server_rank_font = ImageFont.truetype("./app/resource/montserrat.ttf", 50)  # Шрифт для server_rank
     except Exception:
-        main_font = aux_font = aux_value_font = ImageFont.load_default()
+        main_font = aux_font = aux_value_font = server_rank_font = ImageFont.load_default()
 
     def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gapp=10):
         """Отрисовка блока текста с вертикальным выравниванием по центру"""
@@ -195,21 +201,29 @@ def create_image_with_text(
     a_text_left = avatar_left + avatar_size + avatar_margin + 20 if avatar_img else a_left + 10
     a_cy = a_top + (a_bottom - a_top) // 2
 
-    # Размер display_name и rang_description
+    # Подготавливаем тексты для равномерного распределения
+    server_rank_text = f"Server rank #{server_rank}"
+
+    # Размеры всех трех текстов
     dn_bbox = draw.textbbox((0, 0), display_name, font=main_font)
     dn_height = dn_bbox[3] - dn_bbox[1]
+
     rd_bbox = draw.textbbox((0, 0), rang_description, font=main_font)
     rd_height = rd_bbox[3] - rd_bbox[1]
 
-    gap = 20
-    total_height = dn_height + gap + rd_height
+    sr_bbox = draw.textbbox((0, 0), server_rank_text, font=server_rank_font)
+    sr_height = sr_bbox[3] - sr_bbox[1]
+
+    # Равномерное распределение трех элементов по вертикали
+    gap = 25  # Отступ между элементами
+    total_height = dn_height + rd_height + sr_height + 2 * gap
     top_block = a_cy - total_height // 2
 
-    # Текст: display_name и rang_description
+    # Отрисовка трех текстов с равномерными отступами
     draw.text((a_text_left, top_block), display_name, font=main_font, fill=main_dark_color)
-    draw.text(
-        (a_text_left, top_block + dn_height + gap), rang_description, font=main_font, fill=text_color
-    )
+    draw.text((a_text_left, top_block + dn_height + gap), rang_description, font=main_font, fill=text_color)
+    draw.text((a_text_left, top_block + dn_height + gap + rd_height + gap), server_rank_text, font=server_rank_font,
+              fill=main_dark_color)
 
     # ------ ВЫРАВНИВАНИЕ B ------
     b_cx = b_left + (b_right - b_left) // 2

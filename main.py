@@ -81,11 +81,13 @@ async def on_message(message):
                     else message.author.default_avatar.url
                 )
 
-                embed, file = EM.create_rang_embed(
+                embed, file = await EM.create_rang_embed(
                     message.author.display_name,
                     rank_info["message_count"],
                     new_rank_description["description"],
                     avatar_url,
+                    server_id,
+                    message.author.id
                 )
 
                 await message.channel.send(
@@ -155,11 +157,13 @@ async def on_message(message):
                 else message.author.default_avatar.url
             )
 
-            embed, file = EM.create_rang_embed(
+            embed, file = await EM.create_rang_embed(
                 message.author.display_name,
                 message_count,
                 rank_description["description"],
                 avatar_url,
+                server_id,
+                message.author.id
             )
             await message.channel.send(embed=embed, file=file)
         except ValueError as ve:

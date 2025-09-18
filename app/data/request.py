@@ -2,7 +2,7 @@ import asyncio
 import re
 from datetime import datetime
 
-from sqlalchemy import delete, func, select, update
+from sqlalchemy import delete, func, select, update, and_
 
 from app.data.models import Birthday, ChannelMessage, User, UserMessageStats, async_session
 from app.tools.utils import get_rank_description
@@ -194,3 +194,33 @@ async def get_rang(user_id: int, guild_id: int) -> int:
             raise Exception("Таймаут при получении статистики сообщений.")
         except Exception as e:
             raise Exception(f"Ошибка при получении статистики сообщений: {e}")
+
+
+async def get_user_rank(user_id: int, guild_id: int) -> int:
+    """
+    Получает ранг пользователя в указанном сервере на основе количества сообщений."""
+    async with async_session() as session:
+        try:
+            subquery = (
+                select(
+                    UserMessageStats.user_id,
+                    func.rank().over(
+                        partition_by=UserMessageStats.guild_id,
+                        order_by=UserMessageStats.message_count.desc()
+                    ).label('user_rank')
+                )
+                .where(UserMessageStats.guild_id == guild_id)
+                .subquery()
+            )
+
+            query = select(subquery.c.user_rank).where(and_(subquery.c.user_id == user_id))
+
+            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
+            user_rank = result.scalar_one_or_none()
+
+            return user_rank if user_rank is not None else 0
+
+        except TimeoutError:
+            raise Exception("Таймаут при получении ранга пользователя.")
+        except Exception as e:
+            raise Exception(f"Ошибка при получении ранга пользователя: {e}")

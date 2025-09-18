@@ -71,7 +71,7 @@ def get_rank_description(message_count):
             "next_threshold": 200,
             "rank_level": 3,
             "text_color": (255, 215, 0),
-            "bg_filename": "rang3.jpg",
+            "bg_filename": "rang3.png",
             "description": "Бич",
         },
         {  # 200-499
@@ -79,7 +79,7 @@ def get_rank_description(message_count):
             "next_threshold": 500,
             "rank_level": 4,
             "text_color": (197, 94, 255),
-            "bg_filename": "rang4.jpg",
+            "bg_filename": "rang4.png",
             "description": "Босс бичей",
         },
         {  # 500+
@@ -87,7 +87,7 @@ def get_rank_description(message_count):
             "next_threshold": 500,
             "rank_level": 5,
             "text_color": (255, 73, 73),
-            "bg_filename": "rang5.jpg",
+            "bg_filename": "rang5.png",
             "description": "Бич-император",
         },
     ]
