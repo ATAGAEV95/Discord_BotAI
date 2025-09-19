@@ -227,8 +227,9 @@ def create_image_with_text(
         aux_font = ImageFont.truetype("./app/resource/montserrat.ttf", 40)
         aux_value_font = ImageFont.truetype("./app/resource/montserrat.ttf", 40)
         server_rank_font = ImageFont.truetype("./app/resource/montserrat.ttf", 50)
+        main_font_small = ImageFont.truetype("./app/resource/montserrat.ttf", 60)
     except Exception:
-        main_font = aux_font = aux_value_font = server_rank_font = ImageFont.load_default()
+        main_font = aux_font = aux_value_font = server_rank_font = main_font_small = ImageFont.load_default()
 
     def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gapp=10):
         """Отрисовка блока текста с вертикальным выравниванием по центру"""
@@ -263,12 +264,22 @@ def create_image_with_text(
     sr_height = sr_bbox[3] - sr_bbox[1]
 
     # Распределение по вертикали
-    gap = 25
+    if len(display_name) < 20:
+        gap = 25
+    elif len(display_name) >= 28:
+        gap = 5
+    else:
+        gap = 15
     total_height = dn_height + rd_height + sr_height + 2 * gap
     top_block = a_cy - total_height // 2
 
     # Отрисовка текстов
-    draw.text((a_text_left, top_block), display_name, font=main_font, fill=main_dark_color)
+    if len(display_name) < 20:
+        draw.text((a_text_left, top_block), display_name, font=main_font, fill=main_dark_color)
+    elif len(display_name) >= 28:
+        draw.text((a_text_left, top_block), display_name, font=server_rank_font, fill=main_dark_color)
+    else:
+        draw.text((a_text_left, top_block), display_name, font=main_font_small, fill=main_dark_color)
     draw.text((a_text_left, top_block + dn_height + gap), rang_description, font=main_font, fill=text_color)
     draw.text((a_text_left, top_block + dn_height + gap + rd_height + gap), server_rank_text, font=server_rank_font,
               fill=main_dark_color)
