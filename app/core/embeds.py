@@ -70,7 +70,7 @@ async def create_rang_embed(display_name: str, message_count: int, rang_descript
     )
     file = File(image_buffer, filename="rang_with_text.png")
 
-    embed = discord.Embed(color=discord.Color.red())
+    embed = discord.Embed(color=rank["color"])
     embed.set_image(url="attachment://rang_with_text.png")
 
     return embed, file
