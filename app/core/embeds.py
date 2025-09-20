@@ -47,8 +47,14 @@ def create_help_embed():
     return embed
 
 
-async def create_rang_embed(display_name: str, message_count: int, rang_description: str, avatar_url: str,
-                            server_id: int, user_id: int):
+async def create_rang_embed(
+    display_name: str,
+    message_count: int,
+    rang_description: str,
+    avatar_url: str,
+    server_id: int,
+    user_id: int,
+):
     """Создает embed для команды !rang с цветом и фоном в зависимости от ранга"""
     rank = get_rank_description(message_count)
 
@@ -96,15 +102,15 @@ async def download_avatar_async(avatar_url: str) -> Image.Image | None:
 
 
 async def create_image_with_text_async(
-        display_name,
-        rang_description,
-        progress_bar,
-        exp_title,
-        server_rank,
-        rank_level,
-        text_color=(44, 255, 109),
-        bg_filename="rang0.jpg",
-        avatar_url=None,
+    display_name,
+    rang_description,
+    progress_bar,
+    exp_title,
+    server_rank,
+    rank_level,
+    text_color=(44, 255, 109),
+    bg_filename="rang0.jpg",
+    avatar_url=None,
 ):
     # Асинхронно загружаем аватар
     avatar_img = await download_avatar_async(avatar_url)
@@ -149,15 +155,15 @@ def create_rang_list_embed():
 
 
 def create_image_with_text(
-        display_name,
-        rang_description,
-        progress_bar,
-        exp_title,
-        server_rank,
-        rank_level,
-        text_color=(44, 255, 109),
-        bg_filename="rang0.jpg",
-        avatar_img=None,  # Уже загруженное изображение
+    display_name,
+    rang_description,
+    progress_bar,
+    exp_title,
+    server_rank,
+    rank_level,
+    text_color=(44, 255, 109),
+    bg_filename="rang0.jpg",
+    avatar_img=None,  # Уже загруженное изображение
 ):
     # Загрузка фонового изображения
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
@@ -229,7 +235,9 @@ def create_image_with_text(
         server_rank_font = ImageFont.truetype("./app/resource/montserrat.ttf", 50)
         main_font_small = ImageFont.truetype("./app/resource/montserrat.ttf", 60)
     except Exception:
-        main_font = aux_font = aux_value_font = server_rank_font = main_font_small = ImageFont.load_default()
+        main_font = aux_font = aux_value_font = server_rank_font = main_font_small = (
+            ImageFont.load_default()
+        )
 
     def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gapp=10):
         """Отрисовка блока текста с вертикальным выравниванием по центру"""
@@ -248,7 +256,9 @@ def create_image_with_text(
             current_y += text_height + gapp
 
     # ------ ВЫРАВНИВАНИЕ A ------
-    a_text_left = avatar_left + avatar_size + avatar_margin + 20 if avatar_img is not None else a_left + 10
+    a_text_left = (
+        avatar_left + avatar_size + avatar_margin + 20 if avatar_img is not None else a_left + 10
+    )
     a_cy = a_top + (a_bottom - a_top) // 2
 
     server_rank_text = f"Server rank #{server_rank}"
@@ -277,12 +287,20 @@ def create_image_with_text(
     if len(display_name) < 20:
         draw.text((a_text_left, top_block), display_name, font=main_font, fill=main_dark_color)
     elif len(display_name) >= 28:
-        draw.text((a_text_left, top_block), display_name, font=server_rank_font, fill=main_dark_color)
+        draw.text(
+            (a_text_left, top_block), display_name, font=server_rank_font, fill=main_dark_color
+        )
     else:
         draw.text((a_text_left, top_block), display_name, font=main_font_small, fill=main_dark_color)
-    draw.text((a_text_left, top_block + dn_height + gap), rang_description, font=main_font, fill=text_color)
-    draw.text((a_text_left, top_block + dn_height + gap + rd_height + gap), server_rank_text, font=server_rank_font,
-              fill=main_dark_color)
+    draw.text(
+        (a_text_left, top_block + dn_height + gap), rang_description, font=main_font, fill=text_color
+    )
+    draw.text(
+        (a_text_left, top_block + dn_height + gap + rd_height + gap),
+        server_rank_text,
+        font=server_rank_font,
+        fill=main_dark_color,
+    )
 
     # ------ ВЫРАВНИВАНИЕ B ------
     b_cx = b_left + (b_right - b_left) // 2
@@ -312,4 +330,3 @@ def create_image_with_text(
     background.save(img_buffer, format="PNG")
     img_buffer.seek(0)
     return img_buffer
-

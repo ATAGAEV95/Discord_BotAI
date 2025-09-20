@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 import requests
 from dotenv import load_dotenv
-from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage
+from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionUserMessageParam
 
 load_dotenv()
 
@@ -15,12 +15,13 @@ AI_TOKEN1 = os.getenv("AI_TOKEN1")
 class WeatherAgent:
     def __init__(self):
         self.api_key = os.getenv("OPENWEATHERMAP_API_KEY")
-        self.model = init_chat_model(
-            "gpt-5-nano",
-            model_provider="openai",
+        self.client = AsyncOpenAI(
             api_key=AI_TOKEN1,
             base_url="https://api.aitunnel.ru/v1/",
-            temperature=0,
+            # api_key=AI_TOKEN,
+            # base_url="https://api.proxyapi.ru/openai/v1",
+            # api_key='google/gemma-3n-e4b',
+            # base_url='http://localhost:1234/v1/'
         )
 
     def get_weather(self, city: str, flag: bool) -> str:
@@ -79,16 +80,23 @@ class WeatherAgent:
 
     async def should_handle_weather(self, message: str):
         """Определяет, относится ли сообщение к запросу погоды"""
-        prompt = f"""
-        Определи, является ли этот запрос вопросом о погоде: "{message}".
-        Если город не указан то пустую строку написать.
-        Ответь в формате JSON: {{"is_weather": true/false, "city": "название города"}}
-        """
+        prompt = [
+            ChatCompletionUserMessageParam(
+                role="user",
+                content=f"""
+            Определи, является ли этот запрос вопросом о погоде: "{message}".
+            Если город не указан то пустую строку написать.
+            Ответь в формате JSON: {{"is_weather": true/false, "city": "название города"}}
+            """,
+            ),
+        ]
 
         try:
-            response = await self.model.ainvoke([HumanMessage(prompt)])
-            output = response.content
-            result = json.loads(output)
+            completion = await self.client.chat.completions.create(
+                model="gpt-5-mini", messages=prompt, temperature=0
+            )
+            response = completion.choices[0].message.content.strip()
+            result = json.loads(response)
             # print(response)
             # print(result)
             return result["is_weather"], result["city"]

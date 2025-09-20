@@ -2,7 +2,7 @@ import asyncio
 import re
 from datetime import datetime
 
-from sqlalchemy import delete, func, select, update, and_
+from sqlalchemy import and_, delete, func, select, update
 
 from app.data.models import Birthday, ChannelMessage, User, UserMessageStats, async_session
 from app.tools.utils import get_rank_description
@@ -197,17 +197,18 @@ async def get_rang(user_id: int, guild_id: int) -> int:
 
 
 async def get_user_rank(user_id: int, guild_id: int) -> int:
-    """
-    Получает ранг пользователя в указанном сервере на основе количества сообщений."""
+    """Получает ранг пользователя в указанном сервере на основе количества сообщений."""
     async with async_session() as session:
         try:
             subquery = (
                 select(
                     UserMessageStats.user_id,
-                    func.rank().over(
+                    func.rank()
+                    .over(
                         partition_by=UserMessageStats.guild_id,
-                        order_by=UserMessageStats.message_count.desc()
-                    ).label('user_rank')
+                        order_by=UserMessageStats.message_count.desc(),
+                    )
+                    .label("user_rank"),
                 )
                 .where(UserMessageStats.guild_id == guild_id)
                 .subquery()

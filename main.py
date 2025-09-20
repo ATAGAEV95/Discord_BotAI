@@ -87,7 +87,7 @@ async def on_message(message):
                     new_rank_description["description"],
                     avatar_url,
                     server_id,
-                    message.author.id
+                    message.author.id,
                 )
 
                 await message.channel.send(
@@ -163,7 +163,7 @@ async def on_message(message):
                 rank_description["description"],
                 avatar_url,
                 server_id,
-                message.author.id
+                message.author.id,
             )
             await message.channel.send(embed=embed, file=file)
         except ValueError as ve:
