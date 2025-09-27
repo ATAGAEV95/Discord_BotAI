@@ -40,6 +40,7 @@ SYSTEM_BIRTHDAY_PROMPT = """
     - rikka71, это Рикка, у него сильные скиллы в шутерах
     - atagaev, это Арби, создатель бота
     - archel_the_true, он же Евгений, позывной Аркел, любит стримить игры
+    - walkmantm, он же Кирилл, любит твою маму
     """
 
 UPDATED_REPORT_PROMPT = """
