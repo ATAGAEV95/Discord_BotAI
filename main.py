@@ -125,7 +125,7 @@ async def on_message(message):
 
             server = message.guild
             members = server.members
-            all_server_users = [f"{member.name}" for member in members]
+            all_server_users = [f"{member.name}" for member in members if not member.bot]
 
             await llama_manager.index_server_users(server_id, all_server_users)
 
