@@ -5,8 +5,8 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.services.llama_integration import LlamaIndexManager
-from app.tools.prompt import SYSTEM_BIRTHDAY_PROMPT, SYSTEM_PROMPT
-from app.tools.utils import clean_text, count_tokens, replace_emojis
+from app.tools.prompt import SYSTEM_BIRTHDAY_PROMPT
+from app.tools.utils import clean_text, count_tokens, replace_emojis, user_prompt
 
 load_dotenv()
 llama_manager = LlamaIndexManager()
@@ -39,8 +39,8 @@ async def clear_server_history(server_id):
 
 
 async def ai_generate(text: str, server_id: int, name: str):
-    messages = [{"role": "system", "content": SYSTEM_PROMPT.strip()}]
-
+    prompt = user_prompt(f"{name}")
+    messages = [{"role": "system", "content": prompt}]
     relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=8)
 
     if relevant_contexts:
@@ -110,7 +110,7 @@ async def ai_generate_birthday_congrats(display_name, name):
             top_p=0.95,  # Шире выборка слов
             frequency_penalty=0.3,  # Поощряет новые формулировки
             presence_penalty=0.4,  # Поощряет новые темы
-            max_tokens=200,
+            max_tokens=400,
         )
         text = completion.choices[0].message.content.strip()
         text = await clean_text(text)
