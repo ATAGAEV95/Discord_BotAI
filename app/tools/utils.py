@@ -10,14 +10,40 @@ ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 def user_prompt(name: str) -> str:
     if str(name).strip() in P.USER_DESCRIPTIONS:
-        user_info = ("Информация по пользователям с name(они должны совпадать побуквенно, иначе это другой юзер). "
-                     "Но не упоминать об этом постоянно:")
+        user_info = (
+            "Информация по пользователям с name(они должны совпадать побуквенно, иначе это другой юзер). "
+            "Но не упоминать об этом постоянно:"
+        )
         user_info += f"\n- {name}: {P.USER_DESCRIPTIONS[name]}"
         prompt = P.SYSTEM_PROMPT.format(user_info=user_info).strip()
         return prompt
     else:
         cleaned_prompt = re.sub(r"\n\s*5\..*", "", P.SYSTEM_PROMPT.strip())
         return cleaned_prompt
+
+
+def enrich_users_context(contexts: list[str], user_descriptions: dict) -> list[str]:
+    """Обогащает контекст информацией о пользователях из USER_DESCRIPTIONS."""
+    new_contexts = []
+
+    for context in contexts:
+        if context.startswith("Список пользователей сервера:"):
+            users_str = context.replace("Список пользователей сервера:", "").strip()
+            users_list = [user.strip() for user in users_str.split(",")]
+
+            enriched_users = []
+            for user in users_list:
+                if user in user_descriptions:
+                    enriched_users.append(f"{user}: {user_descriptions[user]}")
+                else:
+                    enriched_users.append(user)
+
+            new_context = "Список пользователей сервера: " + "; ".join(enriched_users)
+            new_contexts.append(new_context)
+        else:
+            new_contexts.append(context)
+
+    return new_contexts
 
 
 def contains_only_urls(text):

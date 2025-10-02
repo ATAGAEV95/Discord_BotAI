@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 import app.core.embeds as EM
 from app.core import handlers
+from app.core.handlers import llama_manager
 from app.core.scheduler import start_scheduler
 from app.data.models import init_models
 from app.data.request import get_rang, save_birthday, update_message_count
@@ -112,6 +113,30 @@ async def on_message(message):
             )
         return
 
+    if message.content.startswith("!update_user"):
+        if not message.author.guild_permissions.administrator:
+            await message.channel.send("Эта команда доступна только администраторам.")
+            return
+
+        try:
+            if server_id is None:
+                await message.channel.send("Эта команда доступна только на сервере.")
+                return
+
+            server = message.guild
+            members = server.members
+            all_server_users = [f"{member.name}" for member in members]
+
+            await llama_manager.index_server_users(server_id, all_server_users)
+
+            await message.channel.send(
+                f"✅ Список пользователей сервера обновлен! Добавлено {len(all_server_users)} пользователей."
+            )
+            return
+        except Exception as e:
+            await message.channel.send(f"❌ Ошибка: {e}")
+            return
+
     if message.content.startswith("!add_youtube"):
         if not message.author.guild_permissions.administrator:
             await message.channel.send("Эта команда доступна только администраторам.")
@@ -140,8 +165,8 @@ async def on_message(message):
             await message.channel.send(f"❌ Ошибка: {e}")
         return
 
-    if message.content.startswith("!rang"):
-        if message.content == "!rang list":
+    if message.content.startswith("!rank"):
+        if message.content == "!rank list":
             embed = EM.create_rang_list_embed()
             await message.channel.send(embed=embed)
             return

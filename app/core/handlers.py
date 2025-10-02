@@ -5,8 +5,14 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.services.llama_integration import LlamaIndexManager
-from app.tools.prompt import SYSTEM_BIRTHDAY_PROMPT
-from app.tools.utils import clean_text, count_tokens, replace_emojis, user_prompt
+from app.tools.prompt import SYSTEM_BIRTHDAY_PROMPT, USER_DESCRIPTIONS
+from app.tools.utils import (
+    clean_text,
+    count_tokens,
+    enrich_users_context,
+    replace_emojis,
+    user_prompt,
+)
 
 load_dotenv()
 llama_manager = LlamaIndexManager()
@@ -42,6 +48,7 @@ async def ai_generate(text: str, server_id: int, name: str):
     prompt = user_prompt(f"{name}")
     messages = [{"role": "system", "content": prompt}]
     relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=8)
+    relevant_contexts = enrich_users_context(relevant_contexts, USER_DESCRIPTIONS)
 
     if relevant_contexts:
         context_message = {

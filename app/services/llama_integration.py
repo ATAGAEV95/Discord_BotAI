@@ -79,3 +79,26 @@ class LlamaIndexManager:
         except Exception as e:
             print(f"Ошибка поиска контекста: {e}")
             return []
+
+    async def index_server_users(self, server_id: int, users: list[str]):
+        """Индексировать список пользователей сервера с использованием метаданных"""
+        try:
+            collection = self.get_server_collection(server_id)
+            collection.delete(where={"document_type": "server_users"})
+            users_text = f"Список пользователей сервера: {', '.join(users)}"
+            document = Document(
+                text=users_text, metadata={"document_type": "server_users", "server_id": server_id}
+            )
+
+            vector_store = ChromaVectorStore(chroma_collection=collection)
+            storage_context = StorageContext.from_defaults(vector_store=vector_store)
+
+            index = VectorStoreIndex.from_documents(
+                [document], storage_context=storage_context, show_progress=False
+            )
+
+            print(f"Обновлен список пользователей сервера {server_id}: {len(users)} пользователей")
+            return index
+        except Exception as e:
+            print(f"Ошибка индексации пользователей сервера: {e}")
+            return None
