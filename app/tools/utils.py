@@ -67,7 +67,7 @@ def count_tokens(text):
 
 
 async def clean_text(text):
-    cleaned_text = re.sub(r"(\*\*|\*|__|###|##|#)", "", text)
+    cleaned_text = re.sub(r"(\*\*|\*|###|##|#)", "", text)
     return cleaned_text
 
 
