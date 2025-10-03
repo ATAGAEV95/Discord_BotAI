@@ -114,7 +114,7 @@ async def on_message(message):
         return
 
     if message.content.startswith("!update_user"):
-        if message.author.guild_permissions.administrator or str(f"{message.author}") == 'atagaev':
+        if message.author.guild_permissions.administrator or str(f"{message.author}") == "atagaev":
             try:
                 if server_id is None:
                     await message.channel.send("Эта команда доступна только на сервере.")
@@ -137,10 +137,11 @@ async def on_message(message):
             await message.channel.send("Эта команда доступна только администраторам.")
             return
 
-
-
     if message.content.startswith("!add_youtube"):
-        if not message.author.guild_permissions.administrator or f"{message.author}" == 'king_atagaev':
+        if (
+            not message.author.guild_permissions.administrator
+            or f"{message.author}" == "king_atagaev"
+        ):
             await message.channel.send("Эта команда доступна только администраторам.")
             return
 

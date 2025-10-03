@@ -47,10 +47,12 @@ class LlamaIndexManager:
             for msg in messages:
                 if msg.get("role") in ["user", "assistant"]:
                     content = f"{msg['role']}: {msg['content']}"
-                    documents.append(Document(
-                        text=content,
-                        metadata={"document_type": "message", "server_id": server_id}
-                    ))
+                    documents.append(
+                        Document(
+                            text=content,
+                            metadata={"document_type": "message", "server_id": server_id},
+                        )
+                    )
 
             if not documents:
                 return
