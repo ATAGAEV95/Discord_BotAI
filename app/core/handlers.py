@@ -36,12 +36,23 @@ async def clear_server_history(server_id):
         collection = llama_manager.get_server_collection(server_id)
         results = collection.get()
         if results and "ids" in results and results["ids"]:
-            collection.delete(ids=results["ids"])
-            return f"Удалено {len(results['ids'])} документов из индекса сервера {server_id}"
+            ids_to_delete = []
+            metadatas = results.get("metadatas", [])
+
+            for i, metadata in enumerate(metadatas):
+                if metadata.get("document_type") != "server_users":
+                    ids_to_delete.append(results["ids"][i])
+
+            if ids_to_delete:
+                collection.delete(ids=ids_to_delete)
+                return f"Удалено {len(ids_to_delete)} документов из индекса сервера {server_id}"
+            else:
+                return f"В индексе сервера {server_id} нет документов для удаления (кроме списка пользователей)"
         else:
             return f"Индекс сервера {server_id} уже пуст"
     except Exception as e:
         print(f"Ошибка очистки индекса LlamaIndex: {e}")
+        return f"Произошла ошибка при очистке индекса: {e}"
 
 
 async def ai_generate(text: str, server_id: int, name: str):
