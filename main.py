@@ -114,31 +114,33 @@ async def on_message(message):
         return
 
     if message.content.startswith("!update_user"):
-        if not message.author.guild_permissions.administrator:
+        if message.author.guild_permissions.administrator or str(f"{message.author}") == 'atagaev':
+            try:
+                if server_id is None:
+                    await message.channel.send("Эта команда доступна только на сервере.")
+                    return
+
+                server = message.guild
+                members = server.members
+                all_server_users = [f"{member.name}" for member in members if not member.bot]
+
+                await llama_manager.index_server_users(server_id, all_server_users)
+
+                await message.channel.send(
+                    f"✅ Список пользователей сервера обновлен! Добавлено {len(all_server_users)} пользователей."
+                )
+                return
+            except Exception as e:
+                await message.channel.send(f"❌ Ошибка: {e}")
+                return
+        else:
             await message.channel.send("Эта команда доступна только администраторам.")
             return
 
-        try:
-            if server_id is None:
-                await message.channel.send("Эта команда доступна только на сервере.")
-                return
 
-            server = message.guild
-            members = server.members
-            all_server_users = [f"{member.name}" for member in members if not member.bot]
-
-            await llama_manager.index_server_users(server_id, all_server_users)
-
-            await message.channel.send(
-                f"✅ Список пользователей сервера обновлен! Добавлено {len(all_server_users)} пользователей."
-            )
-            return
-        except Exception as e:
-            await message.channel.send(f"❌ Ошибка: {e}")
-            return
 
     if message.content.startswith("!add_youtube"):
-        if not message.author.guild_permissions.administrator:
+        if not message.author.guild_permissions.administrator or f"{message.author}" == 'king_atagaev':
             await message.channel.send("Эта команда доступна только администраторам.")
             return
 
