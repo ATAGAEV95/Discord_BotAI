@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Any
 
@@ -25,7 +26,7 @@ class LlamaIndexManager:
             model="text-embedding-3-large",
         )
 
-        self.node_parser = SimpleNodeParser.from_defaults(chunk_size=512)
+        self.node_parser = SimpleNodeParser.from_defaults(chunk_size=128, chunk_overlap=16)
         self.db = chromadb.PersistentClient(path="./chroma_db")
 
         Settings.embed_model = self.embed_model
@@ -55,14 +56,17 @@ class LlamaIndexManager:
                     )
 
             if not documents:
-                return
+                return None
 
             collection = self.get_server_collection(server_id)
             vector_store = ChromaVectorStore(chroma_collection=collection)
             storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-            index = VectorStoreIndex.from_documents(
-                documents, storage_context=storage_context, show_progress=False
+            index = await asyncio.to_thread(
+                VectorStoreIndex.from_documents,
+                documents,
+                storage_context=storage_context,
+                show_progress=False,
             )
             return index
         except Exception as e:
@@ -74,10 +78,10 @@ class LlamaIndexManager:
         try:
             collection = self.get_server_collection(server_id)
             vector_store = ChromaVectorStore(chroma_collection=collection)
-            index = VectorStoreIndex.from_vector_store(vector_store)
+            index = await asyncio.to_thread(VectorStoreIndex.from_vector_store, vector_store)
 
             retriever = index.as_retriever(similarity_top_k=limit)
-            nodes = retriever.retrieve(query)
+            nodes = await asyncio.to_thread(retriever.retrieve, query)
 
             relevant_contexts = [node.text for node in nodes]
             return relevant_contexts
@@ -89,7 +93,7 @@ class LlamaIndexManager:
         """Индексировать список пользователей сервера с использованием метаданных"""
         try:
             collection = self.get_server_collection(server_id)
-            collection.delete(where={"document_type": "server_users"})
+            await asyncio.to_thread(collection.delete, where={"document_type": "server_users"})
             users_text = f"Список пользователей сервера: {', '.join(users)}"
             document = Document(
                 text=users_text, metadata={"document_type": "server_users", "server_id": server_id}
@@ -98,8 +102,11 @@ class LlamaIndexManager:
             vector_store = ChromaVectorStore(chroma_collection=collection)
             storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-            index = VectorStoreIndex.from_documents(
-                [document], storage_context=storage_context, show_progress=False
+            index = await asyncio.to_thread(
+                VectorStoreIndex.from_documents,
+                [document],
+                storage_context=storage_context,
+                show_progress=False,
             )
 
             print(f"Обновлен список пользователей сервера {server_id}: {len(users)} пользователей")
