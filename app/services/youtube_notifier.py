@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
@@ -95,7 +95,7 @@ class YouTubeNotifier:
                                     )
                                     message = (
                                         f"📅 **Запланирован стрим на канале [{channel.name}](https://www.youtube.com/channel/{channel.channel_id})!**\n"
-                                        f"⏰ Начало: {scheduled_dt.strftime('%d.%m.%Y в %H:%M UTC')}\n"
+                                        f"⏰ Начало: {(scheduled_dt + timedelta(hours=3)).strftime('%d.%m.%Y в %H:%M')} MSK\n"
                                         f"https://www.youtube.com/watch?v={video_id}"
                                     )
                                 else:
