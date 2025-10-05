@@ -86,10 +86,10 @@ async def ai_generate(text: str, server_id: int, name: str):
         completion = await client.chat.completions.create(
             model="gpt-5-chat",
             messages=openai_messages,
-            temperature=1,
-            top_p=0.95,
-            frequency_penalty=0.3,
-            presence_penalty=0.4,
+            temperature=0.8,
+            top_p=0.8,
+            frequency_penalty=0.1,
+            presence_penalty=0.2,
             max_tokens=3500,
         )
 
@@ -124,10 +124,10 @@ async def ai_generate_birthday_congrats(display_name, name):
         completion = await client.chat.completions.create(
             model="gpt-5-chat",
             messages=prompt,
-            temperature=0.85,  # Оптимальный баланс креативности/когерентности
-            top_p=0.95,  # Шире выборка слов
-            frequency_penalty=0.3,  # Поощряет новые формулировки
-            presence_penalty=0.4,  # Поощряет новые темы
+            temperature=0.8,  # Оптимальный баланс креативности/когерентности
+            top_p=0.8,  # Шире выборка слов
+            frequency_penalty=0.1,  # Поощряет новые формулировки
+            presence_penalty=0.2,  # Поощряет новые темы
             max_tokens=400,
         )
         text = completion.choices[0].message.content.strip()
