@@ -1,5 +1,4 @@
 import os
-
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -24,10 +23,125 @@ intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 report_generator: ReportGenerator | None = None
 weather_agent = WeatherAgent()
 youtube_notifier = YouTubeNotifier(bot)
+
+
+@bot.command(name="help")
+async def help_command(ctx):
+    """Показать список команд"""
+    embed = EM.create_help_embed()
+    await ctx.send(embed=embed)
+
+
+@bot.command(name="rank")
+async def rank_command(ctx, arg: str = None):
+    """Показать ранг пользователя или список рангов"""
+    if arg == "list":
+        embed = EM.create_rang_list_embed()
+        await ctx.send(embed=embed)
+        return
+
+    try:
+        server_id = ctx.guild.id if ctx.guild else None
+        message_count = await get_rang(ctx.author.id, server_id)
+        rank_description = get_rank_description(int(message_count))
+
+        avatar_url = (
+            ctx.author.avatar.url
+            if ctx.author.avatar
+            else ctx.author.default_avatar.url
+        )
+
+        embed, file = await EM.create_rang_embed(
+            ctx.author.display_name,
+            message_count,
+            rank_description["description"],
+            avatar_url,
+            server_id,
+            ctx.author.id,
+        )
+        await ctx.send(embed=embed, file=file)
+    except ValueError as ve:
+        await ctx.send(str(ve))
+    except Exception as e:
+        await ctx.send(f"Произошла ошибка при получении статистики: {e}")
+
+
+@bot.command(name="birthday")
+async def birthday_command(ctx, *, date: str):
+    """Сохранить дату рождения"""
+    try:
+        await save_birthday(
+            f"!birthday {date}",
+            ctx.author.display_name,
+            ctx.author.name,
+            ctx.author.id,
+        )
+        await ctx.send("Дата рождения сохранена.")
+    except ValueError as ve:
+        await ctx.send(str(ve))
+    except Exception as e:
+        await ctx.send(f"Произошла ошибка при сохранении даты рождения: {e}")
+
+
+@bot.command(name="reset")
+@commands.guild_only()
+async def reset_command(ctx):
+    """Очистить историю сервера (только для администраторов)"""
+    answer = await handlers.clear_server_history(ctx.guild.id)
+    await ctx.send(answer)
+
+
+@bot.command(name="update_user")
+@commands.guild_only()
+@commands.has_permissions(administrator=True)
+async def update_user_command(ctx):
+    """Обновить список пользователей сервера (только для администраторов)"""
+    try:
+        server = ctx.guild
+        members = server.members
+        all_server_users = [f"{member.name}" for member in members if not member.bot]
+
+        await llama_manager.index_server_users(server.id, all_server_users)
+
+        await ctx.send(
+            f"✅ Список пользователей сервера обновлен! Добавлено {len(all_server_users)} пользователей."
+        )
+    except Exception as e:
+        await ctx.send(f"❌ Ошибка: {e}")
+
+
+@bot.command(name="add_youtube")
+@commands.guild_only()
+@commands.has_permissions(administrator=True)
+async def add_youtube_command(ctx, youtube_id: str, discord_channel_id: int, *, name: str):
+    """Добавить YouTube канал для отслеживания"""
+    try:
+        success = await youtube_notifier.add_channel(
+            youtube_id, discord_channel_id, name, ctx.guild.id
+        )
+        if success:
+            await ctx.send("✅ Канал добавлен для отслеживания")
+        else:
+            await ctx.send("❌ Ошибка при добавлении канала")
+    except Exception as e:
+        await ctx.send(f"❌ Ошибка: {e}")
+
+
+@bot.command(name="weather")
+async def weather_command(ctx, *, location: str):
+    """Получить погоду для указанного места"""
+    flag = "завтра" in location.lower()
+    is_weather, city = await weather_agent.should_handle_weather(location)
+
+    if is_weather and city:
+        weather_info = weather_agent.get_weather(city, flag)
+        await ctx.send(weather_info)
+    else:
+        await ctx.send("Не удалось определить местоположение для прогноза погоды")
 
 
 @bot.event
@@ -53,6 +167,25 @@ async def on_resumed():
     await telegram_notifier.send_message(
         "✅ <b>Discord бот восстановил соединение</b>\nРабота продолжается"
     )
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    """Обработка ошибок команд"""
+    if isinstance(error, commands.CommandNotFound):
+        server_id = ctx.guild.id if ctx.guild else None
+        response = await handlers.ai_generate(ctx.message.content, server_id, ctx.author)
+        await ctx.send(f"{ctx.author.mention} {response}")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ У вас недостаточно прав для выполнения этой команды.")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(
+            f"❌ Неправильное использование команды. Используйте: `!{ctx.command.name} {ctx.command.signature}`")
+    elif isinstance(error, commands.NoPrivateMessage):
+        await ctx.send("❌ Эта команда недоступна в личных сообщениях.")
+    else:
+        await ctx.send("❌ Произошла ошибка при выполнении команды.")
+        print(f"Command error: {error}")
 
 
 @bot.event
@@ -113,141 +246,7 @@ async def on_message(message):
             )
         return
 
-    if message.content.startswith("!update_user"):
-        if message.author.guild_permissions.administrator or str(f"{message.author}") == "atagaev":
-            try:
-                if server_id is None:
-                    await message.channel.send("Эта команда доступна только на сервере.")
-                    return
-
-                server = message.guild
-                members = server.members
-                all_server_users = [f"{member.name}" for member in members if not member.bot]
-
-                await llama_manager.index_server_users(server_id, all_server_users)
-
-                await message.channel.send(
-                    f"✅ Список пользователей сервера обновлен! Добавлено {len(all_server_users)} пользователей."
-                )
-                return
-            except Exception as e:
-                await message.channel.send(f"❌ Ошибка: {e}")
-                return
-        else:
-            await message.channel.send("Эта команда доступна только администраторам.")
-            return
-
-    if message.content.startswith("!add_youtube"):
-        if (
-            not message.author.guild_permissions.administrator
-            or f"{message.author}" == "king_atagaev"
-        ):
-            await message.channel.send("Эта команда доступна только администраторам.")
-            return
-
-        try:
-            args = message.content.split()
-            if len(args) < 4:
-                await message.channel.send(
-                    "Использование: !add_youtube <youtube_channel_id> <discord_channel_id> <название_канала>"
-                )
-                return
-
-            youtube_id = args[1]
-            discord_channel_id = int(args[2])
-            name = " ".join(args[3:])
-
-            success = await youtube_notifier.add_channel(
-                youtube_id, discord_channel_id, name, server_id
-            )
-            if success:
-                await message.channel.send("✅ Канал добавлен для отслеживания")
-            else:
-                await message.channel.send("❌ Ошибка при добавлении канала")
-        except Exception as e:
-            await message.channel.send(f"❌ Ошибка: {e}")
-        return
-
-    if message.content.startswith("!rank"):
-        if message.content == "!rank list":
-            embed = EM.create_rang_list_embed()
-            await message.channel.send(embed=embed)
-            return
-
-        try:
-            result = await get_rang(message.author.id, server_id)
-            rank_description = get_rank_description(int(result))
-            message_count = await get_rang(message.author.id, server_id)
-
-            avatar_url = (
-                message.author.avatar.url
-                if message.author.avatar
-                else message.author.default_avatar.url
-            )
-
-            embed, file = await EM.create_rang_embed(
-                message.author.display_name,
-                message_count,
-                rank_description["description"],
-                avatar_url,
-                server_id,
-                message.author.id,
-            )
-            await message.channel.send(embed=embed, file=file)
-        except ValueError as ve:
-            await message.channel.send(str(ve))
-        except Exception as e:
-            await message.channel.send(f"Произошла ошибка при получении статистики: {e}")
-        return
-
-    if message.content.startswith("!birthday"):
-        try:
-            await save_birthday(
-                message.content,
-                message.author.display_name,
-                message.author.name,
-                message.author.id,
-            )
-            await message.channel.send("Дата рождения сохранена.")
-        except ValueError as ve:
-            await message.channel.send(str(ve))
-        except Exception as e:
-            await message.channel.send(f"Произошла ошибка при сохранении даты рождения: {e}")
-        return
-
-    if message.content.startswith("!reset"):
-        if server_id is None:
-            await message.channel.send("Эта команда доступна только на сервере.")
-            return
-
-        answer = await handlers.clear_server_history(server_id)
-        await message.channel.send(answer)
-        return
-
-    if message.content.startswith("!help"):
-        embed = EM.create_help_embed()
-        await message.channel.send(embed=embed)
-        return
-
-    if server_id is None:
-        await message.channel.send("Бот работает только на серверах.")
-        return
-
-    if "погода" in message.content.lower() and len(message.content.split()) > 1:
-        flag = "завтра" in message.content.lower()
-        is_weather, city = await weather_agent.should_handle_weather(message.content)
-
-        if is_weather:
-            if city:
-                weather_info = weather_agent.get_weather(city, flag)
-                await message.channel.send(weather_info)
-            else:
-                response = await handlers.ai_generate(message.content, server_id, message.author)
-                await message.channel.send(f"{message.author.mention} {response}")
-            return
-
-    response = await handlers.ai_generate(message.content, server_id, message.author)
-    await message.channel.send(f"{message.author.mention} {response}")
+    await bot.process_commands(message)
 
 
 bot.run(TOKEN)
