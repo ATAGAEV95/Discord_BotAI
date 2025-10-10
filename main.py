@@ -1,4 +1,5 @@
 import os
+
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ from app.core import handlers
 from app.core.handlers import llama_manager
 from app.core.scheduler import start_scheduler
 from app.data.models import init_models
-from app.data.request import get_rang, save_birthday, update_message_count
+from app.data.request import get_rank, save_birthday, update_message_count
 from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
 from app.services.weather_agent import WeatherAgent
@@ -50,14 +51,10 @@ async def rank_command(ctx, arg: str = None):
 
     try:
         server_id = ctx.guild.id if ctx.guild else None
-        message_count = await get_rang(ctx.author.id, server_id)
+        message_count = await get_rank(ctx.author.id, server_id)
         rank_description = get_rank_description(int(message_count))
 
-        avatar_url = (
-            ctx.author.avatar.url
-            if ctx.author.avatar
-            else ctx.author.default_avatar.url
-        )
+        avatar_url = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
 
         embed, file = await EM.create_rang_embed(
             ctx.author.display_name,
@@ -80,6 +77,7 @@ async def birthday_command(ctx, *, date: str):
 
     Args:
         date: Дата рождения в формате строки
+
     """
     try:
         await save_birthday(
@@ -132,6 +130,7 @@ async def add_youtube_command(ctx, youtube_id: str, discord_channel_id: int, *, 
         youtube_id: ID YouTube канала
         discord_channel_id: ID Discord канала для уведомлений
         name: Название канала
+
     """
     try:
         channel = bot.get_channel(discord_channel_id)
@@ -156,6 +155,7 @@ async def weather_command(ctx, *, location: str):
 
     Args:
         location: Местоположение с возможным флагом "завтра"
+
     """
     flag = "завтра" in location.lower()
     is_weather, city = await weather_agent.should_handle_weather(location)
@@ -202,7 +202,10 @@ async def on_command_error(ctx, error):
     Args:
         ctx: Контекст команды
         error: Возникшая ошибка
+
     """
+    original_error = getattr(error, "original", error)
+
     if isinstance(error, commands.CommandNotFound):
         server_id = ctx.guild.id if ctx.guild else None
         response = await handlers.ai_generate(ctx.message.content, server_id, ctx.author)
@@ -211,9 +214,15 @@ async def on_command_error(ctx, error):
         await ctx.send("❌ У вас недостаточно прав для выполнения этой команды.")
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(
-            f"❌ Неправильное использование команды. Используйте: `!{ctx.command.name} {ctx.command.signature}`")
+            f"❌ Неправильное использование команды. Используйте: `!{ctx.command.name} {ctx.command.signature}`"
+        )
     elif isinstance(error, commands.NoPrivateMessage):
         await ctx.send("❌ Эта команда недоступна в личных сообщениях.")
+    elif isinstance(original_error, (ConnectionError, TimeoutError)):
+        await ctx.send("❌ Проблема с сетью. Попробуйте позже.")
+        await telegram_notifier.send_message(
+            f"⚠️ <b>Сетевая ошибка</b>\nОшибка в команде `{ctx.command.name}`: {original_error}"
+        )
     else:
         await ctx.send("❌ Произошла ошибка при выполнении команды.")
         print(f"Command error: {error}")
@@ -224,7 +233,8 @@ async def on_message(message):
     """Обработка входящих сообщений
 
     Args:
-        message: Объект сообщения Discord
+        message: Объект сообщения Discord.
+
     """
     global report_generator
     server_id = message.guild.id if message.guild else None

@@ -178,7 +178,7 @@ async def update_message_count(user_id: int, name: str, guild_id: int):
         raise Exception(f"Ошибка при сохранении статистики сообщений: {e}")
 
 
-async def get_rang(user_id: int, guild_id: int) -> int:
+async def get_rank(user_id: int, guild_id: int) -> int:
     """Получает количество сообщений пользователя на сервере."""
     async with async_session() as session:
         try:
