@@ -134,6 +134,11 @@ async def add_youtube_command(ctx, youtube_id: str, discord_channel_id: int, *, 
         name: Название канала
     """
     try:
+        channel = bot.get_channel(discord_channel_id)
+        if channel is None:
+            await ctx.send("❌ Канал не найден!")
+            return
+
         success = await youtube_notifier.add_channel(
             youtube_id, discord_channel_id, name, ctx.guild.id
         )
