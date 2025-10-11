@@ -119,6 +119,8 @@ class YouTubeNotifier:
 
         except HttpError as e:
             print(f"YouTube API error: {e}")
+        except (ConnectionResetError, BrokenPipeError, OSError) as e:
+            print(f"Ошибка отправки сообщения в канал {channel.name}: {e}")
         except Exception as e:
             print(f"Ошибка при обработке канала {channel.name}: {e}")
 
