@@ -56,8 +56,7 @@ async def clear_server_history(server_id):
 
 
 async def ai_generate(text: str, server_id: int, name: str):
-    prompt = user_prompt(f"{name}")
-    messages = [{"role": "system", "content": prompt}]
+    messages = [{"role": "system", "content": user_prompt(f"{name}")}]
     relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=16)
     relevant_contexts = enrich_users_context(relevant_contexts, USER_DESCRIPTIONS)
 
