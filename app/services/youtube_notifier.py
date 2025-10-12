@@ -76,10 +76,6 @@ class YouTubeNotifier:
                             )
                         await discord_channel.send(message)
 
-                channel_query = select(YouTubeChannel).where(YouTubeChannel.id == channel.id)
-                channel_result = await session.execute(channel_query)
-                channel_to_update = channel_result.scalar_one()
-                channel_to_update.last_checked = datetime.now()
                 await session.commit()
 
         except Exception as e:
