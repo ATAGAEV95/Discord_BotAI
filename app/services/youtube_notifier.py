@@ -32,19 +32,20 @@ class YouTubeNotifier:
             feed = await asyncio.to_thread(feedparser.parse, url)
 
             if feed.status != 200 or not feed.entries:
-                print(f"❌ Неверный или недоступный канал: {channel.name} (ID: {channel.channel_id})")
+                print(
+                    f"❌ Неверный или недоступный канал: {channel.name} (ID: {channel.channel_id})"
+                )
                 print(f"HTTP статус: {feed.status}")
                 return
 
             latest_video = feed.entries[0]
-            video_id = latest_video.get('yt_videoid')
-            author = latest_video.get('author')
+            video_id = latest_video.get("yt_videoid")
+            author = latest_video.get("author")
             published_at = datetime.now()
 
             async with async_session() as session:
                 video_query = select(YouTubeVideo).where(
-                    YouTubeVideo.video_id == video_id,
-                    YouTubeVideo.guild_id == channel.guild_id
+                    YouTubeVideo.video_id == video_id, YouTubeVideo.guild_id == channel.guild_id
                 )
                 video_result = await session.execute(video_query)
                 existing_video = video_result.scalar_one_or_none()
