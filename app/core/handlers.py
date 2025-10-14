@@ -33,7 +33,8 @@ client = AsyncOpenAI(
 
 async def clear_server_history(server_id):
     """Очищает историю сообщений сервера в индексе LlamaIndex,
-    оставляя только документы типа 'server_users'."""
+    оставляя только документы типа 'server_users'.
+    """
     try:
         collection = llama_manager.get_server_collection(server_id)
         results = collection.get()
