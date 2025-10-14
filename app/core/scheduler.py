@@ -14,6 +14,7 @@ DB_TIMEOUT = 10
 
 
 async def get_today_birthday_users(timezone="Europe/Moscow"):
+    """Получает список пользователей, у которых сегодня день рождения."""
     today = datetime.now(pytz.timezone(timezone)).date()
     async with async_session() as session:
         try:
@@ -35,6 +36,7 @@ async def get_today_birthday_users(timezone="Europe/Moscow"):
 
 
 async def send_birthday_congratulations(bot: discord.Client):
+    """Отправляет поздравления пользователям, у которых сегодня день рождения."""
     try:
         users = await get_today_birthday_users()
         if not users:
@@ -60,6 +62,12 @@ async def send_birthday_congratulations(bot: discord.Client):
 
 
 def start_scheduler(bot: discord.Client):
+    """Инициализирует и запускает асинхронный планировщик задач.
+
+    Добавляет задачи на регулярное выполнение:
+    - Отправка поздравлений с днём рождения в 9:00 по Москве.
+    - Проверка новых видео на YouTube раз в час.
+    """
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
     # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов

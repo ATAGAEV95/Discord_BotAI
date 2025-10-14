@@ -55,7 +55,19 @@ async def create_rang_embed(
     server_id: int,
     user_id: int,
 ):
-    """Создает embed для команды !rang с цветом и фоном в зависимости от ранга"""
+    """Создает embed для команды !rang с цветом и фоном в зависимости от ранга
+
+    Args:
+        display_name: Имя пользователя
+        message_count: Количество сообщений пользователя
+        rang_description: Описание текущего ранга
+        avatar_url: URL аватара пользователя
+        server_id: ID сервера
+        user_id: ID пользователя
+
+    Returns:
+        Tuple[discord.Embed, discord.File]: Объект embed и файл изображения с рангом
+    """
     rank = get_rank_description(message_count)
 
     progress_bar = f"{message_count}/{rank['next_threshold']}"
@@ -165,6 +177,22 @@ def create_image_with_text(
     bg_filename="rang0.jpg",
     avatar_img=None,  # Уже загруженное изображение
 ):
+    """Создает изображение с текстом и аватаром пользователя
+
+    Args:
+        display_name: Имя пользователя
+        rang_description: Описание ранга
+        progress_bar: Прогресс до следующего уровня
+        exp_title: Заголовок прогресса
+        server_rank: Ранг на сервере
+        rank_level: Уровень ранга
+        text_color: Цвет текста
+        bg_filename: Имя файла фона
+        avatar_img: Изображение аватара (если доступно)
+
+    Returns:
+        io.BytesIO: Буфер с готовым изображением в формате PNG
+    """
     # Загрузка фонового изображения
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
     background = background.resize((1920, 480))
@@ -240,7 +268,14 @@ def create_image_with_text(
         )
 
     def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gapp=10):
-        """Отрисовка блока текста с вертикальным выравниванием по центру"""
+        """Отрисовка блока текста с вертикальным выравниванием по центру
+
+        Args:
+            texts_fonts_colors: Список кортежей (текст, шрифт, цвет)
+            center_x: Горизонтальная координата центра
+            center_y: Вертикальная координата центра
+            gapp: Расстояние между строками
+        """
         heights = []
         for text, font, _ in texts_fonts_colors:
             bbox = draw.textbbox((0, 0), text, font=font)
