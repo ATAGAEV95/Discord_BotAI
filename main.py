@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-import app.core.embeds as EM
+import app.core.embeds as em
 from app.core import handlers
 from app.core.handlers import llama_manager
 from app.core.scheduler import start_scheduler
@@ -33,7 +33,7 @@ youtube_notifier = YouTubeNotifier(bot)
 @bot.command(name="help")
 async def help_command(ctx):
     """Показать список команд"""
-    embed = EM.create_help_embed()
+    embed = em.create_help_embed()
     await ctx.send(embed=embed)
 
 
@@ -45,7 +45,7 @@ async def rank_command(ctx, arg: str = None):
     В противном случае показывает текущий ранг автора сообщения.
     """
     if arg == "list":
-        embed = EM.create_rang_list_embed()
+        embed = em.create_rang_list_embed()
         await ctx.send(embed=embed)
         return
 
@@ -56,7 +56,7 @@ async def rank_command(ctx, arg: str = None):
 
         avatar_url = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
 
-        embed, file = await EM.create_rang_embed(
+        embed, file = await em.create_rang_embed(
             ctx.author.display_name,
             message_count,
             rank_description["description"],
@@ -233,7 +233,7 @@ async def on_message(message):
                     else message.author.default_avatar.url
                 )
 
-                embed, file = await EM.create_rang_embed(
+                embed, file = await em.create_rang_embed(
                     message.author.display_name,
                     rank_info["message_count"],
                     new_rank_description["description"],
