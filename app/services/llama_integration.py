@@ -14,6 +14,8 @@ load_dotenv()
 
 
 class LlamaIndexManager:
+    """Управляет интеграцией с LlamaIndex и ChromaDB для построения векторных индексов сообщений Discord-сервера."""
+
     def __init__(self):
         self.custom_client = AsyncOpenAI(
             api_key=os.getenv("AI_TOKEN1"),

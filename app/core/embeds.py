@@ -11,7 +11,7 @@ from app.tools.utils import darken_color, get_rank_description
 
 
 def create_help_embed():
-    """Создает embed для команды !help"""
+    """Создает embed для команды !help."""
     embed = discord.Embed(
         title="📋 Справка по командам бота",
         color=discord.Color.blue(),
@@ -55,19 +55,7 @@ async def create_rang_embed(
     server_id: int,
     user_id: int,
 ):
-    """Создает embed для команды !rang с цветом и фоном в зависимости от ранга
-
-    Args:
-        display_name: Имя пользователя
-        message_count: Количество сообщений пользователя
-        rang_description: Описание текущего ранга
-        avatar_url: URL аватара пользователя
-        server_id: ID сервера
-        user_id: ID пользователя
-
-    Returns:
-        Tuple[discord.Embed, discord.File]: Объект embed и файл изображения с рангом
-    """
+    """Создает embed для команды !rang с цветом и фоном в зависимости от ранга."""
     rank = get_rank_description(message_count)
 
     progress_bar = f"{message_count}/{rank['next_threshold']}"
@@ -95,7 +83,7 @@ async def create_rang_embed(
 
 
 async def download_avatar_async(avatar_url: str) -> Image.Image | None:
-    """Асинхронная загрузка аватара пользователя"""
+    """Асинхронная загрузка аватара пользователя."""
     if not avatar_url:
         return None
 
@@ -124,10 +112,9 @@ async def create_image_with_text_async(
     bg_filename="rang0.jpg",
     avatar_url=None,
 ):
-    # Асинхронно загружаем аватар
+    """Асинхронно создает изображение с текстом и аватаром пользователя."""
     avatar_img = await download_avatar_async(avatar_url)
 
-    # Остальную работу с PIL выполняем в отдельном потоке
     return await asyncio.to_thread(
         create_image_with_text,
         display_name,
@@ -143,7 +130,7 @@ async def create_image_with_text_async(
 
 
 def create_rang_list_embed():
-    """Создает embed для команды !rang list"""
+    """Создает embed для команды !rang list."""
     embed = discord.Embed(
         title="🎖️ Система рангов",
         color=discord.Color.blurple(),
@@ -177,23 +164,7 @@ def create_image_with_text(
     bg_filename="rang0.jpg",
     avatar_img=None,  # Уже загруженное изображение
 ):
-    """Создает изображение с текстом и аватаром пользователя
-
-    Args:
-        display_name: Имя пользователя
-        rang_description: Описание ранга
-        progress_bar: Прогресс до следующего уровня
-        exp_title: Заголовок прогресса
-        server_rank: Ранг на сервере
-        rank_level: Уровень ранга
-        text_color: Цвет текста
-        bg_filename: Имя файла фона
-        avatar_img: Изображение аватара (если доступно)
-
-    Returns:
-        io.BytesIO: Буфер с готовым изображением в формате PNG
-    """
-    # Загрузка фонового изображения
+    """Создает изображение с текстом и аватаром пользователя."""
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
     background = background.resize((1920, 480))
 
@@ -268,14 +239,7 @@ def create_image_with_text(
         )
 
     def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gapp=10):
-        """Отрисовка блока текста с вертикальным выравниванием по центру
-
-        Args:
-            texts_fonts_colors: Список кортежей (текст, шрифт, цвет)
-            center_x: Горизонтальная координата центра
-            center_y: Вертикальная координата центра
-            gapp: Расстояние между строками
-        """
+        """Отрисовка блока текста с вертикальным выравниванием по центру."""
         heights = []
         for text, font, _ in texts_fonts_colors:
             bbox = draw.textbbox((0, 0), text, font=font)

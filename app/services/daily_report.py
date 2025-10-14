@@ -26,15 +26,9 @@ report_client = AsyncOpenAI(
 
 class ReportGenerator:
     """Класс ReportGenerator используется для накопления сообщений в Discord-канале и автоматической отправки
-    отчета о содержимом канала после 60 минут без активности, при достижении порогового количества сообщений.
-    """
+    отчета о содержимом канала после 60 минут без активности, при достижении порогового количества сообщений."""
 
     def __init__(self, bot):
-        """Инициализация экземпляра ReportGenerator.
-
-        Аргументы:
-          bot (DiscordBot): Объект бота для доступа к Discord API.
-        """
         self.bot = bot
         self.channel_data = {}
         self.locks = {}
@@ -46,17 +40,7 @@ class ReportGenerator:
 
     async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
         """Добавляет сообщение в историю канала и обновляет время последней активности.
-        При достижении или превышении количества 15 сообщений запускается задача на отправку отчета через 60 минут.
-
-        Аргументы:
-          channel_id (int): ID Discord канала.
-          message (str): Текст сообщения.
-          author (str): Имя или идентификатор автора.
-          message_id (int): ID сообщения в Discord.
-
-        Возвращает:
-          None
-        """
+        При достижении или превышении количества 15 сообщений запускается задача на отправку отчета через 60 минут."""
         lock = self.get_lock(channel_id)
         async with lock:
             try:
@@ -101,14 +85,7 @@ class ReportGenerator:
 
     async def start_report_timer(self, channel_id: int):
         """Запускает задачу, которая ожидает 60 минут. Если после последнего сообщения прошло
-        не менее 60 минут без активности, то генерируется и отправляется аналитический отчет.
-
-        Аргументы:
-          channel_id (int): ID Discord канала.
-
-        Возвращает:
-          None
-        """
+        не менее 60 минут без активности, то генерируется и отправляется аналитический отчет."""
         await asyncio.sleep(3600)
         lock = self.get_lock(channel_id)
         async with lock:
@@ -123,14 +100,7 @@ class ReportGenerator:
 
     async def generate_and_send_report(self, channel_id: int):
         """Генерирует аналитический отчет на основе накопленных сообщений с использованием GPT-модели
-        и отправляет его в канал.
-
-        Аргументы:
-          channel_id (int): ID Discord канала.
-
-        Возвращает:
-          None
-        """
+        и отправляет его в канал."""
         lock = self.get_lock(channel_id)
         async with lock:
             try:

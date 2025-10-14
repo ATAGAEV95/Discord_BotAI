@@ -58,16 +58,7 @@ async def clear_server_history(server_id):
 
 
 async def ai_generate(text: str, server_id: int, name: str) -> str:
-    """Генерирует ответ от AI на основе контекста сервера и текущего сообщения пользователя.
-
-    Args:
-        text (str): Текст входного сообщения пользователя.
-        server_id (int): ID сервера для получения контекста.
-        name (str): Имя пользователя.
-
-    Returns:
-        str: Ответ AI после генерации и обработки.
-    """
+    """Генерирует ответ от AI на основе контекста сервера и текущего сообщения пользователя."""
     messages = [{"role": "system", "content": user_prompt(f"{name}")}]
     relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=16)
     relevant_contexts = enrich_users_context(relevant_contexts, USER_DESCRIPTIONS)

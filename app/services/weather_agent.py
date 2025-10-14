@@ -13,6 +13,8 @@ AI_TOKEN1 = os.getenv("AI_TOKEN1")
 
 
 class WeatherAgent:
+    """Класс для работы с погодой: получение текущих данных и прогноза на завтра."""
+
     def __init__(self):
         self.api_key = os.getenv("OPENWEATHERMAP_API_KEY")
         self.client = AsyncOpenAI(

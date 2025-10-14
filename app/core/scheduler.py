@@ -62,12 +62,7 @@ async def send_birthday_congratulations(bot: discord.Client):
 
 
 def start_scheduler(bot: discord.Client):
-    """Инициализирует и запускает асинхронный планировщик задач.
-
-    Добавляет задачи на регулярное выполнение:
-    - Отправка поздравлений с днём рождения в 9:00 по Москве.
-    - Проверка новых видео на YouTube раз в час.
-    """
+    """Инициализирует и запускает асинхронный планировщик задач."""
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
     # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов

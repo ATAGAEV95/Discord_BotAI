@@ -13,11 +13,14 @@ load_dotenv()
 
 
 class YouTubeNotifier:
+    """Класс для отслеживания новых видео и прямых эфиров на YouTube-каналах и уведомления Discord-серверов."""
+
     def __init__(self, bot):
         self.bot = bot
         self.youtube = build("youtube", "v3", developerKey=os.getenv("YOUTUBE_API_KEY"))
 
     async def check_new_videos(self):
+        """Проверяет все отслеживаемые YouTube-каналы на наличие новых видео или стримов."""
         try:
             async with async_session() as session:
                 query = select(YouTubeChannel)
@@ -30,6 +33,7 @@ class YouTubeNotifier:
             print(f"Ошибка при проверке YouTube видео: {e}")
 
     async def _check_channel_videos(self, channel):
+        """Проверяет конкретный YouTube-канал на наличие новых видео или стримов."""
         try:
             req = self.youtube.search().list(
                 channelId=channel.channel_id,
@@ -125,6 +129,7 @@ class YouTubeNotifier:
             print(f"Ошибка при обработке канала {channel.name}: {e}")
 
     async def add_channel(self, youtube_channel_id, discord_channel_id, name, guild_id):
+        """Добавляет новый YouTube-канал для отслеживания."""
         try:
             async with async_session() as session:
                 query = select(YouTubeChannel).where(

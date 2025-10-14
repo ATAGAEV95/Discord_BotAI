@@ -73,12 +73,7 @@ async def rank_command(ctx, arg: str = None):
 
 @bot.command(name="birthday")
 async def birthday_command(ctx, *, date: str):
-    """Сохранить дату рождения
-
-    Args:
-        date: Дата рождения в формате строки
-
-    """
+    """Сохранить дату рождения"""
     try:
         await save_birthday(
             f"!birthday {date}",
@@ -124,14 +119,7 @@ async def update_user_command(ctx):
 @commands.guild_only()
 @commands.has_permissions(administrator=True)
 async def add_youtube_command(ctx, youtube_id: str, discord_channel_id: int, *, name: str):
-    """Добавить YouTube канал для отслеживания
-
-    Args:
-        youtube_id: ID YouTube канала
-        discord_channel_id: ID Discord канала для уведомлений
-        name: Название канала
-
-    """
+    """Добавить YouTube канал для отслеживания."""
     try:
         channel = bot.get_channel(discord_channel_id)
         if channel is None:
@@ -151,12 +139,7 @@ async def add_youtube_command(ctx, youtube_id: str, discord_channel_id: int, *, 
 
 @bot.command(name="weather")
 async def weather_command(ctx, *, location: str):
-    """Получить погоду для указанного места
-
-    Args:
-        location: Местоположение с возможным флагом "завтра"
-
-    """
+    """Получить погоду для указанного места."""
     flag = "завтра" in location.lower()
     is_weather, city = await weather_agent.should_handle_weather(location)
 
@@ -169,7 +152,7 @@ async def weather_command(ctx, *, location: str):
 
 @bot.event
 async def on_ready():
-    """Инициализация при подключении бота к Discord"""
+    """Инициализация при подключении бота к Discord."""
     await init_models()
     global report_generator
     report_generator = ReportGenerator(bot)
@@ -179,7 +162,7 @@ async def on_ready():
 
 @bot.event
 async def on_disconnect():
-    """Обработка отключения от Discord"""
+    """Обработка отключения от Discord."""
     print("Бот отключился от Discord")
     await telegram_notifier.send_message(
         "⚠️ <b>Discord бот отключился</b>\nСоединение с Discord потеряно"
@@ -188,7 +171,7 @@ async def on_disconnect():
 
 @bot.event
 async def on_resumed():
-    """Обработка восстановления соединения с Discord"""
+    """Обработка восстановления соединения с Discord."""
     print("Соединение с Discord восстановлено")
     await telegram_notifier.send_message(
         "✅ <b>Discord бот восстановил соединение</b>\nРабота продолжается"
@@ -197,13 +180,7 @@ async def on_resumed():
 
 @bot.event
 async def on_command_error(ctx, error):
-    """Обработка ошибок команд
-
-    Args:
-        ctx: Контекст команды
-        error: Возникшая ошибка
-
-    """
+    """Обработка ошибок команд."""
     original_error = getattr(error, "original", error)
 
     if isinstance(error, commands.CommandNotFound):
@@ -230,12 +207,7 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_message(message):
-    """Обработка входящих сообщений
-
-    Args:
-        message: Объект сообщения Discord.
-
-    """
+    """Обработка входящих сообщений."""
     global report_generator
     server_id = message.guild.id if message.guild else None
 

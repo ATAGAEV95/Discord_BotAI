@@ -9,6 +9,7 @@ ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
 def user_prompt(name: str) -> str:
+    """Формирует системный промпт для пользователя, если имя совпадает с ключами в P.USER_DESCRIPTIONS."""
     if str(name).strip() in P.USER_DESCRIPTIONS:
         user_info = (
             "Информация по пользователям с name(они должны совпадать побуквенно, иначе это другой юзер). "
@@ -61,12 +62,14 @@ def darken_color(rgb, factor=0.75):
 
 
 def count_tokens(text):
+    """Подсчитывает количество токенов в тексте с использованием кодировки GPT-4o-mini."""
     if not isinstance(text, str):
         text = str(text) if text else ""
     return len(ENCODING.encode(text))
 
 
 async def clean_text(text):
+    """Очищает текст от markdown-стилей: **, *, ###, ##, #."""
     cleaned_text = re.sub(r"(\*\*|\*|###|##|#)", "", text)
     return cleaned_text
 
@@ -79,6 +82,7 @@ async def replace_emojis(text):
 
 
 def get_rank_description(message_count):
+    """Возвращает описание уровня (ранга) пользователя на основе количества сообщений."""
     rank_designs = [
         {  # 0 сообщений
             "color": discord.Color.light_grey(),
