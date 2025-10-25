@@ -170,7 +170,9 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         server_id = ctx.guild.id if ctx.guild else None
         tool_result = await handlers.check_weather_intent(ctx.message.content)
-        response = await handlers.ai_generate(ctx.message.content, server_id, ctx.author, tool_result)
+        response = await handlers.ai_generate(
+            ctx.message.content, server_id, ctx.author, tool_result
+        )
         await ctx.send(f"{ctx.author.mention} {response}")
     elif isinstance(error, commands.MissingPermissions):
         await ctx.send("❌ У вас недостаточно прав для выполнения этой команды.")

@@ -3,7 +3,7 @@ import re
 import discord
 import tiktoken
 
-from app.tools.prompt import USER_DESCRIPTIONS, EMOJI_MAPPING, SYSTEM_PROMPT
+from app.tools.prompt import EMOJI_MAPPING, SYSTEM_PROMPT, USER_DESCRIPTIONS
 
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
@@ -159,8 +159,8 @@ def convert_mcp_tools_to_openai(mcp_tools) -> list:
             "function": {
                 "name": tool.name,
                 "description": tool.description or "Инструмент без описания",
-                "parameters": tool.inputSchema
-            }
+                "parameters": tool.inputSchema,
+            },
         }
         openai_tools.append(openai_tool)
 

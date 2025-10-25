@@ -2,19 +2,20 @@ import json
 import os
 
 from dotenv import load_dotenv
-from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.services.llama_integration import LlamaIndexManager
 from app.tools.prompt import SYSTEM_BIRTHDAY_PROMPT, USER_DESCRIPTIONS, WEATHER_PROMPT
 from app.tools.utils import (
     clean_text,
+    convert_mcp_tools_to_openai,
     count_tokens,
     enrich_users_context,
     replace_emojis,
-    user_prompt, convert_mcp_tools_to_openai,
+    user_prompt,
 )
 
 load_dotenv()
@@ -79,7 +80,7 @@ async def ai_generate(text: str, server_id: int, name: str, tool_result: str) ->
     if tool_result and tool_result.strip():
         tool_message = {
             "role": "system",
-            "content": f"Дополнительная информация от инструментов: {tool_result}"
+            "content": f"Дополнительная информация от инструментов: {tool_result}",
         }
         messages.append(tool_message)
 
@@ -155,11 +156,7 @@ async def ai_generate_birthday_congrats(display_name, name):
 
 
 async def check_weather_intent(text: str) -> str:
-    server_params = StdioServerParameters(
-        command="python",
-        args=["app/mcp/server.py"],
-        env=None
-    )
+    server_params = StdioServerParameters(command="python", args=["app/mcp/server.py"], env=None)
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
@@ -170,16 +167,10 @@ async def check_weather_intent(text: str) -> str:
 
             messages = [
                 ChatCompletionSystemMessageParam(role="system", content=WEATHER_PROMPT.strip()),
-                ChatCompletionUserMessageParam(
-                    role="user", content=text
-                ),
+                ChatCompletionUserMessageParam(role="user", content=text),
             ]
 
-            final_response = await process_conversation(
-                messages,
-                openai_tools,
-                session
-            )
+            final_response = await process_conversation(messages, openai_tools, session)
 
             return final_response
 
@@ -190,7 +181,7 @@ async def process_conversation(messages: list, tools: list, session: ClientSessi
         model="gpt-4o-mini",
         messages=messages,
         tools=tools,  # Передаем доступные инструменты
-        tool_choice="auto"  # Модель сама решает, нужны ли инструменты
+        tool_choice="auto",  # Модель сама решает, нужны ли инструменты
     )
 
     assistant_message = response.choices[0].message
@@ -215,4 +206,4 @@ async def process_conversation(messages: list, tools: list, session: ClientSessi
         except Exception as e:
             print(f"Ошибка при вызове инструмента: {str(e)}")
 
-    return ''
+    return ""

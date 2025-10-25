@@ -55,6 +55,7 @@ jobs:
               -e DC_TOKEN="${{ secrets.DC_TOKEN }}" \
               -e AI_TOKEN="${{ secrets.AI_TOKEN }}" \
               -e AI_TOKEN1="${{ secrets.AI_TOKEN1 }}" \
+              -e AI_TOKEN2="${{ secrets.AI_TOKEN_POLZA }}" \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e OPENWEATHERMAP_API_KEY="${{ secrets.OPENWEATHERMAP_API_KEY }}" \
               -e TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \

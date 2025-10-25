@@ -1,10 +1,10 @@
+import logging
 import os
 from typing import Any
-import httpx
-from mcp.server.fastmcp import FastMCP
-from dotenv import load_dotenv
-import logging
 
+import httpx
+from dotenv import load_dotenv
+from mcp.server.fastmcp import FastMCP
 
 logging.getLogger("fastmcp").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -17,8 +17,7 @@ OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
 async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[str, Any] | None:
-    """
-    Вспомогательная функция для выполнения запросов к OpenWeatherMap API
+    """Вспомогательная функция для выполнения запросов к OpenWeatherMap API
 
     Args:
         endpoint: Конечная точка API (например, "weather" или "forecast")
@@ -26,6 +25,7 @@ async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[st
 
     Returns:
         JSON ответ от API или None в случае ошибки
+
     """
     if not OPENWEATHER_API_KEY:
         return None
@@ -48,8 +48,7 @@ async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[st
 
 @mcp.tool()
 async def get_current_weather(city: str, units: str = "metric") -> str:
-    """
-    Получить текущую погоду для указанного города
+    """Получить текущую погоду для указанного города
 
     Args:
         city: Название города на русском или английском (например, "Москва" или "Moscow")
@@ -57,11 +56,9 @@ async def get_current_weather(city: str, units: str = "metric") -> str:
 
     Returns:
         Строка с описанием текущей погоды
+
     """
-    params = {
-        "q": city,
-        "units": units
-    }
+    params = {"q": city, "units": units}
 
     data = await make_weather_request("weather", params)
 
@@ -80,16 +77,16 @@ async def get_current_weather(city: str, units: str = "metric") -> str:
         wind_unit = "м/с" if units == "metric" else "миль/ч"
 
         result = f"""
-🌍 Погода в городе {data['name']}, {data['sys']['country']}
+🌍 Погода в городе {data["name"]}, {data["sys"]["country"]}
 
-🌡️ Температура: {main['temp']:.1f}{temp_unit}
-🤔 Ощущается как: {main['feels_like']:.1f}{temp_unit}
-📊 Мин/Макс: {main['temp_min']:.1f}{temp_unit} / {main['temp_max']:.1f}{temp_unit}
+🌡️ Температура: {main["temp"]:.1f}{temp_unit}
+🤔 Ощущается как: {main["feels_like"]:.1f}{temp_unit}
+📊 Мин/Макс: {main["temp_min"]:.1f}{temp_unit} / {main["temp_max"]:.1f}{temp_unit}
 
-☁️ Условия: {weather['description'].capitalize()}
-💧 Влажность: {main['humidity']}%
-🎚️ Давление: {main['pressure']} гПа
-💨 Ветер: {wind['speed']} {wind_unit}, направление {wind.get('deg', 'н/д')}°
+☁️ Условия: {weather["description"].capitalize()}
+💧 Влажность: {main["humidity"]}%
+🎚️ Давление: {main["pressure"]} гПа
+💨 Ветер: {wind["speed"]} {wind_unit}, направление {wind.get("deg", "н/д")}°
         """.strip()
 
         return result
@@ -100,8 +97,7 @@ async def get_current_weather(city: str, units: str = "metric") -> str:
 
 @mcp.tool()
 async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
-    """
-    Получить прогноз погоды на несколько дней
+    """Получить прогноз погоды на несколько дней
 
     Args:
         city: Название города на русском или английском
@@ -110,14 +106,11 @@ async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
 
     Returns:
         Строка с прогнозом погоды
+
     """
     days = min(max(days, 1), 5)
 
-    params = {
-        "q": city,
-        "units": units,
-        "cnt": days * 8
-    }
+    params = {"q": city, "units": units, "cnt": days * 8}
 
     data = await make_weather_request("forecast", params)
 
@@ -161,8 +154,7 @@ async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
 
 
 def format_day_forecast(day_data: list, temp_unit: str) -> str:
-    """
-    Форматирует прогноз на один день
+    """Форматирует прогноз на один день
 
     Args:
         day_data: Список данных о погоде за день (каждые 3 часа)
@@ -170,6 +162,7 @@ def format_day_forecast(day_data: list, temp_unit: str) -> str:
 
     Returns:
         Отформатированная строка с прогнозом
+
     """
     date = day_data[0]["dt_txt"].split()[0]
 
