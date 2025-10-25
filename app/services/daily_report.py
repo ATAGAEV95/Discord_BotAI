@@ -11,16 +11,16 @@ from app.tools.prompt import UPDATED_REPORT_PROMPT
 
 load_dotenv()
 
-AI_TOKEN = os.getenv("AI_TOKEN")
-AI_TOKEN1 = os.getenv("AI_TOKEN1")
+AI_TOKEN_PROXYAPI = os.getenv("AI_TOKEN")
+AI_TOKEN_AITUNNEL = os.getenv("AI_TOKEN1")
+AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
+proxyapi = "https://api.proxyapi.ru/openai/v1"
+aitunnel = "https://api.aitunnel.ru/v1/"
+polza = "https://api.polza.ai/api/v1"
 
 report_client = AsyncOpenAI(
-    api_key=AI_TOKEN1,
-    base_url="https://api.aitunnel.ru/v1/",
-    # api_key=AI_TOKEN,
-    # base_url="https://api.proxyapi.ru/openai/v1",
-    # api_key='google/gemma-3n-e4b',
-    # base_url='http://localhost:1234/v1/'
+    api_key=AI_TOKEN_AITUNNEL,
+    base_url=aitunnel,
 )
 
 

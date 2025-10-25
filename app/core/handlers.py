@@ -21,19 +21,16 @@ from app.tools.utils import (
 load_dotenv()
 llama_manager = LlamaIndexManager()
 
-AI_TOKEN = os.getenv("AI_TOKEN")
-AI_TOKEN1 = os.getenv("AI_TOKEN1")
+AI_TOKEN_PROXYAPI = os.getenv("AI_TOKEN")
+AI_TOKEN_AITUNNEL = os.getenv("AI_TOKEN1")
 AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
-
+proxyapi = "https://api.proxyapi.ru/openai/v1"
+aitunnel = "https://api.aitunnel.ru/v1/"
+polza = "https://api.polza.ai/api/v1"
 
 client = AsyncOpenAI(
     api_key=AI_TOKEN_POLZA,
-    # base_url="https://api.aitunnel.ru/v1/",
-    base_url="https://api.polza.ai/api/v1",
-    # api_key=AI_TOKEN,
-    # base_url="https://api.proxyapi.ru/openai/v1",
-    # api_key='google/gemma-3n-e4b',
-    # base_url='http://localhost:1234/v1/'
+    base_url=polza,
 )
 
 
@@ -156,7 +153,9 @@ async def ai_generate_birthday_congrats(display_name, name):
 
 
 async def check_weather_intent(text: str) -> str:
-    server_params = StdioServerParameters(command="python", args=["app/mcp/server_weather.py"], env=None)
+    server_params = StdioServerParameters(
+        command="python", args=["app/mcp/server_weather.py"], env=None
+    )
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:

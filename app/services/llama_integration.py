@@ -12,19 +12,26 @@ from openai import AsyncOpenAI
 
 load_dotenv()
 
+AI_TOKEN_PROXYAPI = os.getenv("AI_TOKEN")
+AI_TOKEN_AITUNNEL = os.getenv("AI_TOKEN1")
+AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
+proxyapi = "https://api.proxyapi.ru/openai/v1"
+aitunnel = "https://api.aitunnel.ru/v1/"
+polza = "https://api.polza.ai/api/v1"
+
 
 class LlamaIndexManager:
     """Управляет интеграцией с LlamaIndex и ChromaDB для построения векторных индексов сообщений Discord-сервера."""
 
     def __init__(self):
         self.custom_client = AsyncOpenAI(
-            api_key=os.getenv("AI_TOKEN1"),
-            base_url="https://api.aitunnel.ru/v1/",
+            api_key=AI_TOKEN_AITUNNEL,
+            base_url=aitunnel,
         )
 
         self.embed_model = OpenAIEmbedding(
-            api_key=os.getenv("AI_TOKEN1"),
-            api_base="https://api.aitunnel.ru/v1/",
+            api_key=AI_TOKEN_AITUNNEL,
+            api_base=aitunnel,
             model="text-embedding-3-large",
         )
 
