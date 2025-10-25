@@ -24,7 +24,6 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 report_generator: ReportGenerator | None = None
-weather_agent = WeatherAgent()
 youtube_notifier = YouTubeNotifier(bot)
 
 
