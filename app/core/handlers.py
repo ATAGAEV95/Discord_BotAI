@@ -156,7 +156,7 @@ async def ai_generate_birthday_congrats(display_name, name):
 
 
 async def check_weather_intent(text: str) -> str:
-    server_params = StdioServerParameters(command="python", args=["app/mcp/server.py"], env=None)
+    server_params = StdioServerParameters(command="python", args=["app/mcp/server_weather.py"], env=None)
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
