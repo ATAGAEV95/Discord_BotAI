@@ -6,13 +6,11 @@ from dotenv import load_dotenv
 
 import app.core.embeds as em
 from app.core import handlers
-from app.core.handlers import llama_manager
 from app.core.scheduler import start_scheduler
 from app.data.models import init_models
 from app.data.request import get_rank, save_birthday, update_message_count
 from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
-from app.services.weather_agent import WeatherAgent
 from app.services.youtube_notifier import YouTubeNotifier
 from app.tools.utils import contains_only_urls, get_rank_description
 
@@ -106,7 +104,7 @@ async def update_user_command(ctx):
         members = server.members
         all_server_users = [f"{member.name}" for member in members if not member.bot]
 
-        await llama_manager.index_server_users(server.id, all_server_users)
+        await handlers.llama_manager.index_server_users(server.id, all_server_users)
 
         await ctx.send(
             f"✅ Список пользователей сервера обновлен! Добавлено {len(all_server_users)} пользователей."
@@ -135,19 +133,6 @@ async def add_youtube_command(ctx, youtube_id: str, discord_channel_id: int, *, 
             await ctx.send("❌ Ошибка при добавлении канала")
     except Exception as e:
         await ctx.send(f"❌ Ошибка: {e}")
-
-
-@bot.command(name="weather")
-async def weather_command(ctx, *, location: str):
-    """Получить погоду для указанного места."""
-    flag = "завтра" in location.lower()
-    is_weather, city = await weather_agent.should_handle_weather(location)
-
-    if is_weather and city:
-        weather_info = weather_agent.get_weather(city, flag)
-        await ctx.send(weather_info)
-    else:
-        await ctx.send("Не удалось определить местоположение для прогноза погоды")
 
 
 @bot.event
@@ -185,7 +170,8 @@ async def on_command_error(ctx, error):
 
     if isinstance(error, commands.CommandNotFound):
         server_id = ctx.guild.id if ctx.guild else None
-        response = await handlers.ai_generate(ctx.message.content, server_id, ctx.author)
+        tool_result = await handlers.check_weather_intent(ctx.message.content)
+        response = await handlers.ai_generate(ctx.message.content, server_id, ctx.author, tool_result)
         await ctx.send(f"{ctx.author.mention} {response}")
     elif isinstance(error, commands.MissingPermissions):
         await ctx.send("❌ У вас недостаточно прав для выполнения этой команды.")

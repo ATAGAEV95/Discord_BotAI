@@ -3,23 +3,23 @@ import re
 import discord
 import tiktoken
 
-import app.tools.prompt as P
+from app.tools.prompt import USER_DESCRIPTIONS, EMOJI_MAPPING, SYSTEM_PROMPT
 
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
 def user_prompt(name: str) -> str:
     """Формирует системный промпт для пользователя, если имя совпадает с ключами в P.USER_DESCRIPTIONS."""
-    if str(name).strip() in P.USER_DESCRIPTIONS:
+    if str(name).strip() in USER_DESCRIPTIONS:
         user_info = (
             "Информация по пользователям с name(они должны совпадать побуквенно, иначе это другой юзер). "
             "Но не упоминать об этом постоянно:"
         )
-        user_info += f"\n- {name}: {P.USER_DESCRIPTIONS[name]}"
-        prompt = P.SYSTEM_PROMPT.format(user_info=user_info).strip()
+        user_info += f"\n- {name}: {USER_DESCRIPTIONS[name]}"
+        prompt = SYSTEM_PROMPT.format(user_info=user_info).strip()
         return prompt
     else:
-        cleaned_prompt = re.sub(r"\n\s*5\..*", "", P.SYSTEM_PROMPT.strip())
+        cleaned_prompt = re.sub(r"\n\s*5\..*", "", SYSTEM_PROMPT.strip())
         return cleaned_prompt
 
 
@@ -76,7 +76,7 @@ async def clean_text(text):
 
 async def replace_emojis(text):
     """Заменяет текстовые представления эмодзи на реальные Discord-эмодзи"""
-    for text_emoji, discord_emoji in P.EMOJI_MAPPING.items():
+    for text_emoji, discord_emoji in EMOJI_MAPPING.items():
         text = text.replace(text_emoji, discord_emoji)
     return text
 
@@ -147,3 +147,21 @@ def get_rank_description(message_count):
     else:
         rank = rank_designs[5]
     return rank
+
+
+def convert_mcp_tools_to_openai(mcp_tools) -> list:
+    """Конвертирует MCP инструменты в формат OpenAI."""
+    openai_tools = []
+
+    for tool in mcp_tools:
+        openai_tool = {
+            "type": "function",
+            "function": {
+                "name": tool.name,
+                "description": tool.description or "Инструмент без описания",
+                "parameters": tool.inputSchema
+            }
+        }
+        openai_tools.append(openai_tool)
+
+    return openai_tools
