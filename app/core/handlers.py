@@ -153,6 +153,7 @@ async def ai_generate_birthday_congrats(display_name, name):
 
 
 async def check_weather_intent(text: str) -> str:
+    """Проверяет наличие намерения запросить информацию о погоде и обрабатывает его."""
     server_params = StdioServerParameters(
         command="python", args=["app/mcp/server_weather.py"], env=None
     )
