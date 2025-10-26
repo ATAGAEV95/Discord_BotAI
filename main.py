@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 import app.core.embeds as em
 from app.core import handlers
-from app.core.scheduler import start_scheduler
+from app.core.scheduler import start_scheduler, send_birthday_congratulations
 from app.data.models import init_models
 from app.data.request import get_rank, save_birthday, update_message_count
 from app.services.daily_report import ReportGenerator
@@ -83,6 +83,13 @@ async def birthday_command(ctx, *, date: str):
         await ctx.send(str(ve))
     except Exception as e:
         await ctx.send(f"Произошла ошибка при сохранении даты рождения: {e}")
+
+
+@bot.command(name="check_birthday")
+@commands.guild_only()
+async def manual_birthday_command(ctx):
+    """Ручная отправка поздравлений с днем рождения."""
+    await send_birthday_congratulations(bot)
 
 
 @bot.command(name="reset")

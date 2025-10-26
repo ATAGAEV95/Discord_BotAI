@@ -53,7 +53,7 @@ async def send_birthday_congratulations(bot: discord.Client):
                     continue
 
                 try:
-                    congrats_text = await ai_generate_birthday_congrats(member.mention, user.name)
+                    congrats_text = await ai_generate_birthday_congrats(member.mention)
                     await channel.send(f"{member.mention} {congrats_text}")
                 except Exception as e:
                     print(f"[Ошибка] при отправке поздравления для {user.name}: {e}")

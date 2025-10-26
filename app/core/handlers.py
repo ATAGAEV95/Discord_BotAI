@@ -97,7 +97,7 @@ async def ai_generate(text: str, server_id: int, name: str, tool_result: str) ->
                 )
 
         completion = await client.chat.completions.create(
-            model="gpt-5-chat",
+            model="gpt-4.1",
             messages=openai_messages,
             temperature=0.8,
             top_p=0.8,
@@ -125,7 +125,7 @@ async def ai_generate(text: str, server_id: int, name: str, tool_result: str) ->
         return "Произошла ошибка. Пожалуйста, попробуйте позже."
 
 
-async def ai_generate_birthday_congrats(display_name, name):
+async def ai_generate_birthday_congrats(name):
     """Генерирует креативное поздравление с днём рождения для пользователя."""
     prompt = [
         ChatCompletionSystemMessageParam(role="system", content=SYSTEM_BIRTHDAY_PROMPT.strip()),
@@ -136,7 +136,7 @@ async def ai_generate_birthday_congrats(display_name, name):
 
     try:
         completion = await client.chat.completions.create(
-            model="gpt-5-chat",
+            model="gpt-4.1",
             messages=prompt,
             temperature=0.8,  # Оптимальный баланс креативности/когерентности
             top_p=0.8,  # Шире выборка слов
@@ -149,7 +149,7 @@ async def ai_generate_birthday_congrats(display_name, name):
         return text
     except Exception as e:
         print(f"[Ошибка генерации поздравления]: {e}")
-        return f"Поздравляем {display_name} с днём рождения! 🎉"
+        return f"Поздравляем с днём рождения! 🎉"
 
 
 async def check_weather_intent(text: str) -> str:

@@ -134,7 +134,7 @@ class ReportGenerator:
 
             try:
                 response = await report_client.chat.completions.create(
-                    model="gpt-5-mini", messages=message, temperature=0.0, top_p=0.01, max_tokens=500
+                    model="gpt-5-mini", messages=message, temperature=0.0, top_p=0.01
                 )
                 report = response.choices[0].message.content
             except Exception as e:
