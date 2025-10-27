@@ -46,6 +46,14 @@ jobs:
           password: ${{ secrets.DEPLOY_SERVER_PASSWORD }}
           port: 22
           script: |
+            echo "Проверка WEATHER_API..."
+            if [ -z "${{ secrets.WEATHER_API }}" ]; then
+              echo "❌ ОШИБКА: WEATHER_API не установлен!"
+              exit 1
+            else
+              echo "✅ WEATHER_API установлен"
+            fi
+            
             docker load -i ~/deploy/image_dc.tar
             docker stop dcchatbot || true
             docker rm dcchatbot || true
