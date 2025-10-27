@@ -97,7 +97,7 @@ async def ai_generate(text: str, server_id: int, name: str, tool_result: str) ->
                 )
 
         completion = await client.chat.completions.create(
-            model="gpt-4.1",
+            model="openai/gpt-5-chat",
             messages=openai_messages,
             temperature=0.8,
             top_p=0.8,
@@ -136,7 +136,7 @@ async def ai_generate_birthday_congrats(name):
 
     try:
         completion = await client.chat.completions.create(
-            model="gpt-4.1",
+            model="openai/gpt-5-chat",
             messages=prompt,
             temperature=0.8,  # Оптимальный баланс креативности/когерентности
             top_p=0.8,  # Шире выборка слов
