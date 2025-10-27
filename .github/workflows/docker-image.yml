@@ -46,14 +46,6 @@ jobs:
           password: ${{ secrets.DEPLOY_SERVER_PASSWORD }}
           port: 22
           script: |
-            echo "Проверка WEATHER_API..."
-            if [ -z "${{ secrets.WEATHER_API }}" ]; then
-              echo "❌ ОШИБКА: WEATHER_API не установлен!"
-              exit 1
-            else
-              echo "✅ WEATHER_API установлен"
-            fi
-            
             docker load -i ~/deploy/image_dc.tar
             docker stop dcchatbot || true
             docker rm dcchatbot || true
@@ -65,7 +57,6 @@ jobs:
               -e AI_TOKEN1="${{ secrets.AI_TOKEN1 }}" \
               -e AI_TOKEN_POLZA="${{ secrets.AI_TOKEN_POLZA }}" \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e WEATHER_API='${{ secrets.WEATHER_API }}' \
               -e TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
               -e TELEGRAM_CHAT_ID="${{ secrets.TELEGRAM_CHAT_ID }}" \
               -e YOUTUBE_API_KEY="${{ secrets.YOUTUBE_API_KEY }}" \

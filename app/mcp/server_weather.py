@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP("weather")
 
 # Константы для работы с API
-WEATHER_API = os.getenv("WEATHER_API")
+WEATHER_API = '2630c5a327992df5af2e363e23d13c1f'
 OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
