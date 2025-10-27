@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP("weather")
 
 # Константы для работы с API
-OPENWEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
+OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
@@ -35,12 +35,12 @@ async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[st
         JSON ответ от API или None в случае ошибки
     """
     # Проверяем наличие API ключа
-    if not OPENWEATHER_API_KEY:
+    if not OPENWEATHERMAP_API_KEY:
         logger.error("OPENWEATHER_API_KEY не найден в переменных окружения")
         return None
 
     # Добавляем API ключ к параметрам запроса
-    params["appid"] = OPENWEATHER_API_KEY
+    params["appid"] = OPENWEATHERMAP_API_KEY
     # Устанавливаем метрическую систему (Цельсий, метры/сек)
     params["lang"] = "ru"  # Русский язык для описаний
 
