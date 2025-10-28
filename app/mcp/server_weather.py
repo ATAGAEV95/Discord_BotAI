@@ -6,7 +6,7 @@ import httpx
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
-import app.tools.utils as utils
+import __init__ as api
 
 # Загружаем переменные окружения из файла .env
 load_dotenv()
@@ -22,7 +22,7 @@ mcp = FastMCP("weather")
 
 # Пытаемся загрузить WEATHER_API из переменных окружения
 logger.info("Пытаемся загрузить WEATHER_API из переменных окружения")
-WEATHER_API = os.getenv("WEATHER_API")
+WEATHER_API = os.getenv("WEATHER_API0")
 
 # Проверяем, есть ли значение в переменных окружения
 if WEATHER_API:
@@ -30,7 +30,7 @@ if WEATHER_API:
 else:
     logger.info("WEATHER_API не найден в переменных окружения. Пытаемся загрузить из utils")
     # Пытаемся загрузить из utils
-    WEATHER_API = utils.WEATHER_API
+    WEATHER_API = api.WEATHER_API
 
     # Проверяем, есть ли значение в utils
     if WEATHER_API:
