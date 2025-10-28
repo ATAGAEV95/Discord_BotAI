@@ -1,11 +1,16 @@
+import os
 import re
 
 import discord
 import tiktoken
+from dotenv import load_dotenv
 
 from app.tools.prompt import EMOJI_MAPPING, SYSTEM_PROMPT, USER_DESCRIPTIONS
 
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
+load_dotenv()
+
+WEATHER_API = os.getenv("WEATHER_API")
 
 
 def user_prompt(name: str) -> str:

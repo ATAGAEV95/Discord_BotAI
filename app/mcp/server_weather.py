@@ -1,38 +1,50 @@
-import os
 import logging
+import os
 from typing import Any
+
 import httpx
-from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
+from mcp.server.fastmcp import FastMCP
+
+import app.tools.utils as utils
 
 # Загружаем переменные окружения из файла .env
 load_dotenv()
 
 # Настраиваем логирование (важно для STDIO серверов - не использовать print!)
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # Создаем экземпляр MCP сервера с именем "weather"
 mcp = FastMCP("weather")
 
-# Константы для работы с API
+# Пытаемся загрузить WEATHER_API из переменных окружения
+logger.info("Пытаемся загрузить WEATHER_API из переменных окружения")
 WEATHER_API = os.getenv("WEATHER_API")
+
+# Проверяем, есть ли значение в переменных окружения
 if WEATHER_API:
-    logger.info("WEATHER_API загружен (длина: %d)", len(WEATHER_API))
+    logger.info("WEATHER_API найден в переменных окружения (длина: %d)", len(WEATHER_API))
 else:
-    logger.error("WEATHER_API не загружен!")
-    WEATHER_API = '2630c5a327992df5af2e363e23d13c1f'
+    logger.info("WEATHER_API не найден в переменных окружения. Пытаемся загрузить из utils")
+    # Пытаемся загрузить из utils
+    WEATHER_API = utils.WEATHER_API
+
+    # Проверяем, есть ли значение в utils
+    if WEATHER_API:
+        logger.info("WEATHER_API найден в utils (длина: %d)", len(WEATHER_API))
+    else:
+        logger.error("WEATHER_API не найден в utils. Используем значение по умолчанию")
+        WEATHER_API = "2630c5a327992df5af2e363e23d13c1f"
 
 # WEATHER_API = '2630c5a327992df5af2e363e23d13c1f'
 OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
 async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[str, Any] | None:
-    """
-    Вспомогательная функция для выполнения запросов к OpenWeatherMap API
+    """Вспомогательная функция для выполнения запросов к OpenWeatherMap API
 
     Args:
         endpoint: Конечная точка API (например, "weather" или "forecast")
@@ -40,6 +52,7 @@ async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[st
 
     Returns:
         JSON ответ от API или None в случае ошибки
+
     """
     # Проверяем наличие API ключа
     if not WEATHER_API:
@@ -71,8 +84,7 @@ async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[st
 
 @mcp.tool()
 async def get_current_weather(city: str, units: str = "metric") -> str:
-    """
-    Получить текущую погоду для указанного города
+    """Получить текущую погоду для указанного города
 
     Args:
         city: Название города на русском или английском (например, "Москва" или "Moscow")
@@ -80,14 +92,12 @@ async def get_current_weather(city: str, units: str = "metric") -> str:
 
     Returns:
         Строка с описанием текущей погоды
+
     """
     logger.info(f"Запрос погоды для города: {city}")
 
     # Формируем параметры запроса
-    params = {
-        "q": city,
-        "units": units
-    }
+    params = {"q": city, "units": units}
 
     # Выполняем запрос к API
     data = await make_weather_request("weather", params)
@@ -112,16 +122,16 @@ async def get_current_weather(city: str, units: str = "metric") -> str:
 
         # Форматируем ответ
         result = f"""
-🌍 Погода в городе {data['name']}, {data['sys']['country']}
+🌍 Погода в городе {data["name"]}, {data["sys"]["country"]}
 
-🌡️ Температура: {main['temp']:.1f}{temp_unit}
-🤔 Ощущается как: {main['feels_like']:.1f}{temp_unit}
-📊 Мин/Макс: {main['temp_min']:.1f}{temp_unit} / {main['temp_max']:.1f}{temp_unit}
+🌡️ Температура: {main["temp"]:.1f}{temp_unit}
+🤔 Ощущается как: {main["feels_like"]:.1f}{temp_unit}
+📊 Мин/Макс: {main["temp_min"]:.1f}{temp_unit} / {main["temp_max"]:.1f}{temp_unit}
 
-☁️ Условия: {weather['description'].capitalize()}
-💧 Влажность: {main['humidity']}%
-🎚️ Давление: {main['pressure']} гПа
-💨 Ветер: {wind['speed']} {wind_unit}, направление {wind.get('deg', 'н/д')}°
+☁️ Условия: {weather["description"].capitalize()}
+💧 Влажность: {main["humidity"]}%
+🎚️ Давление: {main["pressure"]} гПа
+💨 Ветер: {wind["speed"]} {wind_unit}, направление {wind.get("deg", "н/д")}°
         """.strip()
 
         logger.info(f"Успешно получена погода для {city}")
@@ -134,8 +144,7 @@ async def get_current_weather(city: str, units: str = "metric") -> str:
 
 @mcp.tool()
 async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
-    """
-    Получить прогноз погоды на несколько дней
+    """Получить прогноз погоды на несколько дней
 
     Args:
         city: Название города на русском или английском
@@ -144,6 +153,7 @@ async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
 
     Returns:
         Строка с прогнозом погоды
+
     """
     logger.info(f"Запрос прогноза для города: {city} на {days} дней")
 
@@ -154,7 +164,7 @@ async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
     params = {
         "q": city,
         "units": units,
-        "cnt": days * 8  # API возвращает данные каждые 3 часа, 8 записей = 1 день
+        "cnt": days * 8,  # API возвращает данные каждые 3 часа, 8 записей = 1 день
     }
 
     # Выполняем запрос к API
@@ -210,8 +220,7 @@ async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
 
 
 def format_day_forecast(day_data: list, temp_unit: str) -> str:
-    """
-    Форматирует прогноз на один день
+    """Форматирует прогноз на один день
 
     Args:
         day_data: Список данных о погоде за день (каждые 3 часа)
@@ -219,6 +228,7 @@ def format_day_forecast(day_data: list, temp_unit: str) -> str:
 
     Returns:
         Отформатированная строка с прогнозом
+
     """
     # Берем первую запись для даты
     date = day_data[0]["dt_txt"].split()[0]

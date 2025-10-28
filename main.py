@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 import app.core.embeds as em
 from app.core import handlers
-from app.core.scheduler import start_scheduler, send_birthday_congratulations
+from app.core.scheduler import send_birthday_congratulations, start_scheduler
 from app.data.models import init_models
 from app.data.request import get_rank, save_birthday, update_message_count
 from app.services.daily_report import ReportGenerator

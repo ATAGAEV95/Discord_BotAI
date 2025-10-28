@@ -149,7 +149,7 @@ async def ai_generate_birthday_congrats(name):
         return text
     except Exception as e:
         print(f"[Ошибка генерации поздравления]: {e}")
-        return f"Поздравляем с днём рождения! 🎉"
+        return "Поздравляем с днём рождения! 🎉"
 
 
 async def check_weather_intent(text: str) -> str:
