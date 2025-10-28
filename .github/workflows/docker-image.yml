@@ -52,6 +52,7 @@ jobs:
             docker volume create chroma_data || true
             docker run -d --name dcchatbot \
               -v chroma_data:/python-app/chroma_db \
+              -e WEATHER_API="${{ secrets.WEATHER_API }}" \
               -e DC_TOKEN="${{ secrets.DC_TOKEN }}" \
               -e AI_TOKEN="${{ secrets.AI_TOKEN }}" \
               -e AI_TOKEN1="${{ secrets.AI_TOKEN1 }}" \

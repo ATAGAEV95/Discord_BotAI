@@ -19,7 +19,14 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP("weather")
 
 # Константы для работы с API
-WEATHER_API = '2630c5a327992df5af2e363e23d13c1f'
+WEATHER_API = os.getenv("WEATHER_API")
+if WEATHER_API:
+    logger.info("WEATHER_API загружен (длина: %d)", len(WEATHER_API))
+else:
+    logger.error("WEATHER_API не загружен!")
+    WEATHER_API = '2630c5a327992df5af2e363e23d13c1f'
+
+# WEATHER_API = '2630c5a327992df5af2e363e23d13c1f'
 OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
@@ -242,9 +249,5 @@ def format_day_forecast(day_data: list, temp_unit: str) -> str:
 
 # Запуск сервера
 if __name__ == "__main__":
-    if WEATHER_API:
-        logger.info("WEATHER_API загружен (длина: %d)", len(WEATHER_API))
-    else:
-        logger.error("WEATHER_API не загружен!")
     logger.info("Запуск MCP сервера погоды...")
     mcp.run(transport="stdio")
