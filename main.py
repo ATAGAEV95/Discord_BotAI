@@ -103,7 +103,7 @@ async def reset_command(ctx):
 
 @bot.command(name="update_user")
 @commands.guild_only()
-@commands.has_permissions(administrator=True)
+# @commands.has_permissions(administrator=True)
 async def update_user_command(ctx):
     """Обновить список пользователей сервера (только для администраторов)"""
     try:
