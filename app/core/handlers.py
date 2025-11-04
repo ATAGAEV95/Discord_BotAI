@@ -8,7 +8,7 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.services.llama_integration import LlamaIndexManager
-from app.tools.prompt import SYSTEM_BIRTHDAY_PROMPT, USER_DESCRIPTIONS, WEATHER_PROMPT
+from app.tools.prompt import SEARCH_PROMPT, SYSTEM_BIRTHDAY_PROMPT, USER_DESCRIPTIONS, WEATHER_PROMPT
 from app.tools.utils import (
     clean_text,
     convert_mcp_tools_to_openai,
@@ -61,7 +61,9 @@ async def clear_server_history(server_id):
         return f"Произошла ошибка при очистке индекса: {e}"
 
 
-async def ai_generate(text: str, server_id: int, name: str, tool_result: str) -> str:
+async def ai_generate(
+    text: str, server_id: int, name: str, tool_weather: str | None, tool_search: str | None
+) -> str:
     """Генерирует ответ от AI на основе контекста сервера и текущего сообщения пользователя."""
     messages = [{"role": "system", "content": user_prompt(f"{name}")}]
     relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=16)
@@ -74,10 +76,17 @@ async def ai_generate(text: str, server_id: int, name: str, tool_result: str) ->
         }
         messages.append(context_message)
 
-    if tool_result and tool_result.strip():
+    if tool_weather is not None:
         tool_message = {
             "role": "system",
-            "content": f"Дополнительная информация от инструментов: {tool_result}",
+            "content": f"Дополнительная информация от инструментов: {tool_weather}",
+        }
+        messages.append(tool_message)
+
+    if tool_search is not None:
+        tool_message = {
+            "role": "system",
+            "content": f"Дополнительная информация от инструментов: {tool_search}",
         }
         messages.append(tool_message)
 
@@ -152,7 +161,7 @@ async def ai_generate_birthday_congrats(name):
         return "Поздравляем с днём рождения! 🎉"
 
 
-async def check_weather_intent(text: str) -> str:
+async def check_weather_intent(text: str) -> str | None:
     """Проверяет наличие намерения запросить информацию о погоде и обрабатывает его."""
     server_params = StdioServerParameters(
         command="python", args=["app/mcp/server_weather.py"], env=None
@@ -170,12 +179,16 @@ async def check_weather_intent(text: str) -> str:
                 ChatCompletionUserMessageParam(role="user", content=text),
             ]
 
-            final_response = await process_conversation(messages, openai_tools, session)
+            final_response = await process_conversation_weather(messages, openai_tools, session)
 
-            return final_response
+            if final_response[1] is True:
+                return final_response[0]
+            return None
 
 
-async def process_conversation(messages: list, tools: list, session: ClientSession) -> str:
+async def process_conversation_weather(
+    messages: list, tools: list, session: ClientSession
+) -> str | tuple:
     """Обрабатывает разговор с возможными вызовами инструментов."""
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
@@ -183,11 +196,11 @@ async def process_conversation(messages: list, tools: list, session: ClientSessi
         tools=tools,  # Передаем доступные инструменты
         tool_choice="auto",  # Модель сама решает, нужны ли инструменты
     )
-
     assistant_message = response.choices[0].message
+    print(assistant_message)
 
     if not assistant_message.tool_calls:
-        return assistant_message.content or "Извините, я не смог сформировать ответ."
+        return assistant_message.content, False
 
     for tool_call in assistant_message.tool_calls:
         function_name = tool_call.function.name
@@ -201,7 +214,67 @@ async def process_conversation(messages: list, tools: list, session: ClientSessi
             else:
                 tool_result = "Инструмент выполнен, но результат пуст"
 
-            return tool_result
+            return tool_result, True
+
+        except Exception as e:
+            print(f"Ошибка при вызове инструмента: {str(e)}")
+
+    return ""
+
+
+async def check_search_intent(text: str) -> str | None:
+    """Проверяет наличие намерения запросить информацию и обрабатывает его."""
+    server_params = StdioServerParameters(command="python", args=["app/mcp/server_search.py"], env=None)
+
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            tools_list = await session.list_tools()
+
+            openai_tools = convert_mcp_tools_to_openai(tools_list.tools)
+
+            messages = [
+                ChatCompletionSystemMessageParam(role="system", content=SEARCH_PROMPT.strip()),
+                ChatCompletionUserMessageParam(role="user", content=text),
+            ]
+
+            final_response = await process_conversation_search(messages, openai_tools, session)
+
+            if final_response[1] is True:
+                return final_response[0]
+            return None
+
+
+async def process_conversation_search(
+    messages: list, tools: list, session: ClientSession
+) -> str | tuple:
+    """Обрабатывает разговор с возможными вызовами инструментов."""
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages,
+        tools=tools,  # Передаем доступные инструменты
+        tool_choice="auto",  # Модель сама решает, нужны ли инструменты
+    )
+
+    assistant_message = response.choices[0].message
+    print(assistant_message)
+
+    if not assistant_message.tool_calls:
+        return assistant_message.content, False
+
+    for tool_call in assistant_message.tool_calls:
+        function_name = tool_call.function.name
+        function_args = json.loads(tool_call.function.arguments)
+
+        try:
+            result = await session.call_tool(function_name, function_args)
+
+            if result.content:
+                tool_result = result.content[0].text if result.content else "Нет результата"
+            else:
+                tool_result = "Инструмент выполнен, но результат пуст"
+
+            return tool_result, True
 
         except Exception as e:
             print(f"Ошибка при вызове инструмента: {str(e)}")

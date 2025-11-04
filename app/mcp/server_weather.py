@@ -2,11 +2,11 @@ import logging
 import os
 from typing import Any
 
+import __init__ as api
 import httpx
 from dotenv import load_dotenv
-from mcp.server.fastmcp import FastMCP
 
-import __init__ as api
+from mcp.server.fastmcp import FastMCP
 
 # Загружаем переменные окружения из файла .env
 load_dotenv()
@@ -28,18 +28,15 @@ WEATHER_API = os.getenv("WEATHER_API0")
 if WEATHER_API:
     logger.info("WEATHER_API найден в переменных окружения (длина: %d)", len(WEATHER_API))
 else:
-    logger.info("WEATHER_API не найден в переменных окружения. Пытаемся загрузить из utils")
-    # Пытаемся загрузить из utils
+    logger.info("WEATHER_API не найден в переменных окружения. Пытаемся загрузить из __init__")
     WEATHER_API = api.WEATHER_API
 
-    # Проверяем, есть ли значение в utils
     if WEATHER_API:
-        logger.info("WEATHER_API найден в utils (длина: %d)", len(WEATHER_API))
+        logger.info("WEATHER_API найден в __init__ (длина: %d)", len(WEATHER_API))
     else:
-        logger.error("WEATHER_API не найден в utils. Используем значение по умолчанию")
+        logger.error("WEATHER_API не найден в __init__. Используем значение по умолчанию")
         WEATHER_API = "2630c5a327992df5af2e363e23d13c1f"
 
-# WEATHER_API = '2630c5a327992df5af2e363e23d13c1f'
 OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 

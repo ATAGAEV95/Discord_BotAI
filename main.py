@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 import discord
@@ -176,9 +177,12 @@ async def on_command_error(ctx, error):
 
     if isinstance(error, commands.CommandNotFound):
         server_id = ctx.guild.id if ctx.guild else None
-        tool_result = await handlers.check_weather_intent(ctx.message.content)
+        tool_weather, tool_search = await asyncio.gather(
+            handlers.check_weather_intent(ctx.message.content),
+            handlers.check_search_intent(ctx.message.content),
+        )
         response = await handlers.ai_generate(
-            ctx.message.content, server_id, ctx.author, tool_result
+            ctx.message.content, server_id, ctx.author, tool_weather, tool_search
         )
         await ctx.send(f"{ctx.author.mention} {response}")
     elif isinstance(error, commands.MissingPermissions):
