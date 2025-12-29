@@ -2,8 +2,8 @@ import logging
 import os
 from typing import Any
 
-from dotenv import load_dotenv
 import __init__ as api
+from dotenv import load_dotenv
 from tavily import AsyncTavilyClient
 
 from mcp.server.fastmcp import FastMCP

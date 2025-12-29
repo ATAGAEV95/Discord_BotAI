@@ -7,7 +7,7 @@ from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUs
 
 from app.services.llama_integration import LlamaIndexManager
 from app.tools.prompt import SYSTEM_NEWYEAR_PROMPT, USER_DESCRIPTIONS
-from app.tools.utils import clean_text, users_context, replace_emojis
+from app.tools.utils import clean_text, replace_emojis, users_context
 
 load_dotenv()
 llama_manager = LlamaIndexManager()
@@ -28,14 +28,11 @@ client = AsyncOpenAI(
 async def ai_generate_new_year_congrats(names):
     """Генерирует креативное поздравление с Новым годом для пользователей."""
     relevant_contexts = users_context(names, USER_DESCRIPTIONS)
-    print(relevant_contexts)
-    print(names)
     current_date = datetime.now()
     date_minus_month = current_date - timedelta(days=30)
     date_plus_month = current_date + timedelta(days=30)
     old_year = date_minus_month.year
     new_year = date_plus_month.year
-    print(old_year, new_year)
     prompt = [
         ChatCompletionSystemMessageParam(role="system", content=SYSTEM_NEWYEAR_PROMPT.strip()),
         ChatCompletionUserMessageParam(

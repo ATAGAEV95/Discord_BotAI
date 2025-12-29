@@ -224,7 +224,9 @@ async def process_conversation_weather(
 
 async def check_search_intent(text: str) -> str | None:
     """Проверяет наличие намерения запросить информацию и обрабатывает его."""
-    server_params = StdioServerParameters(command="python", args=["app/mcp/server_search.py"], env=None)
+    server_params = StdioServerParameters(
+        command="python", args=["app/mcp/server_search.py"], env=None
+    )
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:

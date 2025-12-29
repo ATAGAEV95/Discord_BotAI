@@ -96,7 +96,7 @@ def start_scheduler(bot: discord.Client):
         hour=23,
         minute=59,
         args=[bot],
-        id="new_year_greeting"
+        id="new_year_greeting",
     )
     # scheduler.add_job(send_new_year_congratulations, "interval", seconds=20, args=[bot], id="new_year_greeting")
     youtube_notifier = YouTubeNotifier(bot)
