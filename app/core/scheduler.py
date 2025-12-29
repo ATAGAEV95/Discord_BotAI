@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from app.core.handlers import ai_generate_birthday_congrats
 from app.data.models import Birthday, async_session
+from app.services.holiday import ai_generate_new_year_congrats
 from app.services.youtube_notifier import YouTubeNotifier
 
 DB_TIMEOUT = 10
@@ -61,11 +62,43 @@ async def send_birthday_congratulations(bot: discord.Client):
         print(f"[Ошибка] в задаче send_birthday_congratulations: {e}")
 
 
+async def send_new_year_congratulations(bot: discord.Client):
+    """Отправляет поздравления с Новым годом всем участникам серверов."""
+    try:
+        for guild in bot.guilds:
+            channel = guild.text_channels[0] if guild.text_channels else None
+            if not channel:
+                continue
+
+            member_names = [member.name for member in guild.members if not member.bot]
+            if not member_names:
+                continue
+
+            try:
+                congrats_text = await ai_generate_new_year_congrats(member_names)
+                await channel.send(f"🎉 **С Новым Годом, {guild.name}!** 🎉\n{congrats_text}")
+            except Exception as e:
+                print(f"[Ошибка] при отправке Новогоднего поздравления для {guild.name}: {e}")
+
+    except Exception as e:
+        print(f"[Ошибка] в задаче send_new_year_congratulations: {e}")
+
+
 def start_scheduler(bot: discord.Client):
     """Инициализирует и запускает асинхронный планировщик задач."""
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
-    # scheduler.add_job(send_birthday_congratulations, 'interval', minutes=1, args=[bot]) # Раз в минуту для тестов
+    scheduler.add_job(
+        send_new_year_congratulations,
+        "cron",
+        month=12,
+        day=31,
+        hour=23,
+        minute=59,
+        args=[bot],
+        id="new_year_greeting"
+    )
+    # scheduler.add_job(send_new_year_congratulations, "interval", seconds=20, args=[bot], id="new_year_greeting")
     youtube_notifier = YouTubeNotifier(bot)
     scheduler.add_job(youtube_notifier.check_new_videos, "interval", minutes=60, id="youtube_check")
     scheduler.start()
