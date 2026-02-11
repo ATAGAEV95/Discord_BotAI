@@ -1,4 +1,3 @@
-import asyncio
 import os
 import sys
 
@@ -19,9 +18,17 @@ try:
     import googleapiclient
     import PIL
     import httpx
+    import llama_index.core
     import mcp
+    import openai
+    import PIL
+    import pytz
+    import requests
+    import sqlalchemy
     import tavily
-    
+    import tiktoken
+    from dotenv import load_dotenv
+
     print("Все зависимости успешно загружены.")
 except ImportError as e:
     print(f"Импорт не удалось: {e}")
@@ -36,6 +43,7 @@ if not DC_TOKEN_TEST:
     sys.exit(1)
 else:
     print("Начинаем тест подключения к Discord...")
+
     class TestClient(discord.Client):
         async def on_ready(self):
             if self.user:
