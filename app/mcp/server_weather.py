@@ -41,7 +41,7 @@ OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
 async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[str, Any] | None:
-    """Вспомогательная функция для выполнения запросов к OpenWeatherMap API
+    """Вспомогательная функция для выполнения запросов к OpenWeatherMap API.
 
     Args:
         endpoint: Конечная точка API (например, "weather" или "forecast")
@@ -81,7 +81,7 @@ async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[st
 
 @mcp.tool()
 async def get_current_weather(city: str, units: str = "metric") -> str:
-    """Получить текущую погоду для указанного города
+    """Получить текущую погоду для указанного города.
 
     Args:
         city: Название города на русском или английском (например, "Москва" или "Moscow")
@@ -141,7 +141,7 @@ async def get_current_weather(city: str, units: str = "metric") -> str:
 
 @mcp.tool()
 async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
-    """Получить прогноз погоды на несколько дней
+    """Получить прогноз погоды на несколько дней.
 
     Args:
         city: Название города на русском или английском
@@ -217,7 +217,7 @@ async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
 
 
 def format_day_forecast(day_data: list, temp_unit: str) -> str:
-    """Форматирует прогноз на один день
+    """Форматирует прогноз на один день.
 
     Args:
         day_data: Список данных о погоде за день (каждые 3 часа)

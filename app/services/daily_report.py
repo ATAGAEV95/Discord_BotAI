@@ -85,7 +85,7 @@ class ReportGenerator:
                     self.start_report_timer(channel_id)
                 )
 
-    async def start_report_timer(self, channel_id: int):
+    async def start_report_timer(self, channel_id: int) -> None:
         """Запускает задачу, которая ожидает 60 минут. Если после последнего сообщения прошло
         не менее 60 минут без активности, то генерируется и отправляется аналитический отчет.
         """
@@ -101,7 +101,7 @@ class ReportGenerator:
 
         await self.generate_and_send_report(channel_id)
 
-    async def generate_and_send_report(self, channel_id: int):
+    async def generate_and_send_report(self, channel_id: int) -> None:
         """Генерирует аналитический отчет на основе накопленных сообщений с использованием GPT-модели
         и отправляет его в канал.
         """

@@ -42,7 +42,7 @@ class LlamaIndexManager:
         Settings.node_parser = self.node_parser
 
     def get_server_collection(self, server_id: int):
-        """Получить или создать коллекцию для сервера"""
+        """Получить или создать коллекцию для сервера."""
         collection_name = f"server_{server_id}_messages"
         try:
             collection = self.db.get_collection(collection_name)
@@ -51,7 +51,7 @@ class LlamaIndexManager:
         return collection
 
     async def index_messages(self, server_id: int, messages: list[dict[str, Any]]):
-        """Индексировать сообщения сервера"""
+        """Индексировать сообщения сервера."""
         try:
             documents = []
             for msg in messages:
@@ -83,7 +83,7 @@ class LlamaIndexManager:
             return None
 
     async def query_relevant_context(self, server_id: int, query: str, limit: int = 8) -> list[str]:
-        """Найти релевантный контекст для запроса на сервере"""
+        """Найти релевантный контекст для запроса на сервере."""
         try:
             collection = self.get_server_collection(server_id)
             vector_store = ChromaVectorStore(chroma_collection=collection)
@@ -99,7 +99,7 @@ class LlamaIndexManager:
             return []
 
     async def index_server_users(self, server_id: int, users: list[str]):
-        """Индексировать список пользователей сервера с использованием метаданных"""
+        """Индексировать список пользователей сервера с использованием метаданных."""
         try:
             collection = self.get_server_collection(server_id)
             await asyncio.to_thread(collection.delete, where={"document_type": "server_users"})

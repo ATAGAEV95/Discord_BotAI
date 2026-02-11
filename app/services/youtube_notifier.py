@@ -19,7 +19,7 @@ class YouTubeNotifier:
         self.bot = bot
         self.youtube = build("youtube", "v3", developerKey=os.getenv("YOUTUBE_API_KEY"))
 
-    async def check_new_videos(self):
+    async def check_new_videos(self) -> None:
         """Проверяет все отслеживаемые YouTube-каналы на наличие новых видео или стримов."""
         try:
             async with async_session() as session:
@@ -128,7 +128,9 @@ class YouTubeNotifier:
         except Exception as e:
             print(f"Ошибка при обработке канала {channel.name}: {e}")
 
-    async def add_channel(self, youtube_channel_id, discord_channel_id, name, guild_id):
+    async def add_channel(
+        self, youtube_channel_id, discord_channel_id, name, guild_id
+    ) -> bool | None:
         """Добавляет новый YouTube-канал для отслеживания."""
         try:
             async with async_session() as session:

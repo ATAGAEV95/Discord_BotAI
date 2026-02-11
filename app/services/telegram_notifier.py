@@ -20,7 +20,7 @@ class TelegramNotifier:
             )
 
     async def send_message(self, message: str) -> bool:
-        """Отправляет сообщение в Telegram"""
+        """Отправляет сообщение в Telegram."""
         if not self.enabled:
             return False
 

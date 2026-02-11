@@ -41,7 +41,7 @@ client = AsyncTavilyClient(SEARCH_API)
 
 
 async def make_search_request(endpoint: str) -> dict[str, Any] | None:
-    """Вспомогательная функция для выполнения поискового запроса к Tavily API
+    """Вспомогательная функция для выполнения поискового запроса к Tavily API.
 
     Args:
         endpoint: Текстовый запрос
@@ -71,7 +71,7 @@ async def make_search_request(endpoint: str) -> dict[str, Any] | None:
 
 @mcp.tool()
 async def get_current_search(text: str) -> str:
-    """Получить описание поискового запроса
+    """Получить описание поискового запроса.
 
     Args:
         text: Поисковой запрос

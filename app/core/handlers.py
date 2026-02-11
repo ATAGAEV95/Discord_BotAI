@@ -34,7 +34,7 @@ client = AsyncOpenAI(
 )
 
 
-async def clear_server_history(server_id):
+async def clear_server_history(server_id) -> str | None:
     """Очищает историю сообщений сервера в индексе LlamaIndex,
     оставляя только документы типа 'server_users'.
     """

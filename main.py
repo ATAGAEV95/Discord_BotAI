@@ -29,14 +29,14 @@ youtube_notifier = YouTubeNotifier(bot)
 
 
 @bot.command(name="help")
-async def help_command(ctx):
-    """Показать список команд"""
+async def help_command(ctx: commands.Context) -> None:
+    """Показать список команд."""
     embed = em.create_help_embed()
     await ctx.send(embed=embed)
 
 
 @bot.command(name="rank")
-async def rank_command(ctx, arg: str = None):
+async def rank_command(ctx: commands.Context, arg: str | None = None) -> None:
     """Показать ранг пользователя или список рангов.
 
     Если указан аргумент "list", отображает список всех рангов.
@@ -70,8 +70,8 @@ async def rank_command(ctx, arg: str = None):
 
 
 @bot.command(name="birthday")
-async def birthday_command(ctx, *, date: str):
-    """Сохранить дату рождения"""
+async def birthday_command(ctx: commands.Context, *, date: str) -> None:
+    """Сохранить дату рождения."""
     try:
         await save_birthday(
             f"!birthday {date}",
@@ -88,15 +88,15 @@ async def birthday_command(ctx, *, date: str):
 
 @bot.command(name="check_birthday")
 @commands.guild_only()
-async def manual_birthday_command(ctx):
+async def manual_birthday_command(ctx: commands.Context) -> None:
     """Ручная отправка поздравлений с днем рождения."""
     await send_birthday_congratulations(bot)
 
 
 @bot.command(name="reset")
 @commands.guild_only()
-async def reset_command(ctx):
-    """Очистить историю сервера (только для администраторов)"""
+async def reset_command(ctx: commands.Context) -> None:
+    """Очистить историю сервера (только для администраторов)."""
     answer = await handlers.clear_server_history(ctx.guild.id)
     await ctx.send(answer)
 
@@ -104,8 +104,8 @@ async def reset_command(ctx):
 @bot.command(name="update_user")
 @commands.guild_only()
 # @commands.has_permissions(administrator=True)
-async def update_user_command(ctx):
-    """Обновить список пользователей сервера (только для администраторов)"""
+async def update_user_command(ctx: commands.Context) -> None:
+    """Обновить список пользователей сервера (только для администраторов)."""
     try:
         server = ctx.guild
         members = server.members
@@ -114,7 +114,8 @@ async def update_user_command(ctx):
         await handlers.llama_manager.index_server_users(server.id, all_server_users)
 
         await ctx.send(
-            f"✅ Список пользователей сервера обновлен! Добавлено {len(all_server_users)} пользователей."
+            f"✅ Список пользователей сервера обновлен! "
+            f"Добавлено {len(all_server_users)} пользователей."
         )
     except Exception as e:
         await ctx.send(f"❌ Ошибка: {e}")
@@ -123,7 +124,9 @@ async def update_user_command(ctx):
 @bot.command(name="add_youtube")
 @commands.guild_only()
 @commands.has_permissions(administrator=True)
-async def add_youtube_command(ctx, youtube_id: str, discord_channel_id: int, *, name: str):
+async def add_youtube_command(
+    ctx: commands.Context, youtube_id: str, discord_channel_id: int, *, name: str
+) -> None:
     """Добавить YouTube канал для отслеживания."""
     try:
         channel = bot.get_channel(discord_channel_id)
@@ -143,7 +146,7 @@ async def add_youtube_command(ctx, youtube_id: str, discord_channel_id: int, *, 
 
 
 @bot.event
-async def on_ready():
+async def on_ready() -> None:
     """Инициализация при подключении бота к Discord."""
     await init_models()
     global report_generator
@@ -153,7 +156,7 @@ async def on_ready():
 
 
 @bot.event
-async def on_disconnect():
+async def on_disconnect() -> None:
     """Обработка отключения от Discord."""
     print("Бот отключился от Discord")
     await telegram_notifier.send_message(
@@ -162,7 +165,7 @@ async def on_disconnect():
 
 
 @bot.event
-async def on_resumed():
+async def on_resumed() -> None:
     """Обработка восстановления соединения с Discord."""
     print("Соединение с Discord восстановлено")
     await telegram_notifier.send_message(
@@ -171,7 +174,7 @@ async def on_resumed():
 
 
 @bot.event
-async def on_command_error(ctx, error):
+async def on_command_error(ctx: commands.Context, error: commands.CommandError) -> None:
     """Обработка ошибок команд."""
     original_error = getattr(error, "original", error)
 
@@ -189,7 +192,8 @@ async def on_command_error(ctx, error):
         await ctx.send("❌ У вас недостаточно прав для выполнения этой команды.")
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(
-            f"❌ Неправильное использование команды. Используйте: `!{ctx.command.name} {ctx.command.signature}`"
+            f"❌ Неправильное использование команды. "
+            f"Используйте: `!{ctx.command.name} {ctx.command.signature}`"
         )
     elif isinstance(error, commands.NoPrivateMessage):
         await ctx.send("❌ Эта команда недоступна в личных сообщениях.")
@@ -204,7 +208,7 @@ async def on_command_error(ctx, error):
 
 
 @bot.event
-async def on_message(message):
+async def on_message(message: discord.Message) -> None:
     """Обработка входящих сообщений."""
     global report_generator
     server_id = message.guild.id if message.guild else None
@@ -215,7 +219,8 @@ async def on_message(message):
     if len(message.content) > 1000:
         if message.content.startswith("!"):
             await message.channel.send(
-                f"Сообщение слишком длинное: {len(message.content)} символов! Максимальная длина - 1000 символов."
+                f"Сообщение слишком длинное: {len(message.content)} символов! "
+                "Максимальная длина - 1000 символов."
             )
         return
 

@@ -27,7 +27,7 @@ async def get_user_context(user_id: int):
             raise Exception(f"Ошибка доступа к базе данных: {e}")
 
 
-async def save_user_context(user_id: int, name: str, context: list):
+async def save_user_context(user_id: int, name: str, context: list) -> None:
     """Сохраняет контекст пользователя в базе данных."""
     async with async_session() as session:
         try:
@@ -40,7 +40,7 @@ async def save_user_context(user_id: int, name: str, context: list):
             raise Exception(f"Ошибка сохранения в БД: {e}")
 
 
-async def delete_user_context(user_id: int):
+async def delete_user_context(user_id: int) -> None:
     """Удаляет контекст пользователя из базы данных."""
     async with async_session() as session:
         try:
@@ -53,7 +53,7 @@ async def delete_user_context(user_id: int):
             raise Exception(f"Ошибка удаления из БД: {e}")
 
 
-async def save_channel_message(channel_id: int, message_id: int, author: str, content: str):
+async def save_channel_message(channel_id: int, message_id: int, author: str, content: str) -> None:
     """Сохраняет сообщение канала в базы данных."""
     async with async_session() as session:
         try:
@@ -81,7 +81,7 @@ async def get_channel_messages(channel_id: int):
             raise Exception(f"Ошибка доступа к базе данных: {e}")
 
 
-async def delete_channel_messages(channel_id: int):
+async def delete_channel_messages(channel_id: int) -> None:
     """Удаляет сообщения канала из базы данных."""
     async with async_session() as session:
         try:
@@ -94,7 +94,7 @@ async def delete_channel_messages(channel_id: int):
             raise Exception(f"Ошибка удаления сообщений канала: {e}")
 
 
-async def save_birthday(content, display_name, name, user_id):
+async def save_birthday(content, display_name, name, user_id) -> None:
     """Сохраняет дату рождения пользователя."""
     try:
         args = content[len("!birthday") :].strip()
