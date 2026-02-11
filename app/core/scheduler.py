@@ -37,7 +37,7 @@ async def get_today_birthday_users(timezone="Europe/Moscow"):
             return []
 
 
-async def send_birthday_congratulations(bot: discord.Client):
+async def send_birthday_congratulations(bot: discord.Client) -> None:
     """Отправляет поздравления пользователям, у которых сегодня день рождения."""
     try:
         users = await get_today_birthday_users()
@@ -63,7 +63,7 @@ async def send_birthday_congratulations(bot: discord.Client):
         print(f"[Ошибка] в задаче send_birthday_congratulations: {e}")
 
 
-async def send_holiday_congratulations(bot: discord.Client):
+async def send_holiday_congratulations(bot: discord.Client) -> None:
     """Отправляет поздравления с праздниками всем участникам серверов."""
     try:
         msk_tz = pytz.timezone("Europe/Moscow")
@@ -92,7 +92,7 @@ async def send_holiday_congratulations(bot: discord.Client):
         print(f"[Ошибка] в задаче send_holiday_congratulations: {e}")
 
 
-def start_scheduler(bot: discord.Client):
+def start_scheduler(bot: discord.Client) -> None:
     """Инициализирует и запускает асинхронный планировщик задач."""
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
