@@ -6,7 +6,7 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.services.llama_integration import LlamaIndexManager
-from app.tools.prompt import SYSTEM_NEWYEAR_PROMPT, USER_DESCRIPTIONS
+from app.tools.prompt import USER_DESCRIPTIONS, system_holiday_prompt
 from app.tools.utils import clean_text, replace_emojis, users_context
 
 load_dotenv()
@@ -25,25 +25,39 @@ client = AsyncOpenAI(
 )
 
 
-async def ai_generate_new_year_congrats(names):
-    """Генерирует креативное поздравление с Новым годом для пользователей."""
+async def ai_generate_holiday_congrats(names, holiday):
+    """Генерирует креативное поздравление с праздником для пользователей."""
     relevant_contexts = users_context(names, USER_DESCRIPTIONS)
     current_date = datetime.now()
     date_minus_month = current_date - timedelta(days=30)
     date_plus_month = current_date + timedelta(days=30)
     old_year = date_minus_month.year
     new_year = date_plus_month.year
-    prompt = [
-        ChatCompletionSystemMessageParam(role="system", content=SYSTEM_NEWYEAR_PROMPT.strip()),
-        ChatCompletionUserMessageParam(
-            role="user", content=f"{relevant_contexts}. Новый год {new_year}. Старый год {old_year}."
-        ),
-    ]
-
+    if holiday == "Новым годом":
+        # Specific New Year prompt
+        messages = [
+            ChatCompletionSystemMessageParam(
+                role="system", content=system_holiday_prompt(holiday).strip()
+            ),
+            ChatCompletionUserMessageParam(
+                role="user",
+                content=f"{relevant_contexts}. Новый год {new_year}. Старый год {old_year}.",
+            ),
+        ]
+    else:
+        # Universal holiday prompt
+        messages = [
+            ChatCompletionSystemMessageParam(
+                role="system", content=system_holiday_prompt(holiday).strip()
+            ),
+            ChatCompletionUserMessageParam(
+                role="user", content=f"{relevant_contexts}. Праздник: {holiday}."
+            ),
+        ]
     try:
         completion = await client.chat.completions.create(
             model="openai/gpt-5-chat",
-            messages=prompt,
+            messages=messages,
             temperature=1,  # Оптимальный баланс креативности/когерентности
             top_p=0.8,  # Шире выборка слов
             frequency_penalty=0.1,  # Поощряет новые формулировки
@@ -56,4 +70,4 @@ async def ai_generate_new_year_congrats(names):
         return emoji_response_text
     except Exception as e:
         print(f"[Ошибка генерации поздравления]: {e}")
-        return "Поздравляем всех пользователей с Новым Годом!!!! 🎉"
+        return f"Поздравляем всех пользователей с {holiday}!!!! 🎉"

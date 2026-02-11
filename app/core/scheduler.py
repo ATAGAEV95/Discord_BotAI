@@ -8,8 +8,9 @@ from sqlalchemy import select
 
 from app.core.handlers import ai_generate_birthday_congrats
 from app.data.models import Birthday, async_session
-from app.services.holiday import ai_generate_new_year_congrats
+from app.services.holiday import ai_generate_holiday_congrats
 from app.services.youtube_notifier import YouTubeNotifier
+from app.tools.utils import check_holiday
 
 DB_TIMEOUT = 10
 
@@ -19,7 +20,7 @@ async def get_today_birthday_users(timezone="Europe/Moscow"):
     today = datetime.now(pytz.timezone(timezone)).date()
     async with async_session() as session:
         try:
-            stmt = select(Birthday).where(Birthday.birthday != None)
+            stmt = select(Birthday).where(Birthday.birthday is not None)
             result = await asyncio.wait_for(session.execute(stmt), timeout=DB_TIMEOUT)
             users = result.scalars().all()
             birthday_users = [
@@ -62,9 +63,16 @@ async def send_birthday_congratulations(bot: discord.Client):
         print(f"[Ошибка] в задаче send_birthday_congratulations: {e}")
 
 
-async def send_new_year_congratulations(bot: discord.Client):
-    """Отправляет поздравления с Новым годом всем участникам серверов."""
+async def send_holiday_congratulations(bot: discord.Client):
+    """Отправляет поздравления с праздниками всем участникам серверов."""
     try:
+        msk_tz = pytz.timezone("Europe/Moscow")
+        now_msk = datetime.now(msk_tz)
+        holiday = check_holiday(now_msk.date())
+
+        if not holiday:
+            return
+
         for guild in bot.guilds:
             channel = guild.text_channels[0] if guild.text_channels else None
             if not channel:
@@ -75,13 +83,13 @@ async def send_new_year_congratulations(bot: discord.Client):
                 continue
 
             try:
-                congrats_text = await ai_generate_new_year_congrats(member_names)
-                await channel.send(f"🎉 **С Новым Годом, {guild.name}!** 🎉\n{congrats_text}")
+                congrats_text = await ai_generate_holiday_congrats(member_names, holiday)
+                await channel.send(f"🎉 **С праздником, {guild.name}!** 🎉\n{congrats_text}")
             except Exception as e:
-                print(f"[Ошибка] при отправке Новогоднего поздравления для {guild.name}: {e}")
+                print(f"[Ошибка] при отправке поздравления с {holiday} для {guild.name}: {e}")
 
     except Exception as e:
-        print(f"[Ошибка] в задаче send_new_year_congratulations: {e}")
+        print(f"[Ошибка] в задаче send_holiday_congratulations: {e}")
 
 
 def start_scheduler(bot: discord.Client):
@@ -89,16 +97,14 @@ def start_scheduler(bot: discord.Client):
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
     scheduler.add_job(
-        send_new_year_congratulations,
+        send_holiday_congratulations,
         "cron",
-        month=12,
-        day=31,
-        hour=23,
-        minute=59,
+        hour=0,
+        minute=1,
         args=[bot],
-        id="new_year_greeting",
+        id="holiday_greeting",
     )
-    # scheduler.add_job(send_new_year_congratulations, "interval", seconds=20, args=[bot], id="new_year_greeting")
+    # scheduler.add_job(send_holiday_congratulations, "interval", seconds=20, args=[bot], id="holiday_greeting_test")
     youtube_notifier = YouTubeNotifier(bot)
     scheduler.add_job(youtube_notifier.check_new_videos, "interval", minutes=60, id="youtube_check")
     scheduler.start()

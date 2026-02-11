@@ -1,4 +1,5 @@
 import re
+from datetime import date
 
 import discord
 import tiktoken
@@ -8,12 +9,24 @@ from app.tools.prompt import EMOJI_MAPPING, SYSTEM_PROMPT, USER_DESCRIPTIONS
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
 
+def check_holiday(current_date: date) -> str | None:
+    """Проверяет, является ли текущая дата праздником."""
+    holidays = {
+        (1, 1): "Новым годом",
+        (2, 11): "Днем защитника Отечества",
+    }
+    return holidays.get((current_date.month, current_date.day))
+
+
 def user_prompt(name: str) -> str:
-    """Формирует системный промпт для пользователя, если имя совпадает с ключами в P.USER_DESCRIPTIONS."""
+    """Формирует системный промпт для пользователя.
+
+    Если имя совпадает с ключами в P.USER_DESCRIPTIONS.
+    """
     if str(name).strip() in USER_DESCRIPTIONS:
         user_info = (
-            "Информация по пользователям с name(они должны совпадать побуквенно, иначе это другой юзер). "
-            "Но не упоминать об этом постоянно:"
+            "Информация по пользователям с name (они должны совпадать побуквенно, "
+            "иначе это другой юзер). Но не упоминать об этом постоянно:"
         )
         user_info += f"\n- {name}: {USER_DESCRIPTIONS[name]}"
         prompt = SYSTEM_PROMPT.format(user_info=user_info).strip()
@@ -60,41 +73,42 @@ def users_context(contexts: list[str], user_descriptions: dict) -> str:
     return new_context
 
 
-def contains_only_urls(text):
-    """Проверяет, содержит ли текст только ссылки (и пробелы между ними)"""
+def contains_only_urls(text: str) -> bool:
+    """Проверяет, содержит ли текст только ссылки (и пробелы между ними)."""
     url_pattern = re.compile(r"https?://\S+|www\.\S+")
     text_without_urls = url_pattern.sub("", text)
     return not text_without_urls.strip()
 
 
-def darken_color(rgb, factor=0.75):
+def darken_color(rgb: tuple, factor: float = 0.75) -> tuple:
     """Уменьшает яркость цвета RGB — делает его темнее.
+
     factor < 1 = темнее, factor > 1 = светлее.
     """
     return tuple(max(0, min(255, int(c * factor))) for c in rgb)
 
 
-def count_tokens(text):
+def count_tokens(text: str | None) -> int:
     """Подсчитывает количество токенов в тексте с использованием кодировки GPT-4o-mini."""
     if not isinstance(text, str):
         text = str(text) if text else ""
     return len(ENCODING.encode(text))
 
 
-async def clean_text(text):
+async def clean_text(text: str) -> str:
     """Очищает текст от markdown-стилей: **, *, ###, ##, #."""
     cleaned_text = re.sub(r"(\*\*|\*|###|##|#)", "", text)
     return cleaned_text
 
 
-async def replace_emojis(text):
-    """Заменяет текстовые представления эмодзи на реальные Discord-эмодзи"""
+async def replace_emojis(text: str) -> str:
+    """Заменяет текстовые представления эмодзи на реальные Discord-эмодзи."""
     for text_emoji, discord_emoji in EMOJI_MAPPING.items():
         text = text.replace(text_emoji, discord_emoji)
     return text
 
 
-def get_rank_description(message_count):
+def get_rank_description(message_count: int) -> dict:
     """Возвращает описание уровня (ранга) пользователя на основе количества сообщений."""
     rank_designs = [
         {  # 0 сообщений
@@ -162,7 +176,7 @@ def get_rank_description(message_count):
     return rank
 
 
-def convert_mcp_tools_to_openai(mcp_tools) -> list:
+def convert_mcp_tools_to_openai(mcp_tools: list) -> list:
     """Конвертирует MCP инструменты в формат OpenAI."""
     openai_tools = []
 
