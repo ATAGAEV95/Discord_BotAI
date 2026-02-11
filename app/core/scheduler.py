@@ -8,9 +8,9 @@ from sqlalchemy import select
 
 from app.core.handlers import ai_generate_birthday_congrats
 from app.data.models import Birthday, async_session
+from app.data.request import check_holiday
 from app.services.holiday import ai_generate_holiday_congrats
 from app.services.youtube_notifier import YouTubeNotifier
-from app.tools.utils import check_holiday
 
 DB_TIMEOUT = 10
 
@@ -68,7 +68,7 @@ async def send_holiday_congratulations(bot: discord.Client) -> None:
     try:
         msk_tz = pytz.timezone("Europe/Moscow")
         now_msk = datetime.now(msk_tz)
-        holiday = check_holiday(now_msk.date())
+        holiday = await check_holiday(now_msk.date())
 
         if not holiday:
             return

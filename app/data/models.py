@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     Index,
     Integer,
+    PrimaryKeyConstraint,
     String,
     Text,
     UniqueConstraint,
@@ -114,6 +115,16 @@ class YouTubeVideo(Base):
     is_live = Column(Boolean, default=False, nullable=False)
 
     __table_args__ = (UniqueConstraint("video_id", "guild_id", name="uq_youtube_video_per_guild"),)
+
+
+class Holiday(Base):
+    __tablename__ = "holidays"
+
+    day = Column(Integer, nullable=False)
+    month = Column(Integer, nullable=False)
+    name = Column(String(255), nullable=False)
+
+    __table_args__ = (PrimaryKeyConstraint("day", "month", name="pk_holidays"),)
 
 
 async def init_models() -> None:

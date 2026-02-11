@@ -1,10 +1,10 @@
 import asyncio
 import re
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import and_, delete, func, select, update
 
-from app.data.models import Birthday, ChannelMessage, User, UserMessageStats, async_session
+from app.data.models import Birthday, ChannelMessage, Holiday, User, UserMessageStats, async_session
 from app.tools.utils import get_rank_description
 
 DB_TIMEOUT = 10
@@ -225,3 +225,19 @@ async def get_user_rank(user_id: int, guild_id: int) -> int:
             raise Exception("Таймаут при получении ранга пользователя.")
         except Exception as e:
             raise Exception(f"Ошибка при получении ранга пользователя: {e}")
+
+
+async def check_holiday(current_date: date) -> str | None:
+    """Проверяет, является ли текущая дата праздником."""
+    async with async_session() as session:
+        try:
+            query = select(Holiday).where(
+                Holiday.day == current_date.day, Holiday.month == current_date.month
+            )
+            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
+            holiday = result.scalar_one_or_none()
+            return holiday.name if holiday else None
+        except TimeoutError:
+            raise Exception("Таймаут при проверке праздника.")
+        except Exception as e:
+            raise Exception(f"Ошибка доступа к базе данных (праздники): {e}")

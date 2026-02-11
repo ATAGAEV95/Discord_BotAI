@@ -1,5 +1,4 @@
 import re
-from datetime import date
 
 import discord
 import tiktoken
@@ -7,15 +6,6 @@ import tiktoken
 from app.tools.prompt import EMOJI_MAPPING, SYSTEM_PROMPT, USER_DESCRIPTIONS
 
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
-
-
-def check_holiday(current_date: date) -> str | None:
-    """Проверяет, является ли текущая дата праздником."""
-    holidays = {
-        (1, 1): "Новым годом",
-        (2, 23): "Днем защитника Отечества",
-    }
-    return holidays.get((current_date.month, current_date.day))
 
 
 def user_prompt(name: str) -> str:
