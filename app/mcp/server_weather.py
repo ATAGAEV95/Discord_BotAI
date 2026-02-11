@@ -4,7 +4,6 @@ from typing import Any
 
 import httpx
 from dotenv import load_dotenv
-
 from mcp.server.fastmcp import FastMCP
 
 # Загружаем переменные окружения из файла .env

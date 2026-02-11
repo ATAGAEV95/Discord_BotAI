@@ -3,9 +3,8 @@ import os
 from typing import Any
 
 from dotenv import load_dotenv
-from tavily import AsyncTavilyClient
-
 from mcp.server.fastmcp import FastMCP
+from tavily import AsyncTavilyClient
 
 # Загружаем переменные окружения из файла .env
 load_dotenv()
