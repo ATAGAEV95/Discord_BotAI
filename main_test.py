@@ -33,6 +33,7 @@ DC_TOKEN_TEST = os.getenv("DC_TOKEN_TEST")
 if not DC_TOKEN_TEST:
     print("DC_TOKEN_TEST не найден в переменных окружения. Пропускаем тест подключения к Discord.")
     print("Предупреждение: DC_TOKEN_TEST отсутствует!")
+    sys.exit(1)
 else:
     print("Начинаем тест подключения к Discord...")
     class TestClient(discord.Client):

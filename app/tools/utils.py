@@ -13,7 +13,7 @@ def check_holiday(current_date: date) -> str | None:
     """Проверяет, является ли текущая дата праздником."""
     holidays = {
         (1, 1): "Новым годом",
-        (2, 11): "Днем защитника Отечества",
+        (2, 23): "Днем защитника Отечества",
     }
     return holidays.get((current_date.month, current_date.day))
 
