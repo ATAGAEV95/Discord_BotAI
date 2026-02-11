@@ -44,6 +44,15 @@ async def ai_generate_holiday_congrats(names, holiday):
                 content=f"{relevant_contexts}. Новый год {new_year}. Старый год {old_year}.",
             ),
         ]
+    if holiday == "Днем Бичей":
+        messages = [
+            ChatCompletionSystemMessageParam(
+                role="system", content=system_holiday_prompt(holiday).strip()
+            ),
+            ChatCompletionUserMessageParam(
+                role="user", content=f"{relevant_contexts}. Сегодня {current_date}, Сервер бичей открылся 2017 году."
+            ),
+        ]
     else:
         # Universal holiday prompt
         messages = [
