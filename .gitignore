@@ -3,3 +3,4 @@
 /.python-version
 /chroma_db
 /.idea
+__pycache__/
