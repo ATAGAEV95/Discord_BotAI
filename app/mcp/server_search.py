@@ -2,7 +2,6 @@ import logging
 import os
 from typing import Any
 
-import __init__ as api
 from dotenv import load_dotenv
 from tavily import AsyncTavilyClient
 
@@ -17,25 +16,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Создаем экземпляр MCP сервера с именем "weather"
+# Создаем экземпляр MCP сервера с именем "search"
 mcp = FastMCP("search")
 
-# Пытаемся загрузить WEATHER_API из переменных окружения
-logger.info("Пытаемся загрузить LOCAL_API из переменных окружения")
+# Загружаем SEARCH_API из переменных окружения
+logger.info("Загружаем SEARCH_API из переменных окружения")
 SEARCH_API = os.getenv("SEARCH_API")
 
-# Проверяем, есть ли значение в переменных окружения
-if SEARCH_API:
-    logger.info("SEARCH_API найден в переменных окружения (длина: %d)", len(SEARCH_API))
+if not SEARCH_API:
+    logger.error("SEARCH_API не найден в переменных окружения")
+    SEARCH_API = "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"
 else:
-    logger.info("SEARCH_API не найден в переменных окружения. Пытаемся загрузить из __init__")
-    WEATHER_API = api.SEARCH_API
-
-    if SEARCH_API:
-        logger.info("SEARCH_API найден в __init__ (длина: %d)", len(SEARCH_API))
-    else:
-        logger.error("SEARCH_API не найден в __init__. Используем значение по умолчанию")
-        SEARCH_API = "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"
+    logger.info("SEARCH_API найден в переменных окружения (длина: %d)", len(SEARCH_API))
 
 client = AsyncTavilyClient(SEARCH_API)
 

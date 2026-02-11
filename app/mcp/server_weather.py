@@ -2,7 +2,6 @@ import logging
 import os
 from typing import Any
 
-import __init__ as api
 import httpx
 from dotenv import load_dotenv
 
@@ -20,22 +19,15 @@ logger = logging.getLogger(__name__)
 # Создаем экземпляр MCP сервера с именем "weather"
 mcp = FastMCP("weather")
 
-# Пытаемся загрузить WEATHER_API из переменных окружения
-logger.info("Пытаемся загрузить WEATHER_API из переменных окружения")
-WEATHER_API = os.getenv("WEATHER_API0")
+# Загружаем WEATHER_API из переменных окружения
+logger.info("Загружаем WEATHER_API из переменных окружения")
+WEATHER_API = os.getenv("WEATHER_API")
 
-# Проверяем, есть ли значение в переменных окружения
-if WEATHER_API:
-    logger.info("WEATHER_API найден в переменных окружения (длина: %d)", len(WEATHER_API))
+if not WEATHER_API:
+    logger.error("WEATHER_API не найден в переменных окружения")
+    WEATHER_API = "2630c5a327992df5af2e363e23d13c1f"
 else:
-    logger.info("WEATHER_API не найден в переменных окружения. Пытаемся загрузить из __init__")
-    WEATHER_API = api.WEATHER_API
-
-    if WEATHER_API:
-        logger.info("WEATHER_API найден в __init__ (длина: %d)", len(WEATHER_API))
-    else:
-        logger.error("WEATHER_API не найден в __init__. Используем значение по умолчанию")
-        WEATHER_API = "2630c5a327992df5af2e363e23d13c1f"
+    logger.info("WEATHER_API найден в переменных окружения (длина: %d)", len(WEATHER_API))
 
 OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
