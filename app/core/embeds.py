@@ -1,5 +1,6 @@
 import asyncio
 import io
+from typing import Any
 
 import aiohttp
 import discord
@@ -10,7 +11,7 @@ from app.data.request import get_user_rank
 from app.tools.utils import darken_color, get_rank_description
 
 
-def create_help_embed():
+def create_help_embed() -> discord.Embed:
     """Создает embed для команды !help."""
     embed = discord.Embed(
         title="📋 Справка по командам бота",
@@ -54,7 +55,7 @@ async def create_rang_embed(
     avatar_url: str,
     server_id: int,
     user_id: int,
-):
+) -> tuple[discord.Embed, File]:
     """Создает embed для команды !rang с цветом и фоном в зависимости от ранга."""
     rank = get_rank_description(message_count)
 
@@ -82,7 +83,7 @@ async def create_rang_embed(
     return embed, file
 
 
-async def download_avatar_async(avatar_url: str) -> Image.Image | None:
+async def download_avatar_async(avatar_url: str | None) -> Image.Image | None:
     """Асинхронная загрузка аватара пользователя."""
     if not avatar_url:
         return None
@@ -102,16 +103,16 @@ async def download_avatar_async(avatar_url: str) -> Image.Image | None:
 
 
 async def create_image_with_text_async(
-    display_name,
-    rang_description,
-    progress_bar,
-    exp_title,
-    server_rank,
-    rank_level,
-    text_color=(44, 255, 109),
-    bg_filename="rang0.jpg",
-    avatar_url=None,
-):
+    display_name: str,
+    rang_description: str,
+    progress_bar: str,
+    exp_title: str,
+    server_rank: int,
+    rank_level: int,
+    text_color: tuple[int, int, int] = (44, 255, 109),
+    bg_filename: str = "rang0.jpg",
+    avatar_url: str | None = None,
+) -> io.BytesIO:
     """Асинхронно создает изображение с текстом и аватаром пользователя."""
     avatar_img = await download_avatar_async(avatar_url)
 
@@ -129,7 +130,7 @@ async def create_image_with_text_async(
     )
 
 
-def create_rang_list_embed():
+def create_rang_list_embed() -> discord.Embed:
     """Создает embed для команды !rang list."""
     embed = discord.Embed(
         title="🎖️ Система рангов",
@@ -154,16 +155,16 @@ def create_rang_list_embed():
 
 
 def create_image_with_text(
-    display_name,
-    rang_description,
-    progress_bar,
-    exp_title,
-    server_rank,
-    rank_level,
-    text_color=(44, 255, 109),
-    bg_filename="rang0.jpg",
-    avatar_img=None,  # Уже загруженное изображение
-):
+    display_name: str,
+    rang_description: str,
+    progress_bar: str,
+    exp_title: str,
+    server_rank: int,
+    rank_level: int,
+    text_color: tuple[int, int, int] = (44, 255, 109),
+    bg_filename: str = "rang0.jpg",
+    avatar_img: Image.Image | None = None,  # Уже загруженное изображение
+) -> io.BytesIO:
     """Создает изображение с текстом и аватаром пользователя."""
     background = Image.open(f"./app/resource/{bg_filename}").convert("RGBA")
     background = background.resize((1920, 480))
@@ -238,7 +239,12 @@ def create_image_with_text(
             ImageFont.load_default()
         )
 
-    def draw_centered_text_block(texts_fonts_colors, center_x, center_y, gapp=10):
+    def draw_centered_text_block(
+        texts_fonts_colors: list[tuple[str, Any, tuple[int, int, int]]],
+        center_x: int,
+        center_y: int,
+        gapp: int = 10,
+    ) -> None:
         """Отрисовка блока текста с вертикальным выравниванием по центру."""
         heights = []
         for text, font, _ in texts_fonts_colors:

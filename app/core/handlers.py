@@ -34,9 +34,10 @@ client = AsyncOpenAI(
 )
 
 
-async def clear_server_history(server_id) -> str | None:
-    """Очищает историю сообщений сервера в индексе LlamaIndex,
-    оставляя только документы типа 'server_users'.
+async def clear_server_history(server_id: int) -> str | None:
+    """Очищает историю сообщений сервера в индексе LlamaIndex.
+
+    Оставляет только документы типа 'server_users'.
     """
     try:
         collection = llama_manager.get_server_collection(server_id)
@@ -53,7 +54,10 @@ async def clear_server_history(server_id) -> str | None:
                 collection.delete(ids=ids_to_delete)
                 return f"Удалено {len(ids_to_delete)} документов из индекса сервера {server_id}"
             else:
-                return f"В индексе сервера {server_id} нет документов для удаления (кроме списка пользователей)"
+                return (
+                    f"В индексе сервера {server_id} нет документов для удаления "
+                    "(кроме списка пользователей)"
+                )
         else:
             return f"Индекс сервера {server_id} уже пуст"
     except Exception as e:
@@ -134,7 +138,7 @@ async def ai_generate(
         return "Произошла ошибка. Пожалуйста, попробуйте позже."
 
 
-async def ai_generate_birthday_congrats(name):
+async def ai_generate_birthday_congrats(name: str) -> str:
     """Генерирует креативное поздравление с днём рождения для пользователя."""
     prompt = [
         ChatCompletionSystemMessageParam(role="system", content=SYSTEM_BIRTHDAY_PROMPT.strip()),

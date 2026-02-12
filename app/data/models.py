@@ -48,6 +48,8 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 
 class User(Base):
+    """Модель пользователя Discord."""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -58,6 +60,8 @@ class User(Base):
 
 
 class ChannelMessage(Base):
+    """Модель сообщения в канале Discord."""
+
     __tablename__ = "channel_messages"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -69,6 +73,8 @@ class ChannelMessage(Base):
 
 
 class Birthday(Base):
+    """Модель дня рождения пользователя."""
+
     __tablename__ = "birthday"
     user_id = Column(BigInteger, primary_key=True, nullable=False)
     display_name = Column(String(50), nullable=False)
@@ -78,6 +84,8 @@ class Birthday(Base):
 
 
 class UserMessageStats(Base):
+    """Модель статистики сообщений пользователя."""
+
     __tablename__ = "user_message_stats"
 
     user_id = Column(BigInteger, primary_key=True, nullable=False)
@@ -93,6 +101,8 @@ class UserMessageStats(Base):
 
 
 class YouTubeChannel(Base):
+    """Модель отслеживаемого YouTube канала."""
+
     __tablename__ = "youtube_channels"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -104,6 +114,8 @@ class YouTubeChannel(Base):
 
 
 class YouTubeVideo(Base):
+    """Модель видео с YouTube."""
+
     __tablename__ = "youtube_videos"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -118,6 +130,8 @@ class YouTubeVideo(Base):
 
 
 class Holiday(Base):
+    """Модель праздника."""
+
     __tablename__ = "holidays"
 
     day = Column(Integer, nullable=False)

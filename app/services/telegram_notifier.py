@@ -9,7 +9,8 @@ load_dotenv()
 class TelegramNotifier:
     """Класс для отправки уведомлений в Telegram."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Инициализирует клиент Telegram-уведомлений."""
         self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
         self.chat_id = os.getenv("TELEGRAM_CHAT_ID")
         self.enabled = bool(self.bot_token and self.chat_id)

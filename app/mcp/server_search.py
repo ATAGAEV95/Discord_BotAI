@@ -32,15 +32,7 @@ client = AsyncTavilyClient(SEARCH_API)
 
 
 async def make_search_request(endpoint: str) -> dict[str, Any] | None:
-    """Вспомогательная функция для выполнения поискового запроса к Tavily API.
-
-    Args:
-        endpoint: Текстовый запрос
-
-    Returns:
-        JSON ответ от API или None в случае ошибки
-
-    """
+    """Выполняет поисковый запрос к Tavily API."""
     # Проверяем наличие API ключа
     if not SEARCH_API:
         logger.error("SEARCH_API не найден в переменных окружения")
@@ -62,15 +54,7 @@ async def make_search_request(endpoint: str) -> dict[str, Any] | None:
 
 @mcp.tool()
 async def get_current_search(text: str) -> str:
-    """Получить описание поискового запроса.
-
-    Args:
-        text: Поисковой запрос
-
-    Returns:
-        Строка с описанием поискового запроса
-
-    """
+    """Получить описание поискового запроса."""
     logger.info(f"Поиск: {text}")
 
     # Выполняем запрос к API

@@ -15,7 +15,7 @@ from app.services.youtube_notifier import YouTubeNotifier
 DB_TIMEOUT = 10
 
 
-async def get_today_birthday_users(timezone="Europe/Moscow"):
+async def get_today_birthday_users(timezone: str = "Europe/Moscow") -> list[Birthday]:
     """Получает список пользователей, у которых сегодня день рождения."""
     today = datetime.now(pytz.timezone(timezone)).date()
     async with async_session() as session:
@@ -104,7 +104,14 @@ def start_scheduler(bot: discord.Client) -> None:
         args=[bot],
         id="holiday_greeting",
     )
-    # scheduler.add_job(send_holiday_congratulations, "interval", seconds=20, args=[bot], id="holiday_greeting_test")
+    # scheduler.add_job(
+    #     send_holiday_congratulations,
+    #     "interval",
+    #     seconds=20,
+    #     args=[bot],
+    #     id="holiday_greeting_test"
+    # )
+
     youtube_notifier = YouTubeNotifier(bot)
     scheduler.add_job(youtube_notifier.check_new_videos, "interval", minutes=60, id="youtube_check")
     scheduler.start()

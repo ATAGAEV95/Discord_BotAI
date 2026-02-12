@@ -21,9 +21,13 @@ polza = "https://api.polza.ai/api/v1"
 
 
 class LlamaIndexManager:
-    """Управляет интеграцией с LlamaIndex и ChromaDB для построения векторных индексов сообщений Discord-сервера."""
+    """Управляет интеграцией с LlamaIndex и ChromaDB.
 
-    def __init__(self):
+    Строит векторные индексы сообщений Discord-сервера.
+    """
+
+    def __init__(self) -> None:
+        """Инициализирует менеджер LlamaIndex."""
         self.custom_client = AsyncOpenAI(
             api_key=AI_TOKEN_AITUNNEL,
             base_url=aitunnel,
@@ -41,16 +45,16 @@ class LlamaIndexManager:
         Settings.embed_model = self.embed_model
         Settings.node_parser = self.node_parser
 
-    def get_server_collection(self, server_id: int):
+    def get_server_collection(self, server_id: int) -> Any:
         """Получить или создать коллекцию для сервера."""
         collection_name = f"server_{server_id}_messages"
         try:
             collection = self.db.get_collection(collection_name)
-        except:
+        except Exception:
             collection = self.db.create_collection(collection_name)
         return collection
 
-    async def index_messages(self, server_id: int, messages: list[dict[str, Any]]):
+    async def index_messages(self, server_id: int, messages: list[dict[str, Any]]) -> Any:
         """Индексировать сообщения сервера."""
         try:
             documents = []
@@ -98,7 +102,7 @@ class LlamaIndexManager:
             print(f"Ошибка поиска контекста: {e}")
             return []
 
-    async def index_server_users(self, server_id: int, users: list[str]):
+    async def index_server_users(self, server_id: int, users: list[str]) -> Any:
         """Индексировать список пользователей сервера с использованием метаданных."""
         try:
             collection = self.get_server_collection(server_id)

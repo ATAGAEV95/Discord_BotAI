@@ -1,6 +1,7 @@
 import asyncio
 import os
 from datetime import datetime, timedelta
+from typing import Any
 
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
@@ -13,11 +14,17 @@ load_dotenv()
 
 
 class YouTubeNotifier:
-    """Класс для отслеживания новых видео и прямых эфиров на YouTube-каналах и уведомления Discord-серверов."""
+    """Класс для отслеживания новых видео на YouTube.
 
-    def __init__(self, bot):
+    Уведомляет Discord-серверы о новых видео и стримах.
+    """
+
+    def __init__(self, bot: Any) -> None:
+        """Инициализирует YouTube-нотифайер."""
         self.bot = bot
-        self.youtube = build("youtube", "v3", developerKey=os.getenv("YOUTUBE_API_KEY"))
+        self.youtube = build(
+            "youtube", "v3", developerKey=os.getenv("YOUTUBE_API_KEY")
+        )
 
     async def check_new_videos(self) -> None:
         """Проверяет все отслеживаемые YouTube-каналы на наличие новых видео или стримов."""
@@ -32,7 +39,7 @@ class YouTubeNotifier:
         except Exception as e:
             print(f"Ошибка при проверке YouTube видео: {e}")
 
-    async def _check_channel_videos(self, channel):
+    async def _check_channel_videos(self, channel: Any) -> None:
         """Проверяет конкретный YouTube-канал на наличие новых видео или стримов."""
         try:
             req = self.youtube.search().list(
@@ -84,9 +91,11 @@ class YouTubeNotifier:
 
                         discord_channel = self.bot.get_channel(channel.discord_channel_id)
                         if discord_channel:
+                            ch_url = f"https://www.youtube.com/channel/{channel.channel_id}"
                             if is_current_live:
                                 message = (
-                                    f"🔴 **Прямой эфир на канале [{channel.name}](https://www.youtube.com/channel/{channel.channel_id})!**\n"
+                                    f"🔴 **Прямой эфир на канале "
+                                    f"[{channel.name}]({ch_url})!**\n"
                                     f"https://www.youtube.com/watch?v={video_id}"
                                 )
                             elif is_upcoming_live:
@@ -98,18 +107,23 @@ class YouTubeNotifier:
                                         scheduled_time, "%Y-%m-%dT%H:%M:%SZ"
                                     )
                                     message = (
-                                        f"📅 **Запланирован стрим на канале [{channel.name}](https://www.youtube.com/channel/{channel.channel_id})!**\n"
-                                        f"⏰ Начало: {(scheduled_dt + timedelta(hours=3)).strftime('%d.%m.%Y в %H:%M')} MSK\n"
+                                        f"📅 **Запланирован стрим на канале "
+                                        f"[{channel.name}]({ch_url})!**\n"
+                                        f"⏰ Начало: "
+                                        f"{(scheduled_dt + timedelta(hours=3)).strftime('%d.%m.%Y в %H:%M')}"  # noqa: E501
+                                        f" MSK\n"
                                         f"https://www.youtube.com/watch?v={video_id}"
                                     )
                                 else:
                                     message = (
-                                        f"📅 **Запланирован стрим на канале [{channel.name}](https://www.youtube.com/channel/{channel.channel_id})!**\n"
+                                        f"📅 **Запланирован стрим на канале "
+                                        f"[{channel.name}]({ch_url})!**\n"
                                         f"https://www.youtube.com/watch?v={video_id}"
                                     )
                             else:
                                 message = (
-                                    f"🎥 **Новое видео на канале [{channel.name}](https://www.youtube.com/channel/{channel.channel_id})!**\n"
+                                    f"🎥 **Новое видео на канале "
+                                    f"[{channel.name}]({ch_url})!**\n"
                                     f"https://www.youtube.com/watch?v={video_id}"
                                 )
 
@@ -129,7 +143,7 @@ class YouTubeNotifier:
             print(f"Ошибка при обработке канала {channel.name}: {e}")
 
     async def add_channel(
-        self, youtube_channel_id, discord_channel_id, name, guild_id
+        self, youtube_channel_id: str, discord_channel_id: int, name: str, guild_id: int
     ) -> bool | None:
         """Добавляет новый YouTube-канал для отслеживания."""
         try:

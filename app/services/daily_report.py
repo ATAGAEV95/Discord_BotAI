@@ -1,6 +1,7 @@
 import asyncio
 import os
 from datetime import datetime, timedelta
+from typing import Any
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
@@ -25,23 +26,30 @@ report_client = AsyncOpenAI(
 
 
 class ReportGenerator:
-    """Класс ReportGenerator используется для накопления сообщений в Discord-канале и автоматической отправки
-    отчета о содержимом канала после 60 минут без активности, при достижении порогового количества сообщений.
+    """Генератор отчётов по активности в Discord-каналах.
+
+    Накапливает сообщения и автоматически отправляет отчёт
+    после 60 минут без активности при достижении порогового
+    количества сообщений.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: Any) -> None:
+        """Инициализирует генератор отчётов."""
         self.bot = bot
-        self.channel_data = {}
-        self.locks = {}
+        self.channel_data: dict = {}
+        self.locks: dict[int, asyncio.Lock] = {}
 
-    def get_lock(self, channel_id):
+    def get_lock(self, channel_id: int) -> asyncio.Lock:
+        """Возвращает блокировку для указанного канала."""
         if channel_id not in self.locks:
             self.locks[channel_id] = asyncio.Lock()
         return self.locks[channel_id]
 
     async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
-        """Добавляет сообщение в историю канала и обновляет время последней активности.
-        При достижении или превышении количества 15 сообщений запускается задача на отправку отчета через 60 минут.
+        """Добавляет сообщение в историю канала.
+
+        Обновляет время последней активности. При достижении или
+        превышении 15 сообщений запускает задачу отправки отчёта.
         """
         lock = self.get_lock(channel_id)
         async with lock:
@@ -86,8 +94,10 @@ class ReportGenerator:
                 )
 
     async def start_report_timer(self, channel_id: int) -> None:
-        """Запускает задачу, которая ожидает 60 минут. Если после последнего сообщения прошло
-        не менее 60 минут без активности, то генерируется и отправляется аналитический отчет.
+        """Запускает таймер ожидания 60 минут.
+
+        Если после последнего сообщения прошло не менее 60 минут,
+        генерирует и отправляет аналитический отчёт.
         """
         await asyncio.sleep(3600)
         lock = self.get_lock(channel_id)
@@ -102,8 +112,9 @@ class ReportGenerator:
         await self.generate_and_send_report(channel_id)
 
     async def generate_and_send_report(self, channel_id: int) -> None:
-        """Генерирует аналитический отчет на основе накопленных сообщений с использованием GPT-модели
-        и отправляет его в канал.
+        """Генерирует аналитический отчёт и отправляет его в канал.
+
+        Использует GPT-модель для анализа накопленных сообщений.
         """
         lock = self.get_lock(channel_id)
         async with lock:

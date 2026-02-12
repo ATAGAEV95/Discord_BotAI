@@ -25,7 +25,7 @@ client = AsyncOpenAI(
 )
 
 
-async def ai_generate_holiday_congrats(names, holiday):
+async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
     """Генерирует креативное поздравление с праздником для пользователей."""
     relevant_contexts = users_context(names, USER_DESCRIPTIONS)
     current_date = datetime.now()
@@ -50,7 +50,11 @@ async def ai_generate_holiday_congrats(names, holiday):
                 role="system", content=system_holiday_prompt(holiday).strip()
             ),
             ChatCompletionUserMessageParam(
-                role="user", content=f"{relevant_contexts}. Сегодня {current_date}, Сервер бичей открылся 2017 году."
+                role="user",
+                content=(
+                    f"{relevant_contexts}. Сегодня {current_date},"
+                    " Сервер бичей открылся 2017 году."
+                ),
             ),
         ]
     else:

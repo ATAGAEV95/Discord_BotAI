@@ -10,7 +10,7 @@ from app.tools.utils import get_rank_description
 DB_TIMEOUT = 10
 
 
-async def get_user_context(user_id: int):
+async def get_user_context(user_id: int) -> list | str:
     """Извлекает контекст пользователя из базы данных."""
     async with async_session() as session:
         try:
@@ -68,7 +68,7 @@ async def save_channel_message(channel_id: int, message_id: int, author: str, co
             raise Exception(f"Ошибка сохранения сообщения канала в БД: {e}")
 
 
-async def get_channel_messages(channel_id: int):
+async def get_channel_messages(channel_id: int) -> list[ChannelMessage]:
     """Извлекает сообщения канала из базы данных."""
     async with async_session() as session:
         try:
@@ -94,7 +94,7 @@ async def delete_channel_messages(channel_id: int) -> None:
             raise Exception(f"Ошибка удаления сообщений канала: {e}")
 
 
-async def save_birthday(content, display_name, name, user_id) -> None:
+async def save_birthday(content: str, display_name: str, name: str, user_id: int) -> None:
     """Сохраняет дату рождения пользователя."""
     try:
         args = content[len("!birthday") :].strip()
@@ -125,7 +125,7 @@ async def save_birthday(content, display_name, name, user_id) -> None:
             raise Exception(f"Ошибка при сохранении даты рождения: {e}")
 
 
-async def update_message_count(user_id: int, name: str, guild_id: int):
+async def update_message_count(user_id: int, name: str, guild_id: int) -> dict:
     """Обновляет счетчик сообщений пользователя и возвращает информацию о повышении ранга."""
     try:
         async with async_session() as session:

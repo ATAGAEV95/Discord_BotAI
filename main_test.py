@@ -3,31 +3,23 @@ import sys
 
 print("Начинаем проверку зависимостей...")
 try:
-    import tiktoken
-    import openai
-    from dotenv import load_dotenv
+    import aiohttp  # noqa: F401
+    import apscheduler  # noqa: F401
+    import asyncpg  # noqa: F401
+    import chromadb  # noqa: F401
     import discord
-    import sqlalchemy
-    import pytz
-    import apscheduler
-    import asyncpg
-    import chromadb
-    import llama_index.core
-    import requests
-    import aiohttp
-    import googleapiclient
-    import PIL
-    import httpx
-    import llama_index.core
-    import mcp
-    import openai
-    import PIL
-    import pytz
-    import requests
-    import sqlalchemy
-    import tavily
-    import tiktoken
-    from dotenv import load_dotenv
+    import googleapiclient  # noqa: F401
+    import httpx  # noqa: F401
+    import llama_index.core  # noqa: F401
+    import mcp  # noqa: F401
+    import openai  # noqa: F401
+    import PIL  # noqa: F401
+    import pytz  # noqa: F401
+    import requests  # noqa: F401
+    import sqlalchemy  # noqa: F401
+    import tavily  # noqa: F401
+    import tiktoken  # noqa: F401
+    from dotenv import load_dotenv  # noqa: F401
 
     print("Все зависимости успешно загружены.")
 except ImportError as e:
@@ -45,11 +37,15 @@ else:
     print("Начинаем тест подключения к Discord...")
 
     class TestClient(discord.Client):
-        async def on_ready(self):
+        """Тестовый клиент Discord для проверки подключения."""
+
+        async def on_ready(self) -> None:
+            """Обработчик успешного подключения к Discord."""
             if self.user:
                 print(f"Вход выполнен как {self.user} (ID: {self.user.id})")
             print("Тест подключения к Discord прошел успешно.")
             await self.close()
+
 
     intents = discord.Intents.default()
     client = TestClient(intents=intents)

@@ -32,16 +32,7 @@ OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 
 async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[str, Any] | None:
-    """Вспомогательная функция для выполнения запросов к OpenWeatherMap API.
-
-    Args:
-        endpoint: Конечная точка API (например, "weather" или "forecast")
-        params: Параметры запроса
-
-    Returns:
-        JSON ответ от API или None в случае ошибки
-
-    """
+    """Выполняет запрос к OpenWeatherMap API."""
     # Проверяем наличие API ключа
     if not WEATHER_API:
         logger.error("WEATHER_API не найден в переменных окружения")
@@ -72,16 +63,7 @@ async def make_weather_request(endpoint: str, params: dict[str, Any]) -> dict[st
 
 @mcp.tool()
 async def get_current_weather(city: str, units: str = "metric") -> str:
-    """Получить текущую погоду для указанного города.
-
-    Args:
-        city: Название города на русском или английском (например, "Москва" или "Moscow")
-        units: Система измерения - "metric" (Цельсий) или "imperial" (Фаренгейт)
-
-    Returns:
-        Строка с описанием текущей погоды
-
-    """
+    """Получить текущую погоду для указанного города."""
     logger.info(f"Запрос погоды для города: {city}")
 
     # Формируем параметры запроса
@@ -132,17 +114,7 @@ async def get_current_weather(city: str, units: str = "metric") -> str:
 
 @mcp.tool()
 async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
-    """Получить прогноз погоды на несколько дней.
-
-    Args:
-        city: Название города на русском или английском
-        days: Количество дней для прогноза (1-5)
-        units: Система измерения - "metric" (Цельсий) или "imperial" (Фаренгейт)
-
-    Returns:
-        Строка с прогнозом погоды
-
-    """
+    """Получить прогноз погоды на несколько дней."""
     logger.info(f"Запрос прогноза для города: {city} на {days} дней")
 
     # Ограничиваем количество дней
@@ -208,16 +180,7 @@ async def get_forecast(city: str, days: int = 3, units: str = "metric") -> str:
 
 
 def format_day_forecast(day_data: list, temp_unit: str) -> str:
-    """Форматирует прогноз на один день.
-
-    Args:
-        day_data: Список данных о погоде за день (каждые 3 часа)
-        temp_unit: Символ единицы температуры
-
-    Returns:
-        Отформатированная строка с прогнозом
-
-    """
+    """Форматирует прогноз на один день."""
     # Берем первую запись для даты
     date = day_data[0]["dt_txt"].split()[0]
 
