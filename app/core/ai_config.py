@@ -1,10 +1,3 @@
-"""Централизованная конфигурация AI-провайдеров.
-
-Управляет профилями провайдеров, создаёт и кеширует
-клиенты AsyncOpenAI. Поддерживает переключение провайдера
-в рантайме.
-"""
-
 import os
 
 from dotenv import load_dotenv
@@ -12,7 +5,6 @@ from openai import AsyncOpenAI
 
 load_dotenv()
 
-# ── Профили провайдеров ─────────────────────────────────────────
 PROVIDERS: dict[str, dict[str, str]] = {
     "proxyapi": {
         "token_env": "AI_TOKEN",
@@ -28,7 +20,6 @@ PROVIDERS: dict[str, dict[str, str]] = {
     },
 }
 
-# ── Состояние ────────────────────────────────────────────────────
 _active_provider: str = os.getenv("AI_PROVIDER", "aitunnel")
 _active_model: str = os.getenv("AI_MODEL", "claude-haiku-4.5")
 _cached_client: AsyncOpenAI | None = None
