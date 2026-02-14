@@ -2,18 +2,22 @@ import asyncio
 from collections.abc import Callable
 
 from discord.ext import commands
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 import app.core.embeds as em
 from app.core import handlers
 from app.core.ai_config import (
     get_active_provider,
     get_available_providers,
+    get_client,
+    get_model,
     next_provider,
     set_active_provider,
 )
 from app.core.scheduler import send_birthday_congratulations
 from app.data.request import get_rank, save_birthday
 from app.services.youtube_notifier import YouTubeNotifier
+from app.tools.prompt import ROAST_PERSONAS, ROAST_PROMPT, USER_DESCRIPTIONS
 from app.tools.utils import get_rank_description
 
 ALLOWED_USERS = {"atagaev"}
@@ -208,6 +212,86 @@ class BotCommands(commands.Cog):
 
         set_active_provider(name)
         await ctx.send(f"✅ Провайдер переключён на **{name}**")
+
+    @commands.command(name="toxic")
+    async def roast_command(self, ctx: commands.Context, persona: str | None = None) -> None:
+        """Прожарка последних сообщений чата.
+        
+        Использование:
+        !toxic - обычная прожарка
+        !toxic babka - режим бабки
+        !toxic list - список доступных режимов
+        """
+        try:
+            if persona == "list":
+                 keys = ", ".join(f"`{k}`" for k in ROAST_PERSONAS.keys())
+                 await ctx.send(f"🎭 **Доступные режимы:** {keys}")
+                 return
+
+            messages = []
+            async for msg in ctx.channel.history(limit=50):
+                if len(messages) >= 20:
+                    break
+
+                if msg.author == self.bot.user:
+                    continue
+
+                content = msg.content
+                if content.startswith(ctx.prefix) or content.startswith("!"):
+                    continue
+
+                if not content:
+                    if msg.attachments:
+                        content = "[Пользователь скинул картинку/файл]"
+                    elif msg.stickers:
+                        content = "[Пользователь отправил стикер]"
+                    else:
+                        continue  # Пропускаем пустые системные сообщения
+
+                if content.startswith("http"):
+                    content = "[Пользователь отправил ссылку]"
+
+                messages.append(f"[{msg.author.name}]: {content}")
+
+            if not messages:
+                await ctx.send("Тут слишком тихо, некого прожаривать. 🦗")
+                return
+
+            messages.reverse()
+            history_text = "\n".join(messages)
+            # print(f"DEBUG: Messages for roast:\n{history_text}")
+            
+            user_info_text = "\n".join([f"- {k}: {v}" for k, v in USER_DESCRIPTIONS.items()])
+            
+            system_content = ROAST_PROMPT.format(user_info=user_info_text)
+
+            if persona and persona in ROAST_PERSONAS:
+                selected_persona = ROAST_PERSONAS[persona]
+                system_content += f"\n\nВАЖНОЕ ДОПОЛНЕНИЕ К РОЛИ:\n{selected_persona}"
+            elif persona:
+                 keys = ", ".join(f"`{k}`" for k in ROAST_PERSONAS.keys())
+                 await ctx.send(f"❌ Нет такого режима `{persona}`. Доступные: {keys}")
+                 return
+
+            msgs = [
+                ChatCompletionSystemMessageParam(role="system", content=system_content),
+                ChatCompletionUserMessageParam(
+                    role="user", content=f"Вот последние сообщения чата:\n{history_text}"
+                ),
+            ]
+
+            async with ctx.typing():
+                completion = await get_client().chat.completions.create(
+                    model=get_model(),
+                    messages=msgs,
+                    temperature=0.9,
+                    max_tokens=600,
+                )
+                response = completion.choices[0].message.content
+                await ctx.send(response)
+
+        except Exception as e:
+            await ctx.send(f"❌ Не удалось прожарить: {e}")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, error: commands.CommandError) -> None:
