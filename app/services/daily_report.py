@@ -1,5 +1,4 @@
 import asyncio
-import os
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -101,6 +100,13 @@ class ReportGenerator:
 
         Использует GPT-модель для анализа накопленных сообщений.
         """
+        channel = self.bot.get_channel(channel_id)
+        if not channel:
+            print(f"Канал {channel_id} недоступен, пропускаем генерацию отчёта")
+            self.channel_data.pop(channel_id, None)
+            self.locks.pop(channel_id, None)
+            return
+
         lock = self.get_lock(channel_id)
         async with lock:
             try:
