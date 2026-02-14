@@ -95,6 +95,7 @@ async def send_holiday_congratulations(bot: discord.Client) -> None:
 def start_scheduler(bot: discord.Client) -> None:
     """Инициализирует и запускает асинхронный планировщик задач."""
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
+    youtube_notifier = YouTubeNotifier(bot)
     scheduler.add_job(send_birthday_congratulations, "cron", hour=9, minute=0, args=[bot])
     scheduler.add_job(
         send_holiday_congratulations,
@@ -105,13 +106,12 @@ def start_scheduler(bot: discord.Client) -> None:
         id="holiday_greeting",
     )
     # scheduler.add_job(
-    #     send_holiday_congratulations,
+    #     youtube_notifier.check_new_videos,
     #     "interval",
     #     seconds=20,
     #     args=[bot],
-    #     id="holiday_greeting_test"
+    #     id="youtube_check_test",
     # )
 
-    youtube_notifier = YouTubeNotifier(bot)
-    scheduler.add_job(youtube_notifier.check_new_videos, "interval", minutes=60, id="youtube_check")
+    scheduler.add_job(youtube_notifier.check_new_videos, "interval", minutes=5, id="youtube_check")
     scheduler.start()

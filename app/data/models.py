@@ -111,6 +111,7 @@ class YouTubeChannel(Base):
     discord_channel_id = Column(BigInteger, nullable=False)
     name = Column(String(100), nullable=False)
     last_checked = Column(DateTime, default=func.now())
+    is_active = Column(Boolean, default=True, nullable=False)
 
 
 class YouTubeVideo(Base):

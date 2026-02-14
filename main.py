@@ -1,5 +1,6 @@
 import asyncio
 import os
+from collections.abc import Callable
 
 import discord
 from discord.ext import commands
@@ -26,6 +27,21 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 report_generator: ReportGenerator | None = None
 youtube_notifier = YouTubeNotifier(bot)
+
+ALLOWED_USERS = {"atagaev"}
+
+
+def admin_or_owner() -> Callable:
+    """Проверка: администратор или разрешённый пользователь."""
+
+    async def predicate(ctx: commands.Context) -> bool:
+        if ctx.author.name in ALLOWED_USERS:
+            return True
+        if ctx.author.guild_permissions.administrator:
+            return True
+        raise commands.MissingPermissions(["administrator"])
+
+    return commands.check(predicate)
 
 
 @bot.command(name="help")
@@ -123,7 +139,7 @@ async def update_user_command(ctx: commands.Context) -> None:
 
 @bot.command(name="add_youtube")
 @commands.guild_only()
-@commands.has_permissions(administrator=True)
+@admin_or_owner()
 async def add_youtube_command(
     ctx: commands.Context, youtube_id: str, discord_channel_id: int, *, name: str
 ) -> None:
@@ -143,6 +159,31 @@ async def add_youtube_command(
             await ctx.send("❌ Ошибка при добавлении канала")
     except Exception as e:
         await ctx.send(f"❌ Ошибка: {e}")
+
+
+@bot.command(name="youtube")
+@commands.guild_only()
+@admin_or_owner()
+async def youtube_toggle_command(
+    ctx: commands.Context, action: str, *, name: str
+) -> None:
+    """Включить или отключить отслеживание YouTube канала."""
+    action = action.lower()
+    if action not in ("on", "off"):
+        await ctx.send("❌ Используйте: `!youtube on/off название_канала`")
+        return
+
+    active = action == "on"
+    result = await youtube_notifier.toggle_channel(name, ctx.guild.id, active)
+
+    if result is None:
+        await ctx.send(f"❌ Канал **{name}** не найден на этом сервере.")
+    elif result:
+        status = "включено" if active else "отключено"
+        emoji = "✅" if active else "⏸️"
+        await ctx.send(f"{emoji} Отслеживание канала **{name}** {status}.")
+    else:
+        await ctx.send("❌ Ошибка при изменении статуса канала.")
 
 
 @bot.event

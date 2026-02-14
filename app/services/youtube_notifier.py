@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from typing import Any
 
 import feedparser
 from dotenv import load_dotenv
@@ -11,13 +12,17 @@ load_dotenv()
 
 
 class YouTubeNotifier:
-    def __init__(self, bot):
+    """Класс для отслеживания новых видео на YouTube."""
+
+    def __init__(self, bot: Any) -> None:
+        """Инициализирует YouTube-нотифайер."""
         self.bot = bot
 
-    async def check_new_videos(self):
+    async def check_new_videos(self) -> None:
+        """Проверяет все отслеживаемые YouTube-каналы на наличие новых видео."""
         try:
             async with async_session() as session:
-                query = select(YouTubeChannel)
+                query = select(YouTubeChannel).where(YouTubeChannel.is_active.is_(True))
                 result = await session.execute(query)
                 channels = result.scalars().all()
 
@@ -26,7 +31,7 @@ class YouTubeNotifier:
         except Exception as e:
             print(f"Ошибка при проверке YouTube видео: {e}")
 
-    async def _check_channel_videos(self, channel):
+    async def _check_channel_videos(self, channel: Any) -> None:
         try:
             url = f"https://www.youtube.com/feeds/videos.xml?channel_id={channel.channel_id}"
             feed = await asyncio.to_thread(feedparser.parse, url)
@@ -81,7 +86,31 @@ class YouTubeNotifier:
         except Exception as e:
             print(f"Ошибка при обработке канала {channel.name}: {e}")
 
-    async def add_channel(self, youtube_channel_id, discord_channel_id, name, guild_id):
+    async def toggle_channel(self, name: str, guild_id: int, active: bool) -> bool | None:
+        """Переключает статус отслеживания YouTube-канала."""
+        try:
+            async with async_session() as session:
+                query = select(YouTubeChannel).where(
+                    YouTubeChannel.name == name,
+                    YouTubeChannel.guild_id == guild_id,
+                )
+                result = await session.execute(query)
+                channel = result.scalar_one_or_none()
+
+                if not channel:
+                    return None
+
+                channel.is_active = active
+                await session.commit()
+                return True
+        except Exception as e:
+            print(f"Ошибка при переключении YouTube канала: {e}")
+            return False
+
+    async def add_channel(
+        self, youtube_channel_id: str, discord_channel_id: int, name: str, guild_id: int
+    ) -> bool | None:
+        """Добавляет новый YouTube-канал для отслеживания."""
         try:
             async with async_session() as session:
                 query = select(YouTubeChannel).where(

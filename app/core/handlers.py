@@ -29,8 +29,8 @@ aitunnel = "https://api.aitunnel.ru/v1/"
 polza = "https://api.polza.ai/api/v1"
 
 client = AsyncOpenAI(
-    api_key=AI_TOKEN_POLZA,
-    base_url=polza,
+    api_key=AI_TOKEN_AITUNNEL,
+    base_url=aitunnel,
 )
 
 
@@ -110,7 +110,8 @@ async def ai_generate(
                 )
 
         completion = await client.chat.completions.create(
-            model="openai/gpt-5-chat",
+            # model="openai/gpt-5-chat",
+            model="gpt-5.1-chat",
             messages=openai_messages,
             temperature=0.8,
             top_p=0.8,
@@ -132,6 +133,7 @@ async def ai_generate(
         print(count_tokens(relevant_contexts))
         print(f"Сообщения {messages}")
         print(count_tokens(messages))
+        print(f"Ответ: {emoji_response_text}")
         return emoji_response_text
     except Exception as e:
         print(f"Ошибка при вызове OpenAI API: {e}")
@@ -149,7 +151,8 @@ async def ai_generate_birthday_congrats(name: str) -> str:
 
     try:
         completion = await client.chat.completions.create(
-            model="openai/gpt-5-chat",
+            # model="openai/gpt-5-chat",
+            model="gpt-5.1-chat",
             messages=prompt,
             temperature=0.8,  # Оптимальный баланс креативности/когерентности
             top_p=0.8,  # Шире выборка слов

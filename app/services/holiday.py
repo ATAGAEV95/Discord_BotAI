@@ -20,8 +20,8 @@ aitunnel = "https://api.aitunnel.ru/v1/"
 polza = "https://api.polza.ai/api/v1"
 
 client = AsyncOpenAI(
-    api_key=AI_TOKEN_POLZA,
-    base_url=polza,
+    api_key=AI_TOKEN_AITUNNEL,
+    base_url=aitunnel,
 )
 
 
