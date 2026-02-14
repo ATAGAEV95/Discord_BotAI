@@ -8,6 +8,12 @@ from dotenv import load_dotenv
 
 import app.core.embeds as em
 from app.core import handlers
+from app.core.ai_config import (
+    get_active_provider,
+    get_available_providers,
+    next_provider,
+    set_active_provider,
+)
 from app.core.scheduler import send_birthday_congratulations, start_scheduler
 from app.data.models import init_models
 from app.data.request import get_rank, save_birthday, update_message_count
@@ -184,6 +190,39 @@ async def youtube_toggle_command(
         await ctx.send(f"{emoji} Отслеживание канала **{name}** {status}.")
     else:
         await ctx.send("❌ Ошибка при изменении статуса канала.")
+
+
+@bot.command(name="ai")
+@admin_or_owner()
+async def ai_provider_command(ctx: commands.Context, name: str | None = None) -> None:
+    """Переключить AI-провайдера.
+
+    !ai — переключить на следующего провайдера
+    !ai name — переключить на указанного провайдера
+    """
+    available = get_available_providers()
+
+    if name is None:
+        new_provider = next_provider()
+        await ctx.send(
+            f"🔄 Провайдер переключён на **{new_provider}**\n"
+            f"Доступные: {', '.join(available)}"
+        )
+        return
+
+    if name not in available:
+        await ctx.send(
+            f"❌ Провайдер **{name}** не найден.\n"
+            f"Доступные: {', '.join(available)}"
+        )
+        return
+
+    if name == get_active_provider():
+        await ctx.send(f"ℹ️ Провайдер **{name}** уже активен.")
+        return
+
+    set_active_provider(name)
+    await ctx.send(f"✅ Провайдер переключён на **{name}**")
 
 
 @bot.event

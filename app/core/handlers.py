@@ -1,12 +1,11 @@
 import json
 import os
 
-from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
+from app.core.ai_config import get_client, get_model
 from app.services.llama_integration import LlamaIndexManager
 from app.tools.prompt import SEARCH_PROMPT, SYSTEM_BIRTHDAY_PROMPT, USER_DESCRIPTIONS, WEATHER_PROMPT
 from app.tools.utils import (
@@ -18,20 +17,7 @@ from app.tools.utils import (
     user_prompt,
 )
 
-load_dotenv()
 llama_manager = LlamaIndexManager()
-
-AI_TOKEN_PROXYAPI = os.getenv("AI_TOKEN")
-AI_TOKEN_AITUNNEL = os.getenv("AI_TOKEN1")
-AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
-proxyapi = "https://api.proxyapi.ru/openai/v1"
-aitunnel = "https://api.aitunnel.ru/v1/"
-polza = "https://api.polza.ai/api/v1"
-
-client = AsyncOpenAI(
-    api_key=AI_TOKEN_AITUNNEL,
-    base_url=aitunnel,
-)
 
 
 async def clear_server_history(server_id: int) -> str | None:
@@ -70,7 +56,7 @@ async def ai_generate(
 ) -> str:
     """Генерирует ответ от AI на основе контекста сервера и текущего сообщения пользователя."""
     messages = [{"role": "system", "content": user_prompt(f"{name}")}]
-    relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=16)
+    relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=50)
     relevant_contexts = enrich_users_context(relevant_contexts, USER_DESCRIPTIONS)
 
     if relevant_contexts:
@@ -109,9 +95,8 @@ async def ai_generate(
                     ChatCompletionUserMessageParam(role="user", content=msg["content"])
                 )
 
-        completion = await client.chat.completions.create(
-            # model="openai/gpt-5-chat",
-            model="gpt-5.1-chat",
+        completion = await get_client().chat.completions.create(
+            model=get_model(),
             messages=openai_messages,
             temperature=0.8,
             top_p=0.8,
@@ -150,9 +135,8 @@ async def ai_generate_birthday_congrats(name: str) -> str:
     ]
 
     try:
-        completion = await client.chat.completions.create(
-            # model="openai/gpt-5-chat",
-            model="gpt-5.1-chat",
+        completion = await get_client().chat.completions.create(
+            model=get_model(),
             messages=prompt,
             temperature=0.8,  # Оптимальный баланс креативности/когерентности
             top_p=0.8,  # Шире выборка слов
@@ -197,7 +181,7 @@ async def process_conversation_weather(
     messages: list, tools: list, session: ClientSession
 ) -> str | tuple:
     """Обрабатывает разговор с возможными вызовами инструментов."""
-    response = await client.chat.completions.create(
+    response = await get_client().chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
         tools=tools,  # Передаем доступные инструменты
@@ -258,7 +242,7 @@ async def process_conversation_search(
     messages: list, tools: list, session: ClientSession
 ) -> str | tuple:
     """Обрабатывает разговор с возможными вызовами инструментов."""
-    response = await client.chat.completions.create(
+    response = await get_client().chat.completions.create(
         model="gpt-4o-mini",
         messages=messages,
         tools=tools,  # Передаем доступные инструменты

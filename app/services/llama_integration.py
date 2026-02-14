@@ -1,23 +1,13 @@
 import asyncio
-import os
 from typing import Any
 
 import chromadb
-from dotenv import load_dotenv
 from llama_index.core import Document, Settings, StorageContext, VectorStoreIndex
 from llama_index.core.node_parser import SimpleNodeParser
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from openai import AsyncOpenAI
 
-load_dotenv()
-
-AI_TOKEN_PROXYAPI = os.getenv("AI_TOKEN")
-AI_TOKEN_AITUNNEL = os.getenv("AI_TOKEN1")
-AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
-proxyapi = "https://api.proxyapi.ru/openai/v1"
-aitunnel = "https://api.aitunnel.ru/v1/"
-polza = "https://api.polza.ai/api/v1"
+from app.core.ai_config import get_client, get_provider_config
 
 
 class LlamaIndexManager:
@@ -28,14 +18,12 @@ class LlamaIndexManager:
 
     def __init__(self) -> None:
         """Инициализирует менеджер LlamaIndex."""
-        self.custom_client = AsyncOpenAI(
-            api_key=AI_TOKEN_AITUNNEL,
-            base_url=aitunnel,
-        )
+        self.custom_client = get_client()
 
+        config = get_provider_config()
         self.embed_model = OpenAIEmbedding(
-            api_key=AI_TOKEN_AITUNNEL,
-            api_base=aitunnel,
+            api_key=config["api_key"],
+            api_base=config["base_url"],
             model="text-embedding-3-large",
         )
 

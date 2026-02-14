@@ -3,26 +3,11 @@ import os
 from datetime import datetime, timedelta
 from typing import Any
 
-from dotenv import load_dotenv
-from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
+from app.core.ai_config import get_client
 from app.data.request import delete_channel_messages, get_channel_messages, save_channel_message
 from app.tools.prompt import UPDATED_REPORT_PROMPT
-
-load_dotenv()
-
-AI_TOKEN_PROXYAPI = os.getenv("AI_TOKEN")
-AI_TOKEN_AITUNNEL = os.getenv("AI_TOKEN1")
-AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
-proxyapi = "https://api.proxyapi.ru/openai/v1"
-aitunnel = "https://api.aitunnel.ru/v1/"
-polza = "https://api.polza.ai/api/v1"
-
-report_client = AsyncOpenAI(
-    api_key=AI_TOKEN_AITUNNEL,
-    base_url=aitunnel,
-)
 
 
 class ReportGenerator:
@@ -144,8 +129,11 @@ class ReportGenerator:
             ]
 
             try:
-                response = await report_client.chat.completions.create(
-                    model="gpt-5-mini", messages=message, temperature=0.0, top_p=0.01
+                response = await get_client().chat.completions.create(
+                    model="gpt-5-mini", 
+                    messages=message, 
+                    temperature=0.0, 
+                    top_p=0.01
                 )
                 report = response.choices[0].message.content
             except Exception as e:

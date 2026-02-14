@@ -1,28 +1,14 @@
 import os
 from datetime import datetime, timedelta
 
-from dotenv import load_dotenv
-from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
+from app.core.ai_config import get_client, get_model
 from app.services.llama_integration import LlamaIndexManager
 from app.tools.prompt import USER_DESCRIPTIONS, system_holiday_prompt
 from app.tools.utils import clean_text, replace_emojis, users_context
 
-load_dotenv()
 llama_manager = LlamaIndexManager()
-
-AI_TOKEN_PROXYAPI = os.getenv("AI_TOKEN")
-AI_TOKEN_AITUNNEL = os.getenv("AI_TOKEN1")
-AI_TOKEN_POLZA = os.getenv("AI_TOKEN_POLZA")
-proxyapi = "https://api.proxyapi.ru/openai/v1"
-aitunnel = "https://api.aitunnel.ru/v1/"
-polza = "https://api.polza.ai/api/v1"
-
-client = AsyncOpenAI(
-    api_key=AI_TOKEN_AITUNNEL,
-    base_url=aitunnel,
-)
 
 
 async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
@@ -68,8 +54,8 @@ async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
             ),
         ]
     try:
-        completion = await client.chat.completions.create(
-            model="openai/gpt-5-chat",
+        completion = await get_client().chat.completions.create(
+            model=get_model(),
             messages=messages,
             temperature=1,  # Оптимальный баланс креативности/когерентности
             top_p=0.8,  # Шире выборка слов
