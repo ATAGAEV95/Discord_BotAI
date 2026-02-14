@@ -18,7 +18,7 @@ from app.core.scheduler import send_birthday_congratulations
 from app.data.request import get_rank, save_birthday
 from app.services.youtube_notifier import YouTubeNotifier
 from app.tools.prompt import ROAST_PERSONAS, ROAST_PROMPT, USER_DESCRIPTIONS
-from app.tools.utils import get_rank_description
+from app.tools.utils import get_rank_description, replace_emojis
 
 ALLOWED_USERS = {"atagaev"}
 
@@ -287,7 +287,8 @@ class BotCommands(commands.Cog):
                     temperature=0.9,
                     max_tokens=600,
                 )
-                response = completion.choices[0].message.content
+                response = completion.choices[0].message.content or ""
+                response = await replace_emojis(response)
                 await ctx.send(response)
 
         except Exception as e:
