@@ -12,8 +12,10 @@ from app.core.ai_config import (
     get_client,
     get_model,
     next_provider,
+    next_provider,
     set_active_provider,
 )
+from app.core.bot import DisBot
 from app.core.scheduler import send_birthday_congratulations
 from app.data.request import get_rank, save_birthday
 from app.services.youtube_notifier import YouTubeNotifier
@@ -39,7 +41,7 @@ def admin_or_owner() -> Callable:
 class BotCommands(commands.Cog):
     """Все команды бота."""
 
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: DisBot) -> None:
         """Инициализация Cog."""
         self.bot = bot
         self.youtube_notifier = YouTubeNotifier(bot)
@@ -301,10 +303,21 @@ class BotCommands(commands.Cog):
 
         if isinstance(error, commands.CommandNotFound):
             server_id = ctx.guild.id if ctx.guild else None
-            tool_weather, tool_search = await asyncio.gather(
-                handlers.check_weather_intent(ctx.message.content),
-                handlers.check_search_intent(ctx.message.content),
+
+            # Проверяем, включены ли функции в настройках
+            weather_task = (
+                handlers.check_weather_intent(ctx.message.content)
+                if self.bot.weather_enabled
+                else asyncio.sleep(0)
             )
+            search_task = (
+                handlers.check_search_intent(ctx.message.content)
+                if self.bot.search_enabled
+                else asyncio.sleep(0)
+            )
+
+            tool_weather, tool_search = await asyncio.gather(weather_task, search_task)
+
             response = await handlers.ai_generate(
                 ctx.message.content, server_id, ctx.author, tool_weather, tool_search
             )
@@ -331,6 +344,6 @@ class BotCommands(commands.Cog):
             print(f"Command error: {error}")
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: DisBot) -> None:
     """Загрузка Cog в бота."""
     await bot.add_cog(BotCommands(bot))

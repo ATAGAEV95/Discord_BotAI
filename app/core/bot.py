@@ -15,6 +15,9 @@ class DisBot(commands.Bot):
         self,
         command_prefix: str,
         intents: discord.Intents,
+        telegram_enabled: bool = True,
+        weather_enabled: bool = True,
+        search_enabled: bool = True,
         help_command: commands.HelpCommand | None = None,
     ):
         """Инициализация бота."""
@@ -22,6 +25,9 @@ class DisBot(commands.Bot):
             command_prefix=command_prefix, intents=intents, help_command=help_command
         )
         self.report_generator: ReportGenerator | None = None
+        self.telegram_enabled: bool = telegram_enabled
+        self.weather_enabled: bool = weather_enabled
+        self.search_enabled: bool = search_enabled
 
     async def setup_hook(self) -> None:
         """Загрузка расширений (Cogs) при старте бота."""
@@ -33,6 +39,11 @@ class DisBot(commands.Bot):
         await init_models()
         self.report_generator = ReportGenerator(self)
         start_scheduler(self)
+        
+        telegram_notifier.enabled = telegram_notifier.enabled and self.telegram_enabled
+        if not self.telegram_enabled:
+            print("Telegram уведомления отключены в настройках бота.")
+            
         print("Бот успешно подключился к Discord")
 
     async def on_disconnect(self) -> None:
