@@ -1,25 +1,32 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Emoji:
+    """Представляет серверный эмодзи для Discord."""
+
     slug: str
     discord_id: str
     description: str
 
     @property
     def tag(self) -> str:
+        """Возвращает тег эмодзи в формате :slug:."""
         return f":{self.slug}:"
 
     @property
     def full_code(self) -> str:
+        """Возвращает полный код эмодзи для Discord в формате <:slug:id>."""
         return f"<:{self.slug}:{self.discord_id}>"
 
     @property
     def prompt_line(self) -> str:
+        """Возвращает строку для системного промпта: тег - описание."""
         return f"{self.tag} - {self.description}"
 
     @property
     def roast_line(self) -> str:
+        """Возвращает строку для промпта прожарки: тег (описание)."""
         return f"{self.tag} ({self.description})"
 
 

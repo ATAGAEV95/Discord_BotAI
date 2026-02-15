@@ -12,7 +12,6 @@ from app.core.ai_config import (
     get_client,
     get_model,
     next_provider,
-    next_provider,
     set_active_provider,
 )
 from app.core.bot import DisBot
@@ -20,7 +19,7 @@ from app.core.scheduler import send_birthday_congratulations
 from app.data.request import get_rank, save_birthday
 from app.services.youtube_notifier import YouTubeNotifier
 from app.tools.prompt import ROAST_PERSONAS, ROAST_PROMPT, USER_DESCRIPTIONS
-from app.tools.utils import get_rank_description, replace_emojis
+from app.tools.utils import clean_text, get_rank_description, replace_emojis
 
 ALLOWED_USERS = {"atagaev"}
 
@@ -290,8 +289,9 @@ class BotCommands(commands.Cog):
                     max_tokens=600,
                 )
                 response = completion.choices[0].message.content or ""
-                response = await replace_emojis(response)
-                await ctx.send(response)
+                cleaned_response_text = await clean_text(response)
+                emoji_response_text = await replace_emojis(cleaned_response_text)
+                await ctx.send(emoji_response_text)
 
         except Exception as e:
             await ctx.send(f"❌ Не удалось прожарить: {e}")
