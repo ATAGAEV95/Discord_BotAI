@@ -143,13 +143,15 @@ TELEGRAM_CHAT_ID=ваш_chat_id
 ### 📊 Справочник переменных (.env)
 | Категория | Переменная | Описание |
 | :--- | :--- | :--- |
-| **Core** | `DC_TOKEN` | Токен из Discord Developer Portal. |
-| | `DATABASE_URL` | Строка подключения к PostgreSQL. |
-| **AI** | `AI_PROVIDER` | Провайдер  ИИ `aitunnel`. |
-| | `AI_TOKEN1*` | Ключи доступа к ИИ. |
-| **Services** | `WEATHER_API` | Ключ для работы команды погоды. |
-| | `SEARCH_API` | Ключ Tavily для поиска инфы в вебе. |
-| | `TELEGRAM_*` | Данные для отправки отчетов администратору в TG. |
+| **Core** | `DC_TOKEN` | Токен бота из [Discord Developer Portal](https://discord.com/developers/applications). |
+| | `DATABASE_URL` | URL PostgreSQL (формат: `postgresql+asyncpg://user:pass@host:port/db`). |
+| **AI** | `AI_PROVIDER` | Активный провайдер: `aitunnel`. |
+| | `AI_MODEL` | Модель ИИ (например, `claude-haiku-4.5` или `gpt-4o-mini`). |
+| | `AI_TOKEN1` | Ключ доступа для провайдера **AITunnel**. |
+| **Services** | `WEATHER_API` | Ключ [OpenWeatherMap](https://openweathermap.org/api) для погоды. |
+| | `SEARCH_API` | Ключ [Tavily](https://tavily.com/) для поиска информации в вебе. |
+| | `TELEGRAM_BOT_TOKEN` | Токен Telegram-бота для отправки отчетов администратору. |
+| | `TELEGRAM_CHAT_ID` | ID чата в Telegram для получения уведомлений. |
 
 ---
 
