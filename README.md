@@ -108,11 +108,14 @@ ENABLE_SEARCH = False
 
 **Заполните `.env` целиком:**
 ```env
-# База и ИИ
-DC_TOKEN=...
-DATABASE_URL=...
-AI_PROVIDER=...
-AI_TOKEN1=...
+# База
+DC_TOKEN=ваш_токен_discord
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost/dbname
+
+# ИИ (Пример для AITunnel)
+AI_PROVIDER=aitunnel
+AI_MODEL=claude-haiku-4.5
+AI_TOKEN1=ваш_токен_провайдера
 
 # Дополнительные ключи (Обязательно для работы всех команд)
 WEATHER_API=ваш_ключ_openweathermap
@@ -142,8 +145,8 @@ TELEGRAM_CHAT_ID=ваш_chat_id
 | :--- | :--- | :--- |
 | **Core** | `DC_TOKEN` | Токен из Discord Developer Portal. |
 | | `DATABASE_URL` | Строка подключения к PostgreSQL. |
-| **AI** | `AI_PROVIDER` | `aitunnel`, `proxyapi` или `polza`. |
-| | `AI_TOKEN*` | Ключи доступа к ИИ (напр. `AI_TOKEN1` для AITunnel). |
+| **AI** | `AI_PROVIDER` | Провайдер  ИИ `aitunnel`. |
+| | `AI_TOKEN1*` | Ключи доступа к ИИ. |
 | **Services** | `WEATHER_API` | Ключ для работы команды погоды. |
 | | `SEARCH_API` | Ключ Tavily для поиска инфы в вебе. |
 | | `TELEGRAM_*` | Данные для отправки отчетов администратору в TG. |
