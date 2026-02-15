@@ -16,8 +16,8 @@ intents.message_content = True
 
 # Настройки функций
 ENABLE_TELEGRAM_NOTIFIER = True  # Включить/выключить уведомления в Telegram
-ENABLE_WEATHER = True  # Включить/выключить поиск погоды (нужен API ключ)
-ENABLE_SEARCH = True   # Включить/выключить поиск в интернете (нужен API ключ)
+ENABLE_WEATHER = False  # Включить/выключить поиск погоды (нужен API ключ)
+ENABLE_SEARCH = False   # Включить/выключить поиск в интернете (нужен API ключ)
 
 
 def main() -> None:
