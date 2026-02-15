@@ -1,51 +1,73 @@
-EMOJI_MAPPING = {
-    ":yoba:": "<:yoba:1101900451852599427>",
-    ":Gachi1:": "<:Gachi1:469464559959277578>",
-    ":Harold:": "<:Harold:1101900626268532860>",
-    ":Coolstorybob:": "<:Coolstorybob:469464988482797568>",
-    ":F_:": "<:F_:1101900358357368935>",
-    ":BlackManThinking:": "<:BlackManThinking:1101899643585048736>",
-    ":Gay:": "<:Gay:1101900779033469028>",
-}
+from dataclasses import dataclass
+
+@dataclass
+class Emoji:
+    slug: str
+    discord_id: str
+    description: str
+
+    @property
+    def tag(self) -> str:
+        return f":{self.slug}:"
+
+    @property
+    def full_code(self) -> str:
+        return f"<:{self.slug}:{self.discord_id}>"
+
+    @property
+    def prompt_line(self) -> str:
+        return f"{self.tag} - {self.description}"
+
+    @property
+    def roast_line(self) -> str:
+        return f"{self.tag} ({self.description})"
+
+
+EMOJIS = [
+    Emoji("yoba", "1101900451852599427", "издевательство"),
+    Emoji("Gachi1", "469464559959277578", "смех"),
+    Emoji("Harold", "1101900626268532860", "смех через боль"),
+    Emoji("Coolstorybob", "469464988482797568", "неужели?!"),
+    Emoji("F_", "1101900358357368935", "отдать честь"),
+    Emoji("BlackManThinking", "1101899643585048736", "подумай"),
+    Emoji("Gay", "1101900779033469028", "гей и издевка"),
+]
+
+EMOJI_MAPPING = {e.tag: e.full_code for e in EMOJIS}
+
+EMOJI_LIST_STRING = "\n".join([e.prompt_line for e in EMOJIS])
+EMOJI_ROAST_STRING = ", ".join([e.roast_line for e in EMOJIS])
 
 
 USER_DESCRIPTIONS = {
     "serious_vlad": "Владислав, позывной Дарт Путин, он админ канала",
     "rikka71": "Рикка, у него сильные скиллы в шутерах",
     "atagaev": "Арби, создатель бота",
-    "archel_the_true": "Евгений, позывной Аркел, любит стримить игры",
+    "archel_the_true": "он же Евгений, позывной Аркел, любит стримить игры",
     "walkmantm": "Кирилл, любит твою маму, либерал",
 }
 
+USER_DESCRIPTIONS_TEXT = "\n".join([f"- {user}, {desc}" for user, desc in USER_DESCRIPTIONS.items()])
 
-SYSTEM_PROMPT = """
+
+SYSTEM_PROMPT = f"""
 Ты — Discord бот, дерзкий, немного грубый и остроумный. Твои задачи:
 1. Общаться с пользователями в Discord-чатах
 2. Использовать неформальный стиль общения(использовать мат, но по разному)
 3. Использовать только эти эмодзи сервера приведенные в списке:
-:yoba: - издевательство
-:Gachi1: - смех
-:Harold: - смех через боль
-:Coolstorybob: - неужели?!
-:F_: - отдать честь
-:BlackManThinking: - подумай
-:Gay: - гей и издевка
+{EMOJI_LIST_STRING}
 4. Отвечать кратко (2-3 предложения) для удобства чтения в чате
-5. {user_info}
+5. {{user_info}}
 """
 
 
-SYSTEM_BIRTHDAY_PROMPT = """
+SYSTEM_BIRTHDAY_PROMPT = f"""
 Ты — веселый Discord-бот.
 Придумай уникальное, короткое (3-4 предложения) поздравление с днём рождения
 для пользователя которого тебе укажут,
 используй неформальный стиль, уместный юмор и эмодзи.
 Контекст по пользователям:
-- serious_vlad, это Владислав, позывной Дарт Путин, он админ канала
-- rikka71, это Рикка, у него сильные скиллы в шутерах
-- atagaev, это Арби, создатель бота
-- archel_the_true, он же Евгений, позывной Аркел, любит стримить игры
-- walkmantm, он же Кирилл, любит твою маму
+{USER_DESCRIPTIONS_TEXT}
 """
 
 
@@ -137,13 +159,7 @@ def system_holiday_prompt(holiday: str) -> str:
 используй контекст его описания для пожелания, но само описание в текст не включай.
 
 Использовать только эти эмодзи сервера приведенные в списке:
-:yoba: - издевательство
-:Gachi1: - смех
-:Harold: - смех через боль
-:Coolstorybob: - неужели?!
-:F_: - отдать честь
-:BlackManThinking: - подумай
-:Gay: - гей и издевка
+{EMOJI_LIST_STRING}
 """
 
 
@@ -165,8 +181,7 @@ ROAST_PROMPT = (
     "- Используй сленг, интернет-культуру и мемы.\n"
     "- Если в чате тухло — так и скажи, что они скучные.\n"
     "- Обязательно используй эмодзи сервера для эмоциональной окраски:\n"
-    ":yoba: (издевательство), :Gachi1: (смех), :Harold: (боль), :Coolstorybob: (сомнение), "
-    ":F_: (респект), :BlackManThinking: (задумайся), :Gay: (по ситуации).\n\n"
+    f"{EMOJI_ROAST_STRING}.\n\n"
     "**Формат ответа:**\n"
     "Один-два абзаца. Не делай списков. Это должен быть живой, связный спич, как будто ты ворвался "
     "в комнату и пояснил всем, кто они такие.\n"
