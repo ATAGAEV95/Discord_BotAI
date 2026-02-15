@@ -93,8 +93,7 @@ AI_MODEL=claude-haiku-4.5
 AI_TOKEN1=ваш_токен_провайдера
 ```
 
-**2. Отключите функции в [`main.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/main.py):**
-В файле [`main.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/main.py) установите следующие значения:
+**2. В файле [`main.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/main.py) установите следующие значения:
 ```python
 ENABLE_TELEGRAM_NOTIFIER = False
 ENABLE_WEATHER = False
