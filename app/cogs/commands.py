@@ -319,7 +319,12 @@ class BotCommands(commands.Cog):
             tool_weather, tool_search = await asyncio.gather(weather_task, search_task)
 
             response = await handlers.ai_generate(
-                ctx.message.content, server_id, ctx.author, tool_weather, tool_search
+                ctx.message.content,
+                server_id,
+                ctx.author,
+                tool_weather,
+                tool_search,
+                limit=self.bot.context_limit,
             )
             await ctx.send(f"{ctx.author.mention} {response}")
         elif isinstance(error, commands.MissingPermissions):
