@@ -166,3 +166,19 @@ class TestGetClient:
         client = get_client("proxyapi")
         assert isinstance(client, AsyncOpenAI)
         assert ai_config._cached_provider_name == "proxyapi"
+
+
+# ── get_mini_model ──────────────────────────────────────────────
+
+
+class TestGetMiniModel:
+    """Тесты для get_mini_model."""
+
+    def test_default_mini_model(self) -> None:
+        """Модель по умолчанию — 'gpt-5-mini'."""
+        assert ai_config.get_mini_model() == "gpt-5-mini"
+
+    def test_env_var_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Можно переопределить через переменную окружения."""
+        monkeypatch.setenv("AI_MODEL_MINI", "gpt-3.5-turbo")
+        assert ai_config.get_mini_model() == "gpt-3.5-turbo"
