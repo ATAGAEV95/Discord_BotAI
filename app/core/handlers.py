@@ -4,7 +4,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from app.core.ai_config import get_client, get_model
+from app.core.ai_config import get_client, get_mini_model, get_model
 from app.services.llama_integration import LlamaIndexManager
 from app.tools.prompt import SEARCH_PROMPT, SYSTEM_BIRTHDAY_PROMPT, USER_DESCRIPTIONS, WEATHER_PROMPT
 from app.tools.utils import (
@@ -51,11 +51,18 @@ async def clear_server_history(server_id: int) -> str | None:
 
 
 async def ai_generate(
-    text: str, server_id: int, name: str, tool_weather: str | None, tool_search: str | None
+    text: str,
+    server_id: int,
+    name: str,
+    tool_weather: str | None,
+    tool_search: str | None,
+    limit: int = 15,
 ) -> str:
     """Генерирует ответ от AI на основе контекста сервера и текущего сообщения пользователя."""
     messages = [{"role": "system", "content": user_prompt(f"{name}")}]
-    relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=50)
+    relevant_contexts = await llama_manager.query_relevant_context(
+        server_id, text, limit=limit
+    )
     relevant_contexts = enrich_users_context(relevant_contexts, USER_DESCRIPTIONS)
 
     if relevant_contexts:
@@ -181,7 +188,7 @@ async def process_conversation_weather(
 ) -> str | tuple:
     """Обрабатывает разговор с возможными вызовами инструментов."""
     response = await get_client().chat.completions.create(
-        model="gpt-4o-mini",
+        model=get_mini_model(),
         messages=messages,
         tools=tools,  # Передаем доступные инструменты
         tool_choice="auto",  # Модель сама решает, нужны ли инструменты
@@ -242,7 +249,7 @@ async def process_conversation_search(
 ) -> str | tuple:
     """Обрабатывает разговор с возможными вызовами инструментов."""
     response = await get_client().chat.completions.create(
-        model="gpt-4o-mini",
+        model=get_mini_model(),
         messages=messages,
         tools=tools,  # Передаем доступные инструменты
         tool_choice="auto",  # Модель сама решает, нужны ли инструменты
