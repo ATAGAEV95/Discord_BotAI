@@ -18,6 +18,9 @@ class DisBot(commands.Bot):
         telegram_enabled: bool = True,
         weather_enabled: bool = True,
         search_enabled: bool = True,
+        context_limit: int = 50,
+        report_msg_limit: int = 15,
+        report_time_limit: int = 60,
         help_command: commands.HelpCommand | None = None,
     ):
         """Инициализация бота."""
@@ -28,6 +31,9 @@ class DisBot(commands.Bot):
         self.telegram_enabled: bool = telegram_enabled
         self.weather_enabled: bool = weather_enabled
         self.search_enabled: bool = search_enabled
+        self.context_limit: int = context_limit
+        self.report_msg_limit: int = report_msg_limit
+        self.report_time_limit: int = report_time_limit
 
     async def setup_hook(self) -> None:
         """Загрузка расширений (Cogs) при старте бота."""
