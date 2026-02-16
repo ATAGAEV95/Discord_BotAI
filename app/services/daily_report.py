@@ -4,7 +4,7 @@ from typing import Any
 
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
-from app.core.ai_config import get_client
+from app.core.ai_config import get_client, get_mini_model
 from app.data.request import delete_channel_messages, get_channel_messages, save_channel_message
 from app.tools.prompt import UPDATED_REPORT_PROMPT
 
@@ -13,7 +13,7 @@ class ReportGenerator:
     """Генератор отчётов по активности в Discord-каналах.
 
     Накапливает сообщения и автоматически отправляет отчёт
-    после 60 минут без активности при достижении порогового
+    после заданного времени без активности при достижении порогового
     количества сообщений.
     """
 
@@ -33,7 +33,7 @@ class ReportGenerator:
         """Добавляет сообщение в историю канала.
 
         Обновляет время последней активности. При достижении или
-        превышении 15 сообщений запускает задачу отправки отчёта.
+        превышении лимита сообщений запускает задачу отправки отчёта.
         """
         lock = self.get_lock(channel_id)
         async with lock:
@@ -72,25 +72,26 @@ class ReportGenerator:
             cache_count = len(self.channel_data[channel_id]["messages"])
             db_count = len(db_messages)
 
-            if cache_count >= 15 or db_count >= 15:
+            if cache_count >= self.bot.report_msg_limit or db_count >= self.bot.report_msg_limit:
                 self.channel_data[channel_id]["timer"] = asyncio.create_task(
                     self.start_report_timer(channel_id)
                 )
 
     async def start_report_timer(self, channel_id: int) -> None:
-        """Запускает таймер ожидания 60 минут.
+        """Запускает таймер ожидания.
 
-        Если после последнего сообщения прошло не менее 60 минут,
+        Если после последнего сообщения прошло достаточно времени,
         генерирует и отправляет аналитический отчёт.
         """
-        await asyncio.sleep(3600)
+        # Ждем указанное время в минутах
+        await asyncio.sleep(self.bot.report_time_limit * 60)
         lock = self.get_lock(channel_id)
         async with lock:
             if channel_id not in self.channel_data:
                 return
 
             last_time = self.channel_data[channel_id]["last_message_time"]
-            if (datetime.now() - last_time) < timedelta(minutes=60):
+            if (datetime.now() - last_time) < timedelta(minutes=self.bot.report_time_limit):
                 return
 
         await self.generate_and_send_report(channel_id)
@@ -117,7 +118,7 @@ class ReportGenerator:
                 )
                 return
 
-            if not messages or len(messages) < 15:
+            if not messages or len(messages) < self.bot.report_msg_limit:
                 return
 
             messages_text = "\n".join(
@@ -136,7 +137,7 @@ class ReportGenerator:
 
             try:
                 response = await get_client().chat.completions.create(
-                    model="gpt-5-mini", 
+                    model=get_mini_model(), 
                     messages=message, 
                     temperature=0.0, 
                     top_p=0.01
