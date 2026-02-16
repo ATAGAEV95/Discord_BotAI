@@ -19,6 +19,11 @@ ENABLE_TELEGRAM_NOTIFIER = True  # Включить/выключить увед�
 ENABLE_WEATHER = False  # Включить/выключить поиск погоды (нужен API ключ)
 ENABLE_SEARCH = False   # Включить/выключить поиск в интернете (нужен API ключ)
 
+# Лимиты
+CONTEXT_LIMIT = 50  # Количество строк контекста для RAG
+REPORT_MSG_LIMIT = 15  # Порог сообщений для создания отчета
+REPORT_TIME_LIMIT = 60  # Время ожидания в минутах для создания отчета
+
 
 def main() -> None:
     """Запуск бота."""
@@ -28,6 +33,9 @@ def main() -> None:
         telegram_enabled=ENABLE_TELEGRAM_NOTIFIER,
         weather_enabled=ENABLE_WEATHER,
         search_enabled=ENABLE_SEARCH,
+        context_limit=CONTEXT_LIMIT,
+        report_msg_limit=REPORT_MSG_LIMIT,
+        report_time_limit=REPORT_TIME_LIMIT,
         help_command=None,
     )
 
