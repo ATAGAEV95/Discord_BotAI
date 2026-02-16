@@ -98,6 +98,11 @@ def set_model(model: str) -> None:
     _active_model = model
 
 
+def get_mini_model() -> str:
+    """Возвращает текущую мини-модель (для простых задач)."""
+    return os.getenv("AI_MODEL_MINI", "gpt-5-mini")
+
+
 def next_provider() -> str:
     """Переключает на следующего провайдера по кругу и возвращает его имя."""
     providers_list = list(PROVIDERS.keys())
