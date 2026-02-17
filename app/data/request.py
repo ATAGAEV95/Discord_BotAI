@@ -227,6 +227,7 @@ async def get_user_rank(user_id: int, guild_id: int) -> int:
             raise Exception(f"Ошибка при получении ранга пользователя: {e}")
 
 
+
 async def check_holiday(current_date: date) -> str | None:
     """Проверяет, является ли текущая дата праздником."""
     async with async_session() as session:
@@ -241,3 +242,55 @@ async def check_holiday(current_date: date) -> str | None:
             raise Exception("Таймаут при проверке праздника.")
         except Exception as e:
             raise Exception(f"Ошибка доступа к базе данных (праздники): {e}")
+
+
+async def save_holiday(content: str) -> str:
+    """Сохраняет новый праздник."""
+    try:
+        # Ожидаемый формат: !add_holiday 01.01 Новый Год
+        args = content.split(" ", 2)
+        if len(args) < 3:
+            raise ValueError("Используйте формат: `!add_holiday DD.MM Название праздника`")
+
+        date_str = args[1]
+        holiday_name = args[2]
+
+        if not re.match(r"^\d{2}\.\d{2}$", date_str):
+            raise ValueError("Некорректный формат даты. Используйте DD.MM (например, 01.01).")
+
+        day, month = map(int, date_str.split("."))
+
+        if not (1 <= month <= 12):
+            raise ValueError("Месяц должен быть от 1 до 12.")
+        
+        # Простая проверка дней (можно улучшить с учетом calendar)
+        if not (1 <= day <= 31):
+             raise ValueError("День должен быть от 1 до 31.")
+
+    except ValueError as ve:
+        raise ve
+    except Exception:
+        raise ValueError("Ошибка разбора команды. Используйте DD.MM Название.")
+
+    async with async_session() as session:
+        try:
+            # Проверяем, есть ли уже праздник в этот день
+            query = select(Holiday).where(Holiday.day == day, Holiday.month == month)
+            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
+            existing_holiday = result.scalar_one_or_none()
+
+            if existing_holiday:
+                existing_holiday.name = holiday_name
+                action = "обновлен"
+            else:
+                new_holiday = Holiday(day=day, month=month, name=holiday_name)
+                session.add(new_holiday)
+                action = "добавлен"
+
+            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
+            return f"Праздник '{holiday_name}' на {date_str} успешно {action}!"
+
+        except TimeoutError:
+            raise Exception("Таймаут при сохранении праздника.")
+        except Exception as e:
+            raise Exception(f"Ошибка при сохранении праздника: {e}")
