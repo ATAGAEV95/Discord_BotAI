@@ -15,8 +15,8 @@ from app.core.ai_config import (
     set_active_provider,
 )
 from app.core.bot import DisBot
-from app.core.scheduler import send_birthday_congratulations
-from app.data.request import get_rank, save_birthday
+from app.core.scheduler import send_birthday_congratulations, send_holiday_congratulations
+from app.data.request import get_rank, save_birthday, save_holiday
 from app.services.youtube_notifier import YouTubeNotifier
 from app.tools.prompt import ROAST_PERSONAS, ROAST_PROMPT, USER_DESCRIPTIONS
 from app.tools.utils import clean_text, get_rank_description, replace_emojis
@@ -106,12 +106,40 @@ class BotCommands(commands.Cog):
 
     @commands.command(name="check_birthday")
     @commands.guild_only()
+    @admin_or_owner()
     async def manual_birthday_command(self, ctx: commands.Context) -> None:
         """Ручная отправка поздравлений с днем рождения."""
         await send_birthday_congratulations(self.bot)
 
+    @commands.command(name="check_holiday")
+    @commands.guild_only()
+    @admin_or_owner()
+    async def manual_holiday_command(self, ctx: commands.Context) -> None:
+        """Ручная отправка поздравлений с праздниками."""
+        await send_holiday_congratulations(self.bot)
+
+    @commands.command(name="add_holiday")
+    @commands.guild_only()
+    @admin_or_owner()
+    async def add_holiday_command(self, ctx: commands.Context, *, content: str) -> None:
+        """Добавить праздник.
+        
+        Использование: !add_holiday 01.01 Новый Год
+        """
+        try:
+            # Восстанавливаем полный текст команды с аргументами, так как content 
+            # содержит только аргументы (без самой команды), а save_holiday ожидает полный текст
+            full_command = f"{ctx.prefix}{ctx.command.name} {content}"
+            response = await save_holiday(full_command)
+            await ctx.send(f"✅ {response}")
+        except ValueError as ve:
+            await ctx.send(f"❌ Ошибка формата: {ve}")
+        except Exception as e:
+            await ctx.send(f"❌ Ошибка при сохранении праздника: {e}")
+
     @commands.command(name="reset")
     @commands.guild_only()
+    @admin_or_owner()
     async def reset_command(self, ctx: commands.Context) -> None:
         """Очистить историю сервера (только для администраторов)."""
         answer = await handlers.clear_server_history(ctx.guild.id)
@@ -215,30 +243,45 @@ class BotCommands(commands.Cog):
         await ctx.send(f"✅ Провайдер переключён на **{name}**")
 
     @commands.command(name="toxic")
-    async def roast_command(self, ctx: commands.Context, persona: str | None = None) -> None:
+    async def roast_command(self, ctx: commands.Context, *args: str) -> None:
         """Прожарка последних сообщений чата.
-        
+
         Использование:
-        !toxic - обычная прожарка
-        !toxic babka - режим бабки
-        !toxic list - список доступных режимов
+        !toxic [количество] [persona]
+        Примеры:
+        !toxic 20
+        !toxic babka
+        !toxic 50 babka
+        !toxic list
         """
         try:
+            persona = None
+            limit = 20
+
+            for arg in args:
+                if arg.isdigit():
+                    limit = int(arg)
+                else:
+                    persona = arg
+
             if persona == "list":
-                 keys = ", ".join(f"`{k}`" for k in ROAST_PERSONAS.keys())
-                 await ctx.send(f"🎭 **Доступные режимы:** {keys}")
-                 return
+                keys = ", ".join(f"`{k}`" for k in ROAST_PERSONAS.keys())
+                await ctx.send(f"🎭 **Доступные режимы:** {keys}")
+                return
 
             messages = []
-            async for msg in ctx.channel.history(limit=50):
-                if len(messages) >= 20:
+            # Берем с запасом (x2), так как часть отфильтруется (боты, команды и т.д.)
+            history_limit = limit * 2
+            
+            async for msg in ctx.channel.history(limit=history_limit):
+                if len(messages) >= limit:
                     break
 
                 if msg.author == self.bot.user:
                     continue
 
                 content = msg.content
-                if content.startswith(ctx.prefix) or content.startswith("!"):
+                if content and (content.startswith(str(ctx.prefix)) or content.startswith("!")):
                     continue
 
                 if not content:
@@ -260,19 +303,18 @@ class BotCommands(commands.Cog):
 
             messages.reverse()
             history_text = "\n".join(messages)
-            # print(f"DEBUG: Messages for roast:\n{history_text}")
-            
+
             user_info_text = "\n".join([f"- {k}: {v}" for k, v in USER_DESCRIPTIONS.items()])
-            
+
             system_content = ROAST_PROMPT.format(user_info=user_info_text)
 
             if persona and persona in ROAST_PERSONAS:
                 selected_persona = ROAST_PERSONAS[persona]
                 system_content += f"\n\nВАЖНОЕ ДОПОЛНЕНИЕ К РОЛИ:\n{selected_persona}"
             elif persona:
-                 keys = ", ".join(f"`{k}`" for k in ROAST_PERSONAS.keys())
-                 await ctx.send(f"❌ Нет такого режима `{persona}`. Доступные: {keys}")
-                 return
+                keys = ", ".join(f"`{k}`" for k in ROAST_PERSONAS.keys())
+                await ctx.send(f"❌ Нет такого режима `{persona}`. Доступные: {keys}")
+                return
 
             msgs = [
                 ChatCompletionSystemMessageParam(role="system", content=system_content),
