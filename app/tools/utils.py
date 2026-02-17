@@ -3,7 +3,7 @@ import re
 import discord
 import tiktoken
 
-from app.tools.prompt import EMOJI_MAPPING, SYSTEM_PROMPT, USER_DESCRIPTIONS
+from app.tools.prompt import EMOJI_MAPPING, RANK_NAMES, SYSTEM_PROMPT, USER_DESCRIPTIONS
 
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
@@ -107,7 +107,7 @@ def get_rank_description(message_count: int) -> dict:
             "rank_level": 0,
             "text_color": (130, 130, 130),
             "bg_filename": "rang0.jpg",
-            "description": "Человек",
+            "description": RANK_NAMES[0],
         },
         {  # 1-49
             "color": discord.Color.green(),
@@ -115,7 +115,7 @@ def get_rank_description(message_count: int) -> dict:
             "rank_level": 1,
             "text_color": (44, 255, 109),
             "bg_filename": "rang1.png",
-            "description": "Начинающий бич",
+            "description": RANK_NAMES[1],
         },
         {  # 50-99
             "color": discord.Color.blue(),
@@ -123,7 +123,7 @@ def get_rank_description(message_count: int) -> dict:
             "rank_level": 2,
             "text_color": (76, 142, 255),
             "bg_filename": "rang2.png",
-            "description": "Радужный бич",
+            "description": RANK_NAMES[2],
         },
         {  # 100-199
             "color": discord.Color.red(),
@@ -131,7 +131,7 @@ def get_rank_description(message_count: int) -> dict:
             "rank_level": 3,
             "text_color": (255, 73, 73),
             "bg_filename": "rang3.png",
-            "description": "Бич",
+            "description": RANK_NAMES[3],
         },
         {  # 200-499
             "color": discord.Color.purple(),
@@ -139,7 +139,7 @@ def get_rank_description(message_count: int) -> dict:
             "rank_level": 4,
             "text_color": (197, 94, 255),
             "bg_filename": "rang4.png",
-            "description": "Босс бичей",
+            "description": RANK_NAMES[4],
         },
         {  # 500+
             "color": discord.Color.gold(),
@@ -147,7 +147,7 @@ def get_rank_description(message_count: int) -> dict:
             "rank_level": 5,
             "text_color": (255, 215, 0),
             "bg_filename": "rang5.png",
-            "description": "Бич-император",
+            "description": RANK_NAMES[5],
         },
     ]
 
