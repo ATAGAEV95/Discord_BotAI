@@ -24,7 +24,7 @@ WEATHER_API = os.getenv("WEATHER_API")
 
 if not WEATHER_API:
     logger.error("WEATHER_API не найден в переменных окружения")
-    WEATHER_API = "2630c5a327992df5af2e363e23d13c1f"
+    WEATHER_API = ""
 else:
     logger.info("WEATHER_API найден в переменных окружения (длина: %d)", len(WEATHER_API))
 

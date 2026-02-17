@@ -24,7 +24,7 @@ SEARCH_API = os.getenv("SEARCH_API")
 
 if not SEARCH_API:
     logger.error("SEARCH_API не найден в переменных окружения")
-    SEARCH_API = "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"
+    SEARCH_API = ""
 else:
     logger.info("SEARCH_API найден в переменных окружения (длина: %d)", len(SEARCH_API))
 
