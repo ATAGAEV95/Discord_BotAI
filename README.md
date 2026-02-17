@@ -147,7 +147,7 @@ AI_MODEL_MINI=gpt-5-mini
 AI_TOKEN1=ваш_токен_провайдера
 ```
 
-**2. В файле [`main.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/main.py) установите следующие значения:**
+**2. В файле [`main.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/main/main.py) установите следующие значения:**
 ```python
 ENABLE_TELEGRAM_NOTIFIER = False
 ENABLE_WEATHER = False
@@ -212,7 +212,7 @@ TELEGRAM_CHAT_ID=ваш_chat_id
 
 ### ⚙️ Настройка лимитов
 
-В файле [`main.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/main.py) можно настроить внутренние лимиты бота:
+В файле [`main.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/main/main.py) можно настроить внутренние лимиты бота:
 
 ```python
 # Лимиты
@@ -225,13 +225,13 @@ REPORT_TIME_LIMIT = 60  # Время бездействия (минуты) пе�
 
 ## 🎨 Настройка персонализации (Промты и Эмодзи)
 
-Бот поддерживает гибкую настройку под атмосферу конкретного сервера. Основные настройки находятся в файле [`app/tools/prompt.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/app/tools/prompt.py).
+Бот поддерживает гибкую настройку под атмосферу конкретного сервера. Основные настройки находятся в файле [`app/tools/prompt.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/main/app/tools/prompt.py).
 
 ### 😃 Настройка Эмодзи
 
 Эмодзи используются ботом для придания эмоциональной окраски ответам.
 
-1.  **Поиск файла**: Откройте [`app/tools/prompt.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/app/tools/prompt.py).
+1.  **Поиск файла**: Откройте [`app/tools/prompt.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/main/app/tools/prompt.py).
 2.  **Структура данных**: В начале файла находится список `EMOJIS`, содержащий объекты класса `Emoji`.
 
 ```python
@@ -249,7 +249,7 @@ EMOJIS = [
 
 Бот может узнавать пользователей и учитывать их особенности при общении или поздравлениях.
 
-1.  **Словарь описаний**: В файле [`app/tools/prompt.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/app/tools/prompt.py) найдите словарь `USER_DESCRIPTIONS`.
+1.  **Словарь описаний**: В файле [`app/tools/prompt.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/main/app/tools/prompt.py) найдите словарь `USER_DESCRIPTIONS`.
 2.  **Формат**:
     ```python
     USER_DESCRIPTIONS = {
@@ -272,7 +272,7 @@ USER_DESCRIPTIONS = {
 
 Вы можете изменить названия уровней, которые отображаются в команде `!rank` и списке всех рангов.
 
-1.  **Словарь рангов**: В файле [`app/tools/prompt.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/develop/app/tools/prompt.py) найдите словарь `RANK_NAMES`.
+1.  **Словарь рангов**: В файле [`app/tools/prompt.py`](https://github.com/ATAGAEV95/Discord_BotAI/blob/main/app/tools/prompt.py) найдите словарь `RANK_NAMES`.
 2.  **Формат**:
     ```python
     RANK_NAMES = {
