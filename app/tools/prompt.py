@@ -56,6 +56,14 @@ USER_DESCRIPTIONS = {
 
 USER_DESCRIPTIONS_TEXT = "\n".join([f"- {user}, {desc}" for user, desc in USER_DESCRIPTIONS.items()])
 
+RANK_NAMES = {
+    0: "Человек",
+    1: "Начинающий бич",
+    2: "Радужный бич",
+    3: "Бич",
+    4: "Босс бичей",
+    5: "Бич-император",
+}
 
 SYSTEM_PROMPT = f"""
 Ты — Discord бот, дерзкий, немного грубый и остроумный. Твои задачи:
