@@ -8,6 +8,7 @@ from discord import File
 from PIL import Image, ImageDraw, ImageFont
 
 from app.data.request import get_user_rank
+from app.tools.prompt import RANK_NAMES
 from app.tools.utils import darken_color, get_rank_description
 
 
@@ -22,12 +23,12 @@ def create_help_embed() -> discord.Embed:
     embed.add_field(
         name="🎯 Основные команды",
         value=(
-            "`!reset` - очистка истории чата\n"
             "`!help` - показать эту справку\n"
             "`!rank` - узнать свой ранг и статистику\n"
             "`!rank list` - показать все возможные ранги\n"
             "`!birthday DD.MM.YYYY` - добавить/обновить дату рождения\n"
-            "`!toxic` - прожарка чата (без аргументов)\n"
+            "`!toxic` - прожарка чата (по умолчанию 20 сообщений)\n"
+            "`!toxic [число]` - прожарка указанного количества сообщений\n"
             "`!toxic [образ]` - прожарка в образе (или `list` для списка)"
         ),
         inline=False,
@@ -36,8 +37,8 @@ def create_help_embed() -> discord.Embed:
     embed.add_field(
         name="📺 Команды для YouTube",
         value=(
-            "`!add_youtube` - добавить YouTube канал для отслеживания\n"
-            "`!youtube on/off название` - вкл/выкл отслеживание канала\n"
+            "`!add_youtube [ID канала] [ID чата] [Название]` - добавить канал\n"
+            "`!youtube [on/off] [Название]` - вкл/выкл отслеживание канала\n"
             "*(только для администраторов)*"
         ),
         inline=False,
@@ -50,11 +51,12 @@ def create_help_embed() -> discord.Embed:
     )
 
     embed.add_field(
-        name="🤖 AI-провайдер",
+        name="🛡️ Администрирование",
         value=(
-            "`!ai` - переключить на следующего провайдера\n"
-            "`!ai [имя]` - выбрать провайдера\n"
-            "Доступные: `proxyapi`, `aitunnel`, `polza`\n"
+            "`!reset` - очистка истории чата\n"
+            "`!ai` - переключить/выбрать AI-провайдера\n"
+            "`!add_holiday [DD.MM] [Название]` - добавить праздник\n"
+            "`!check_holiday` - принудительная проверка праздников\n"
             "*(только для администраторов)*"
         ),
         inline=False,
@@ -152,17 +154,17 @@ def create_rang_list_embed() -> discord.Embed:
         description="Все возможные ранги и условия их получения:",
     )
 
-    embed.add_field(name="Человек", value="0 сообщений", inline=False)
+    embed.add_field(name=RANK_NAMES[0], value="0 сообщений", inline=False)
 
-    embed.add_field(name="Начинающий бич", value="1-49 сообщений", inline=False)
+    embed.add_field(name=RANK_NAMES[1], value="1-49 сообщений", inline=False)
 
-    embed.add_field(name="Радужный бич", value="50-99 сообщений", inline=False)
+    embed.add_field(name=RANK_NAMES[2], value="50-99 сообщений", inline=False)
 
-    embed.add_field(name="Бич", value="100-199 сообщений", inline=False)
+    embed.add_field(name=RANK_NAMES[3], value="100-199 сообщений", inline=False)
 
-    embed.add_field(name="Босс бичей", value="200-499 сообщений", inline=False)
+    embed.add_field(name=RANK_NAMES[4], value="200-499 сообщений", inline=False)
 
-    embed.add_field(name="Бич-император", value="500+ сообщений", inline=False)
+    embed.add_field(name=RANK_NAMES[5], value="500+ сообщений", inline=False)
 
     embed.set_footer(text="Пишите сообщения, чтобы повысить свой ранг!")
     return embed
