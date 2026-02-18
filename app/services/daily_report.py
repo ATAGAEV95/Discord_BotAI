@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -7,6 +8,16 @@ from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUs
 from app.core.ai_config import get_client, get_mini_model
 from app.data.request import delete_channel_messages, get_channel_messages, save_channel_message
 from app.tools.prompt import UPDATED_REPORT_PROMPT
+
+
+@dataclass
+class ChannelState:
+    """Состояние канала для генерации отчетов."""
+
+    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    messages: list[dict[str, Any]] = field(default_factory=list)
+    last_message_time: datetime = field(default_factory=datetime.now)
+    timer: asyncio.Task | None = None
 
 
 class ReportGenerator:
@@ -20,46 +31,44 @@ class ReportGenerator:
     def __init__(self, bot: Any) -> None:
         """Инициализирует генератор отчётов."""
         self.bot = bot
-        self.channel_data: dict = {}
-        self.locks: dict[int, asyncio.Lock] = {}
+        self.channels: dict[int, ChannelState] = {}
 
-    def get_lock(self, channel_id: int) -> asyncio.Lock:
-        """Возвращает блокировку для указанного канала."""
-        if channel_id not in self.locks:
-            self.locks[channel_id] = asyncio.Lock()
-        return self.locks[channel_id]
+    def get_state(self, channel_id: int) -> ChannelState:
+        """Возвращает (или создает) состояние для указанного канала."""
+        if channel_id not in self.channels:
+            self.channels[channel_id] = ChannelState()
+        return self.channels[channel_id]
 
-    async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
+    async def add_message(
+        self, channel_id: int, message: str, author: str, message_id: int
+    ) -> None:
         """Добавляет сообщение в историю канала.
 
         Обновляет время последней активности. При достижении или
         превышении лимита сообщений запускает задачу отправки отчёта.
         """
-        lock = self.get_lock(channel_id)
-        async with lock:
+        state = self.get_state(channel_id)
+        async with state.lock:
             try:
                 await save_channel_message(channel_id, message_id, author, message)
             except Exception as e:
                 print(f"Ошибка при сохранении сообщения в канал {channel_id}: {e}")
 
-            if channel_id not in self.channel_data:
-                self.channel_data[channel_id] = {
-                    "messages": [],
-                    "timer": None,
-                    "last_message_time": datetime.now(),
+            state.messages.append(
+                {
+                    "id": message_id,
+                    "content": message,
+                    "author": author,
+                    "timestamp": datetime.now(),
                 }
-
-            self.channel_data[channel_id]["messages"].append(
-                {"id": message_id, "content": message, "author": author, "timestamp": datetime.now()}
             )
 
-            self.channel_data[channel_id]["last_message_time"] = datetime.now()
-            if (
-                self.channel_data[channel_id]["timer"]
-                and not self.channel_data[channel_id]["timer"].done()
-            ):
+            state.last_message_time = datetime.now()
+
+            # Если таймер уже запущен — отменяем, так как активность продолжилась
+            if state.timer and not state.timer.done():
                 try:
-                    self.channel_data[channel_id]["timer"].cancel()
+                    state.timer.cancel()
                 except Exception as e:
                     print(f"Ошибка при отмене таймера для канала {channel_id}: {e}")
 
@@ -69,13 +78,11 @@ class ReportGenerator:
                 print(f"Ошибка при получении сообщений из канала {channel_id}: {e}")
                 db_messages = []
 
-            cache_count = len(self.channel_data[channel_id]["messages"])
+            cache_count = len(state.messages)
             db_count = len(db_messages)
 
             if cache_count >= self.bot.report_msg_limit or db_count >= self.bot.report_msg_limit:
-                self.channel_data[channel_id]["timer"] = asyncio.create_task(
-                    self.start_report_timer(channel_id)
-                )
+                state.timer = asyncio.create_task(self.start_report_timer(channel_id))
 
     async def start_report_timer(self, channel_id: int) -> None:
         """Запускает таймер ожидания.
@@ -85,13 +92,17 @@ class ReportGenerator:
         """
         # Ждем указанное время в минутах
         await asyncio.sleep(self.bot.report_time_limit * 60)
-        lock = self.get_lock(channel_id)
-        async with lock:
-            if channel_id not in self.channel_data:
-                return
 
-            last_time = self.channel_data[channel_id]["last_message_time"]
-            if (datetime.now() - last_time) < timedelta(minutes=self.bot.report_time_limit):
+        # Проверяем, существует ли еще состояние канала (могло быть удалено)
+        if channel_id not in self.channels:
+            return
+
+        state = self.channels[channel_id]
+        async with state.lock:
+            # Проверяем актуальность времени последнего сообщения
+            if (datetime.now() - state.last_message_time) < timedelta(
+                minutes=self.bot.report_time_limit
+            ):
                 return
 
         await self.generate_and_send_report(channel_id)
@@ -104,12 +115,11 @@ class ReportGenerator:
         channel = self.bot.get_channel(channel_id)
         if not channel:
             print(f"Канал {channel_id} недоступен, пропускаем генерацию отчёта")
-            self.channel_data.pop(channel_id, None)
-            self.locks.pop(channel_id, None)
+            self.channels.pop(channel_id, None)
             return
 
-        lock = self.get_lock(channel_id)
-        async with lock:
+        state = self.get_state(channel_id)
+        async with state.lock:
             try:
                 messages = await get_channel_messages(channel_id)
             except Exception as e:
@@ -125,7 +135,7 @@ class ReportGenerator:
                 f"[ID:{msg.message_id}] {msg.author}: {msg.content}" for msg in messages
             )
 
-            message = [
+            message_payload = [
                 ChatCompletionSystemMessageParam(
                     role="system",
                     content=UPDATED_REPORT_PROMPT,
@@ -137,19 +147,20 @@ class ReportGenerator:
 
             try:
                 response = await get_client().chat.completions.create(
-                    model=get_mini_model(), 
-                    messages=message, 
-                    temperature=0.0, 
-                    top_p=0.01
+                    model=get_mini_model(),
+                    messages=message_payload,
+                    temperature=0.0,
+                    top_p=0.01,
                 )
-                report = response.choices[0].message.content
+                report = response.choices[0].message.content or "Пустой ответ от AI"
             except Exception as e:
                 print(f"Ошибка генерации отчета: {e}")
                 report = "Ошибка генерации отчета"
 
             if "ID:" in report:
-                channel = self.bot.get_channel(channel_id)
-                guild_id = channel.guild.id if channel and hasattr(channel, "guild") else "UNKNOWN"
+                guild_id = (
+                    channel.guild.id if channel and hasattr(channel, "guild") else "UNKNOWN"
+                )
 
                 for msg in messages:
                     msg_id = str(msg.message_id)
@@ -158,7 +169,6 @@ class ReportGenerator:
                         report = report.replace(f"[ID:{msg_id}]", f"[ссылка]({link})")
 
             try:
-                channel = self.bot.get_channel(channel_id)
                 if channel:
                     await channel.send(report)
             except Exception as e:
@@ -169,7 +179,6 @@ class ReportGenerator:
             except Exception as e:
                 print(f"Ошибка при удалении сообщений из канала {channel_id}: {e}")
 
-            if channel_id in self.channel_data:
-                del self.channel_data[channel_id]
-                if channel_id in self.locks:
-                    del self.locks[channel_id]
+            # Очищаем состояние канала после успешной отправки отчета
+            if channel_id in self.channels:
+                del self.channels[channel_id]
