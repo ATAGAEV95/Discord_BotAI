@@ -7,12 +7,17 @@ import pytest
 from discord.ext import commands
 
 from app.cogs.commands import BotCommands
+from app.core.bot import DisBot
 
 
 @pytest.fixture
 def mock_bot() -> MagicMock:
     """Фикстура для мока бота."""
-    return MagicMock(spec=commands.Bot)
+    bot = MagicMock(spec=DisBot)
+    bot.weather_enabled = True
+    bot.search_enabled = True
+    bot.context_limit = 50
+    return bot
 
 
 @pytest.fixture
