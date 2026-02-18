@@ -37,8 +37,10 @@ class YouTubeNotifier:
             feed = await asyncio.to_thread(feedparser.parse, url)
 
             if feed.status != 200 or not feed.entries:
+                timestamp = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
                 print(
-                    f"❌ Неверный или недоступный канал: {channel.name} (ID: {channel.channel_id})"
+                    f"[{timestamp}] ❌ Неверный или недоступный канал: "
+                    f"{channel.name} (ID: {channel.channel_id})"
                 )
                 print(f"HTTP статус: {feed.status}")
                 return
