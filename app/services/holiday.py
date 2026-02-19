@@ -3,11 +3,8 @@ from datetime import datetime, timedelta
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 from app.core.ai_config import get_client, get_model
-from app.services.llama_integration import LlamaIndexManager
 from app.tools.prompt import USER_DESCRIPTIONS, system_holiday_prompt
 from app.tools.utils import clean_text, replace_emojis, users_context
-
-llama_manager = LlamaIndexManager()
 
 
 async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
@@ -61,8 +58,8 @@ async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
             max_tokens=2000,
         )
         text = completion.choices[0].message.content.strip()
-        cleaned_response_text = await clean_text(text)
-        emoji_response_text = await replace_emojis(cleaned_response_text)
+        cleaned_response_text = clean_text(text)
+        emoji_response_text = replace_emojis(cleaned_response_text)
         return emoji_response_text
     except Exception as e:
         print(f"[Ошибка генерации поздравления]: {e}")
