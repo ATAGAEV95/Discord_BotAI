@@ -23,6 +23,7 @@ dependencies = [
     "sqlalchemy~=2.0.42",
     "tavily>=1.1.0",
     "tiktoken~=0.9.0",
+    "griffe>=2.0.0",
 ]
 
 [tool.ruff]
