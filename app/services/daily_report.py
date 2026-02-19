@@ -90,16 +90,13 @@ class ReportGenerator:
         Если после последнего сообщения прошло достаточно времени,
         генерирует и отправляет аналитический отчёт.
         """
-        # Ждем указанное время в минутах
         await asyncio.sleep(self.bot.report_time_limit * 60)
 
-        # Проверяем, существует ли еще состояние канала (могло быть удалено)
         if channel_id not in self.channels:
             return
 
         state = self.channels[channel_id]
         async with state.lock:
-            # Проверяем актуальность времени последнего сообщения
             if (datetime.now() - state.last_message_time) < timedelta(
                 minutes=self.bot.report_time_limit
             ):
@@ -179,6 +176,5 @@ class ReportGenerator:
             except Exception as e:
                 print(f"Ошибка при удалении сообщений из канала {channel_id}: {e}")
 
-            # Очищаем состояние канала после успешной отправки отчета
             if channel_id in self.channels:
                 del self.channels[channel_id]
