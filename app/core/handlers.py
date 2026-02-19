@@ -108,7 +108,7 @@ async def ai_generate(
             top_p=0.8,
             frequency_penalty=0.1,
             presence_penalty=0.2,
-            max_tokens=3500,
+            max_tokens=4500,
         )
 
         response_text = completion.choices[0].message.content
