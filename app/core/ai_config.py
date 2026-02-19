@@ -1,9 +1,6 @@
 import os
 
-from dotenv import load_dotenv
 from openai import AsyncOpenAI
-
-load_dotenv()
 
 PROVIDERS: dict[str, dict[str, str]] = {
     "proxyapi": {
@@ -100,7 +97,7 @@ def set_model(model: str) -> None:
 
 def get_mini_model() -> str:
     """Возвращает текущую мини-модель (для простых задач)."""
-    return os.getenv("AI_MODEL_MINI", "gpt-5-mini")
+    return os.getenv("AI_MODEL_MINI", "gpt-4o-mini")
 
 
 def next_provider() -> str:
