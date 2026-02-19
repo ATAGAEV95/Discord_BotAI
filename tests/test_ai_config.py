@@ -175,8 +175,8 @@ class TestGetMiniModel:
     """Тесты для get_mini_model."""
 
     def test_default_mini_model(self) -> None:
-        """Модель по умолчанию — 'gpt-5-mini'."""
-        assert ai_config.get_mini_model() == "gpt-5-mini"
+        """Модель по умолчанию — 'gpt-4o-mini'."""
+        assert ai_config.get_mini_model() == "gpt-4o-mini"
 
     def test_env_var_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Можно переопределить через переменную окружения."""
