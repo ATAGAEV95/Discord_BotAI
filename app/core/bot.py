@@ -2,10 +2,10 @@ import discord
 from discord.ext import commands
 
 from app.core.scheduler import start_scheduler
-from app.services.youtube_notifier import YouTubeNotifier
 from app.data.models import init_models
 from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
+from app.services.youtube_notifier import YouTubeNotifier
 from app.tools.utils import contains_only_urls
 
 
