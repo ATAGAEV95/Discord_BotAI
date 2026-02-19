@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 
 from app.core.scheduler import start_scheduler
+from app.services.youtube_notifier import YouTubeNotifier
 from app.data.models import init_models
 from app.services.daily_report import ReportGenerator
 from app.services.telegram_notifier import telegram_notifier
@@ -28,6 +29,7 @@ class DisBot(commands.Bot):
             command_prefix=command_prefix, intents=intents, help_command=help_command
         )
         self.report_generator: ReportGenerator | None = None
+        self.youtube_notifier: YouTubeNotifier = YouTubeNotifier(self)
         self.telegram_enabled: bool = telegram_enabled
         self.weather_enabled: bool = weather_enabled
         self.search_enabled: bool = search_enabled
@@ -48,7 +50,7 @@ class DisBot(commands.Bot):
         """Инициализация при подключении бота к Discord."""
         await init_models()
         self.report_generator = ReportGenerator(self)
-        start_scheduler(self)
+        start_scheduler(self, self.youtube_notifier)
         
         telegram_notifier.enabled = telegram_notifier.enabled and self.telegram_enabled
         if not self.telegram_enabled:
