@@ -4,7 +4,6 @@ from discord.ext import commands
 
 from app.core.bot import DisBot
 from app.core.checks import admin_or_owner
-from app.services.youtube_notifier import YouTubeNotifier
 
 
 class YouTube(commands.Cog):
@@ -13,7 +12,7 @@ class YouTube(commands.Cog):
     def __init__(self, bot: DisBot) -> None:
         """Инициализация Cog."""
         self.bot = bot
-        self.youtube_notifier = YouTubeNotifier(bot)
+        self.youtube_notifier = bot.youtube_notifier
 
     @commands.command(name="add_youtube")
     @commands.guild_only()
