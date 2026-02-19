@@ -1,296 +1,209 @@
 import asyncio
-import re
+from collections.abc import Callable
 from datetime import date, datetime
+from functools import wraps
+from typing import Any
 
 from sqlalchemy import and_, delete, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.data.models import Birthday, ChannelMessage, Holiday, User, UserMessageStats, async_session
+from app.data.models import Birthday, ChannelMessage, Holiday, UserMessageStats, async_session
 from app.tools.utils import get_rank_description
 
 DB_TIMEOUT = 10
 
 
-async def get_user_context(user_id: int) -> list | str:
-    """Извлекает контекст пользователя из базы данных."""
-    async with async_session() as session:
-        try:
-            query = select(User).where(User.user_id == user_id).order_by(User.id.desc()).limit(1)
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            user = result.scalar()
-            if user:
-                return user.context
-            else:
-                return "Пользователь не найден."
-        except TimeoutError:
-            raise Exception("Таймаут при получении контекста пользователя.")
-        except Exception as e:
-            raise Exception(f"Ошибка доступа к базе данных: {e}")
+def db_operation(operation_name: str) -> Callable:
+    """Декоратор для устранения бойлерплейта БД-операций.
+
+    Оборачивает функцию в async with session + try/except с таймаутом.
+    Декорируемая функция должна принимать session: AsyncSession первым аргументом.
+    """
+
+    def decorator(func_inner: Callable) -> Callable:
+        @wraps(func_inner)
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            async with async_session() as session:
+                try:
+                    return await asyncio.wait_for(
+                        func_inner(session, *args, **kwargs), timeout=DB_TIMEOUT
+                    )
+                except TimeoutError:
+                    raise Exception(f"Таймаут при {operation_name}.")
+                except Exception as e:
+                    if isinstance(e, (ValueError, Exception)) and "Таймаут" in str(e):
+                        raise
+                    raise Exception(f"Ошибка при {operation_name}: {e}")
+
+        return wrapper
+
+    return decorator
 
 
-async def save_user_context(user_id: int, name: str, context: list) -> None:
-    """Сохраняет контекст пользователя в базе данных."""
-    async with async_session() as session:
-        try:
-            new_user = User(user_id=user_id, name=str(name), context=context[1:])
-            session.add(new_user)
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-        except TimeoutError:
-            raise Exception("Таймаут при сохранении контекста пользователя.")
-        except Exception as e:
-            raise Exception(f"Ошибка сохранения в БД: {e}")
 
-
-async def delete_user_context(user_id: int) -> None:
-    """Удаляет контекст пользователя из базы данных."""
-    async with async_session() as session:
-        try:
-            query = delete(User).where(User.user_id == user_id)
-            await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-        except TimeoutError:
-            raise Exception("Таймаут при удалении контекста пользователя.")
-        except Exception as e:
-            raise Exception(f"Ошибка удаления из БД: {e}")
-
-
-async def save_channel_message(channel_id: int, message_id: int, author: str, content: str) -> None:
+@db_operation("сохранении сообщения канала")
+async def save_channel_message(
+    session: AsyncSession, channel_id: int, message_id: int, author: str, content: str
+) -> None:
     """Сохраняет сообщение канала в базы данных."""
-    async with async_session() as session:
-        try:
-            new_message = ChannelMessage(
-                channel_id=channel_id, message_id=message_id, author=author, content=content
-            )
-            session.add(new_message)
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-        except TimeoutError:
-            raise Exception("Таймаут при сохранении сообщения канала.")
-        except Exception as e:
-            raise Exception(f"Ошибка сохранения сообщения канала в БД: {e}")
+    new_message = ChannelMessage(
+        channel_id=channel_id, message_id=message_id, author=author, content=content
+    )
+    session.add(new_message)
+    await session.commit()
 
 
-async def get_channel_messages(channel_id: int) -> list[ChannelMessage]:
+@db_operation("получении сообщений канала")
+async def get_channel_messages(session: AsyncSession, channel_id: int) -> list[ChannelMessage]:
     """Извлекает сообщения канала из базы данных."""
-    async with async_session() as session:
-        try:
-            query = select(ChannelMessage).where(ChannelMessage.channel_id == channel_id)
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            return result.scalars().all()
-        except TimeoutError:
-            raise Exception("Таймаут при получении сообщений канала.")
-        except Exception as e:
-            raise Exception(f"Ошибка доступа к базе данных: {e}")
+    query = select(ChannelMessage).where(ChannelMessage.channel_id == channel_id)
+    result = await session.execute(query)
+    return result.scalars().all()
 
 
-async def delete_channel_messages(channel_id: int) -> None:
+@db_operation("удалении сообщений канала")
+async def delete_channel_messages(session: AsyncSession, channel_id: int) -> None:
     """Удаляет сообщения канала из базы данных."""
-    async with async_session() as session:
-        try:
-            query = delete(ChannelMessage).where(ChannelMessage.channel_id == channel_id)
-            await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-        except TimeoutError:
-            raise Exception("Таймаут при удалении сообщений канала.")
-        except Exception as e:
-            raise Exception(f"Ошибка удаления сообщений канала: {e}")
+    query = delete(ChannelMessage).where(ChannelMessage.channel_id == channel_id)
+    await session.execute(query)
+    await session.commit()
 
 
-async def save_birthday(content: str, display_name: str, name: str, user_id: int) -> None:
-    """Сохраняет дату рождения пользователя."""
-    try:
-        args = content[len("!birthday") :].strip()
-        if not re.match(r"^\d{2}\.\d{2}\.\d{4}$", args):
-            raise ValueError("Некорректный формат даты. Используйте DD.MM.YYYY.")
-        birthday = datetime.strptime(args, "%d.%m.%Y")
-    except Exception:
-        raise ValueError("Некорректный формат даты. Используйте DD.MM.YYYY.")
-
-    async with async_session() as session:
-        try:
-            query = select(Birthday).where(Birthday.user_id == user_id)
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            birthday_entry = result.scalar()
-            if birthday_entry:
-                birthday_entry.birthday = birthday
-                birthday_entry.display_name = display_name
-                birthday_entry.name = name
-            else:
-                birthday_entry = Birthday(
-                    user_id=user_id, display_name=display_name, name=name, birthday=birthday
-                )
-                session.add(birthday_entry)
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-        except TimeoutError:
-            raise Exception("Таймаут при сохранении даты рождения.")
-        except Exception as e:
-            raise Exception(f"Ошибка при сохранении даты рождения: {e}")
+@db_operation("сохранении даты рождения")
+async def save_birthday(
+    session: AsyncSession, user_id: int, display_name: str, name: str, birthday: datetime
+) -> None:
+    """Сохраняет дату рождения в БД."""
+    query = select(Birthday).where(Birthday.user_id == user_id)
+    result = await session.execute(query)
+    birthday_entry = result.scalar()
+    if birthday_entry:
+        birthday_entry.birthday = birthday
+        birthday_entry.display_name = display_name
+        birthday_entry.name = name
+    else:
+        birthday_entry = Birthday(
+            user_id=user_id, display_name=display_name, name=name, birthday=birthday
+        )
+        session.add(birthday_entry)
+    await session.commit()
 
 
-async def update_message_count(user_id: int, name: str, guild_id: int) -> dict:
+@db_operation("обновлении статистики сообщений")
+async def update_message_count(
+    session: AsyncSession, user_id: int, name: str, guild_id: int
+) -> dict:
     """Обновляет счетчик сообщений пользователя и возвращает информацию о повышении ранга."""
-    try:
-        async with async_session() as session:
-            query = select(UserMessageStats).where(
+    query = select(UserMessageStats).where(
+        UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
+    )
+    result = await session.execute(query)
+    user_stats = result.scalar_one_or_none()
+
+    if user_stats:
+        old_count = user_stats.message_count
+        old_rank = get_rank_description(old_count)
+        new_count = old_count + 1
+        new_rank = get_rank_description(new_count)
+
+        stmt = (
+            update(UserMessageStats)
+            .where(
                 UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
             )
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            user_stats = result.scalar_one_or_none()
+            .values(message_count=new_count, last_updated=func.now())
+        )
+        await session.execute(stmt)
 
-            if user_stats:
-                old_count = user_stats.message_count
-                old_rank = get_rank_description(old_count)
-                new_count = old_count + 1
-                new_rank = get_rank_description(new_count)
+        rank_up = new_rank["rank_level"] > old_rank["rank_level"]
+    else:
+        old_rank = get_rank_description(0)
+        new_count = 1
+        new_rank = get_rank_description(new_count)
 
-                stmt = (
-                    update(UserMessageStats)
-                    .where(
-                        UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
-                    )
-                    .values(message_count=new_count, last_updated=func.now())
-                )
-                await asyncio.wait_for(session.execute(stmt), timeout=DB_TIMEOUT)
+        new_stat = UserMessageStats(
+            user_id=user_id, name=name, guild_id=guild_id, message_count=new_count
+        )
+        session.add(new_stat)
 
-                rank_up = new_rank["rank_level"] > old_rank["rank_level"]
-            else:
-                old_rank = get_rank_description(0)
-                new_count = 1
-                new_rank = get_rank_description(new_count)
+        rank_up = new_rank["rank_level"] > old_rank["rank_level"]
 
-                new_stat = UserMessageStats(
-                    user_id=user_id, name=name, guild_id=guild_id, message_count=new_count
-                )
-                session.add(new_stat)
+    await session.commit()
 
-                rank_up = new_rank["rank_level"] > old_rank["rank_level"]
-
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-
-            return {
-                "rank_up": rank_up,
-                "old_rank": old_rank["rank_level"],
-                "new_rank": new_rank["rank_level"],
-                "message_count": new_count,
-            }
-
-    except TimeoutError:
-        raise Exception("Таймаут при сохранении статистики сообщений.")
-    except Exception as e:
-        raise Exception(f"Ошибка при сохранении статистики сообщений: {e}")
+    return {
+        "rank_up": rank_up,
+        "old_rank": old_rank["rank_level"],
+        "new_rank": new_rank["rank_level"],
+        "message_count": new_count,
+    }
 
 
-async def get_rank(user_id: int, guild_id: int) -> int:
+@db_operation("получении статистики сообщений")
+async def get_rank(session: AsyncSession, user_id: int, guild_id: int) -> int:
     """Получает количество сообщений пользователя на сервере."""
-    async with async_session() as session:
-        try:
-            query = select(UserMessageStats.message_count).where(
-                UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
-            )
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            stats = result.scalar_one_or_none()
+    query = select(UserMessageStats.message_count).where(
+        UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
+    )
+    result = await session.execute(query)
+    stats = result.scalar_one_or_none()
 
-            count = stats if stats is not None else 0
-            return int(count)
-        except TimeoutError:
-            raise Exception("Таймаут при получении статистики сообщений.")
-        except Exception as e:
-            raise Exception(f"Ошибка при получении статистики сообщений: {e}")
+    count = stats if stats is not None else 0
+    return int(count)
 
 
-async def get_user_rank(user_id: int, guild_id: int) -> int:
+@db_operation("получении ранга пользователя")
+async def get_user_rank(session: AsyncSession, user_id: int, guild_id: int) -> int:
     """Получает ранг пользователя в указанном сервере на основе количества сообщений."""
-    async with async_session() as session:
-        try:
-            subquery = (
-                select(
-                    UserMessageStats.user_id,
-                    func.rank()
-                    .over(
-                        partition_by=UserMessageStats.guild_id,
-                        order_by=UserMessageStats.message_count.desc(),
-                    )
-                    .label("user_rank"),
-                )
-                .where(UserMessageStats.guild_id == guild_id)
-                .subquery()
+    subquery = (
+        select(
+            UserMessageStats.user_id,
+            func.rank()
+            .over(
+                partition_by=UserMessageStats.guild_id,
+                order_by=UserMessageStats.message_count.desc(),
             )
+            .label("user_rank"),
+        )
+        .where(UserMessageStats.guild_id == guild_id)
+        .subquery()
+    )
 
-            query = select(subquery.c.user_rank).where(and_(subquery.c.user_id == user_id))
+    query = select(subquery.c.user_rank).where(and_(subquery.c.user_id == user_id))
 
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            user_rank = result.scalar_one_or_none()
+    result = await session.execute(query)
+    user_rank = result.scalar_one_or_none()
 
-            return user_rank if user_rank is not None else 0
-
-        except TimeoutError:
-            raise Exception("Таймаут при получении ранга пользователя.")
-        except Exception as e:
-            raise Exception(f"Ошибка при получении ранга пользователя: {e}")
+    return user_rank if user_rank is not None else 0
 
 
-
-async def check_holiday(current_date: date) -> str | None:
+@db_operation("проверке праздника")
+async def check_holiday(session: AsyncSession, current_date: date) -> str | None:
     """Проверяет, является ли текущая дата праздником."""
-    async with async_session() as session:
-        try:
-            query = select(Holiday).where(
-                Holiday.day == current_date.day, Holiday.month == current_date.month
-            )
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            holiday = result.scalar_one_or_none()
-            return holiday.name if holiday else None
-        except TimeoutError:
-            raise Exception("Таймаут при проверке праздника.")
-        except Exception as e:
-            raise Exception(f"Ошибка доступа к базе данных (праздники): {e}")
+    query = select(Holiday).where(
+        Holiday.day == current_date.day, Holiday.month == current_date.month
+    )
+    result = await session.execute(query)
+    holiday = result.scalar_one_or_none()
+    return holiday.name if holiday else None
 
 
-async def save_holiday(content: str) -> str:
-    """Сохраняет новый праздник."""
-    try:
-        # Ожидаемый формат: !add_holiday 01.01 Новый Год
-        args = content.split(" ", 2)
-        if len(args) < 3:
-            raise ValueError("Используйте формат: `!add_holiday DD.MM Название праздника`")
+@db_operation("сохранении праздника")
+async def save_holiday(
+    session: AsyncSession, day: int, month: int, holiday_name: str
+) -> str:
+    """Сохраняет праздник в БД."""
+    query = select(Holiday).where(Holiday.day == day, Holiday.month == month)
+    result = await session.execute(query)
+    existing_holiday = result.scalar_one_or_none()
 
-        date_str = args[1]
-        holiday_name = args[2]
+    if existing_holiday:
+        existing_holiday.name = holiday_name
+        action = "обновлен"
+    else:
+        new_holiday = Holiday(day=day, month=month, name=holiday_name)
+        session.add(new_holiday)
+        action = "добавлен"
 
-        if not re.match(r"^\d{2}\.\d{2}$", date_str):
-            raise ValueError("Некорректный формат даты. Используйте DD.MM (например, 01.01).")
-
-        day, month = map(int, date_str.split("."))
-
-        if not (1 <= month <= 12):
-            raise ValueError("Месяц должен быть от 1 до 12.")
-        
-        # Простая проверка дней (можно улучшить с учетом calendar)
-        if not (1 <= day <= 31):
-             raise ValueError("День должен быть от 1 до 31.")
-
-    except ValueError as ve:
-        raise ve
-    except Exception:
-        raise ValueError("Ошибка разбора команды. Используйте DD.MM Название.")
-
-    async with async_session() as session:
-        try:
-            # Проверяем, есть ли уже праздник в этот день
-            query = select(Holiday).where(Holiday.day == day, Holiday.month == month)
-            result = await asyncio.wait_for(session.execute(query), timeout=DB_TIMEOUT)
-            existing_holiday = result.scalar_one_or_none()
-
-            if existing_holiday:
-                existing_holiday.name = holiday_name
-                action = "обновлен"
-            else:
-                new_holiday = Holiday(day=day, month=month, name=holiday_name)
-                session.add(new_holiday)
-                action = "добавлен"
-
-            await asyncio.wait_for(session.commit(), timeout=DB_TIMEOUT)
-            return f"Праздник '{holiday_name}' на {date_str} успешно {action}!"
-
-        except TimeoutError:
-            raise Exception("Таймаут при сохранении праздника.")
-        except Exception as e:
-            raise Exception(f"Ошибка при сохранении праздника: {e}")
+    await session.commit()
+    date_str = f"{day:02d}.{month:02d}"
+    return f"Праздник '{holiday_name}' на {date_str} успешно {action}!"
