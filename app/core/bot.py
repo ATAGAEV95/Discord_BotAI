@@ -37,7 +37,11 @@ class DisBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         """Загрузка расширений (Cogs) при старте бота."""
-        await self.load_extension("app.cogs.commands")
+        await self.load_extension("app.cogs.general")
+        await self.load_extension("app.cogs.admin")
+        await self.load_extension("app.cogs.youtube")
+        await self.load_extension("app.cogs.toxic")
+        await self.load_extension("app.cogs.error_handler")
         await self.load_extension("app.cogs.ranks")
 
     async def on_ready(self) -> None:
@@ -72,14 +76,14 @@ class DisBot(commands.Bot):
             return
 
         if len(message.content) > 1000:
-            if message.content.startswith("!"):
+            if message.content.startswith(self.command_prefix):
                 await message.channel.send(
                     f"Сообщение слишком длинное: {len(message.content)} символов! "
                     "Максимальная длина - 1000 символов."
                 )
             return
 
-        if not message.content.startswith("!"):
+        if not message.content.startswith(self.command_prefix):
             if not message.content.strip():
                 return
 
