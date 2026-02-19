@@ -19,7 +19,6 @@ async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
     old_year = date_minus_month.year
     new_year = date_plus_month.year
     if holiday == "Новым годом":
-        # Specific New Year prompt
         messages = [
             ChatCompletionSystemMessageParam(
                 role="system", content=system_holiday_prompt(holiday).strip()
@@ -43,7 +42,6 @@ async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
             ),
         ]
     else:
-        # Universal holiday prompt
         messages = [
             ChatCompletionSystemMessageParam(
                 role="system", content=system_holiday_prompt(holiday).strip()
