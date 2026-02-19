@@ -1,11 +1,12 @@
 import os
 
-import discord
 from dotenv import load_dotenv
 
-from app.core.bot import DisBot
-
 load_dotenv()
+
+import discord  # noqa: E402
+
+from app.core.bot import DisBot  # noqa: E402
 
 TOKEN = os.getenv("DC_TOKEN")
 
@@ -20,7 +21,7 @@ ENABLE_WEATHER = True  # Включить/выключить поиск пого
 ENABLE_SEARCH = True   # Включить/выключить поиск в интернете (нужен API ключ)
 
 # Лимиты
-CONTEXT_LIMIT = 50  # Количество строк контекста для RAG
+CONTEXT_LIMIT = 100  # Количество строк контекста для RAG
 REPORT_MSG_LIMIT = 15  # Порог сообщений для создания отчета
 REPORT_TIME_LIMIT = 60  # Время ожидания в минутах для создания отчета
 
