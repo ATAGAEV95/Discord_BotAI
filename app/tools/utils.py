@@ -1,9 +1,10 @@
 import re
+from datetime import datetime
 
 import discord
 import tiktoken
 
-from app.tools.prompt import EMOJI_MAPPING, RANK_NAMES, SYSTEM_PROMPT, USER_DESCRIPTIONS
+from app.tools.prompt import EMOJI_MAPPING, RANK_CONFIG, SYSTEM_PROMPT, USER_DESCRIPTIONS
 
 ENCODING = tiktoken.encoding_for_model("gpt-4o-mini")
 
@@ -85,85 +86,44 @@ def count_tokens(text: str | None) -> int:
     return len(ENCODING.encode(text))
 
 
-async def clean_text(text: str) -> str:
+def clean_text(text: str) -> str:
     """Очищает текст от markdown-стилей: **, *, ###, ##, #."""
     cleaned_text = re.sub(r"(\*\*|\*|###|##|#)", "", text)
     return cleaned_text
 
 
-async def replace_emojis(text: str) -> str:
+def replace_emojis(text: str) -> str:
     """Заменяет текстовые представления эмодзи на реальные Discord-эмодзи."""
     for text_emoji, discord_emoji in EMOJI_MAPPING.items():
         text = text.replace(text_emoji, discord_emoji)
     return text
 
 
+COLOR_MAP: dict[str, discord.Color] = {
+    "light_grey": discord.Color.light_grey(),
+    "green": discord.Color.green(),
+    "blue": discord.Color.blue(),
+    "red": discord.Color.red(),
+    "purple": discord.Color.purple(),
+    "gold": discord.Color.gold(),
+}
+
+
 def get_rank_description(message_count: int) -> dict:
     """Возвращает описание уровня (ранга) пользователя на основе количества сообщений."""
-    rank_designs = [
-        {  # 0 сообщений
-            "color": discord.Color.light_grey(),
-            "next_threshold": 50,
-            "rank_level": 0,
-            "text_color": (130, 130, 130),
-            "bg_filename": "rang0.jpg",
-            "description": RANK_NAMES[0],
-        },
-        {  # 1-49
-            "color": discord.Color.green(),
-            "next_threshold": 50,
-            "rank_level": 1,
-            "text_color": (44, 255, 109),
-            "bg_filename": "rang1.png",
-            "description": RANK_NAMES[1],
-        },
-        {  # 50-99
-            "color": discord.Color.blue(),
-            "next_threshold": 100,
-            "rank_level": 2,
-            "text_color": (76, 142, 255),
-            "bg_filename": "rang2.png",
-            "description": RANK_NAMES[2],
-        },
-        {  # 100-199
-            "color": discord.Color.red(),
-            "next_threshold": 200,
-            "rank_level": 3,
-            "text_color": (255, 73, 73),
-            "bg_filename": "rang3.png",
-            "description": RANK_NAMES[3],
-        },
-        {  # 200-499
-            "color": discord.Color.purple(),
-            "next_threshold": 500,
-            "rank_level": 4,
-            "text_color": (197, 94, 255),
-            "bg_filename": "rang4.png",
-            "description": RANK_NAMES[4],
-        },
-        {  # 500+
-            "color": discord.Color.gold(),
-            "next_threshold": 500,
-            "rank_level": 5,
-            "text_color": (255, 215, 0),
-            "bg_filename": "rang5.png",
-            "description": RANK_NAMES[5],
-        },
-    ]
+    selected = RANK_CONFIG[0]
+    for rank_cfg in RANK_CONFIG:
+        if message_count >= rank_cfg["threshold"]:
+            selected = rank_cfg
 
-    if message_count == 0:
-        rank = rank_designs[0]
-    elif message_count < 50:
-        rank = rank_designs[1]
-    elif message_count < 100:
-        rank = rank_designs[2]
-    elif message_count < 200:
-        rank = rank_designs[3]
-    elif message_count < 500:
-        rank = rank_designs[4]
-    else:
-        rank = rank_designs[5]
-    return rank
+    return {
+        "color": COLOR_MAP.get(selected["color_name"], discord.Color.default()),
+        "next_threshold": selected["next_threshold"],
+        "rank_level": RANK_CONFIG.index(selected),
+        "text_color": selected["text_color"],
+        "bg_filename": selected["bg_filename"],
+        "description": selected["name"],
+    }
 
 
 def convert_mcp_tools_to_openai(mcp_tools: list) -> list:
@@ -182,3 +142,57 @@ def convert_mcp_tools_to_openai(mcp_tools: list) -> list:
         openai_tools.append(openai_tool)
 
     return openai_tools
+
+
+def parse_birthday_date(content: str) -> datetime:
+    """Парсит дату рождения из текста команды.
+
+    Ожидаемый формат: '!birthday DD.MM.YYYY' или просто 'DD.MM.YYYY'.
+    """
+    # Убираем возможный префикс команды
+    text = content.strip()
+    for prefix in ("!birthday", "?birthday"):
+        if text.startswith(prefix):
+            text = text[len(prefix) :].strip()
+            break
+
+    if not re.match(r"^\d{2}\.\d{2}\.\d{4}$", text):
+        raise ValueError("Некорректный формат даты. Используйте DD.MM.YYYY.")
+
+    try:
+        return datetime.strptime(text, "%d.%m.%Y")
+    except Exception:
+        raise ValueError("Некорректный формат даты. Используйте DD.MM.YYYY.")
+
+
+def parse_holiday_command(content: str) -> tuple[int, int, str]:
+    """Парсит команду добавления праздника.
+
+    Ожидаемый формат: '!holiday DD.MM Название праздника'.
+    Возвращает (day, month, holiday_name).
+    """
+    try:
+        args = content.split(" ", 2)
+        if len(args) < 3:
+            raise ValueError("Используйте формат: `!holiday DD.MM Название праздника`")
+
+        date_str = args[1]
+        holiday_name = args[2]
+
+        if not re.match(r"^\d{2}\.\d{2}$", date_str):
+            raise ValueError("Некорректный формат даты. Используйте DD.MM (например, 01.01).")
+
+        day, month = map(int, date_str.split("."))
+
+        if not (1 <= month <= 12):
+            raise ValueError("Месяц должен быть от 1 до 12.")
+
+        if not (1 <= day <= 31):
+            raise ValueError("День должен быть от 1 до 31.")
+
+        return day, month, holiday_name
+
+    except ValueError as ve:
+        raise ve
+    except Exception:
+        raise ValueError("Ошибка разбора команды. Используйте DD.MM Название.")
