@@ -3,12 +3,9 @@ from datetime import datetime
 from typing import Any
 
 import feedparser
-from dotenv import load_dotenv
 from sqlalchemy import select
 
 from app.data.models import YouTubeChannel, YouTubeVideo, async_session
-
-load_dotenv()
 
 
 class YouTubeNotifier:
