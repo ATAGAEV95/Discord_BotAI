@@ -112,8 +112,8 @@ async def ai_generate(
         )
 
         response_text = completion.choices[0].message.content
-        cleaned_response_text = await clean_text(response_text)
-        emoji_response_text = await replace_emojis(cleaned_response_text)
+        cleaned_response_text = clean_text(response_text)
+        emoji_response_text = replace_emojis(cleaned_response_text)
 
         messages_to_index = [
             {"role": "user", "content": f"[Пользователь: {name}] {text}"},
@@ -151,17 +151,20 @@ async def ai_generate_birthday_congrats(name: str) -> str:
             max_tokens=400,
         )
         text = completion.choices[0].message.content.strip()
-        text = await clean_text(text)
+        text = clean_text(text)
         return text
     except Exception as e:
         print(f"[Ошибка генерации поздравления]: {e}")
         return "Поздравляем с днём рождения! 🎉"
 
 
-async def check_weather_intent(text: str) -> str | None:
-    """Проверяет наличие намерения запросить информацию о погоде и обрабатывает его."""
+async def check_tool_intent(text: str, server_script: str, prompt: str) -> str | None:
+    """Проверяет наличие намерения использовать MCP-инструмент и обрабатывает его.
+
+    Универсальная функция для проверки намерений (погода, поиск и т.д.).
+    """
     server_params = StdioServerParameters(
-        command="python", args=["app/mcp/server_weather.py"], env=None
+        command="python", args=[server_script], env=None
     )
 
     async with stdio_client(server_params) as (read, write):
@@ -172,89 +175,37 @@ async def check_weather_intent(text: str) -> str | None:
             openai_tools = convert_mcp_tools_to_openai(tools_list.tools)
 
             messages = [
-                ChatCompletionSystemMessageParam(role="system", content=WEATHER_PROMPT.strip()),
+                ChatCompletionSystemMessageParam(role="system", content=prompt.strip()),
                 ChatCompletionUserMessageParam(role="user", content=text),
             ]
 
-            final_response = await process_conversation_weather(messages, openai_tools, session)
+            final_response = await process_mcp_conversation(messages, openai_tools, session)
 
             if final_response[1] is True:
                 return final_response[0]
             return None
 
 
-async def process_conversation_weather(
-    messages: list, tools: list, session: ClientSession
-) -> str | tuple:
-    """Обрабатывает разговор с возможными вызовами инструментов."""
-    response = await get_client().chat.completions.create(
-        model=get_mini_model(),
-        messages=messages,
-        tools=tools,  # Передаем доступные инструменты
-        tool_choice="auto",  # Модель сама решает, нужны ли инструменты
-    )
-    assistant_message = response.choices[0].message
-    print(assistant_message)
-
-    if not assistant_message.tool_calls:
-        return assistant_message.content, False
-
-    for tool_call in assistant_message.tool_calls:
-        function_name = tool_call.function.name
-        function_args = json.loads(tool_call.function.arguments)
-
-        try:
-            result = await session.call_tool(function_name, function_args)
-
-            if result.content:
-                tool_result = result.content[0].text if result.content else "Нет результата"
-            else:
-                tool_result = "Инструмент выполнен, но результат пуст"
-
-            return tool_result, True
-
-        except Exception as e:
-            print(f"Ошибка при вызове инструмента: {str(e)}")
-
-    return ""
+async def check_weather_intent(text: str) -> str | None:
+    """Проверяет наличие намерения запросить информацию о погоде."""
+    return await check_tool_intent(text, "app/mcp/server_weather.py", WEATHER_PROMPT)
 
 
 async def check_search_intent(text: str) -> str | None:
-    """Проверяет наличие намерения запросить информацию и обрабатывает его."""
-    server_params = StdioServerParameters(
-        command="python", args=["app/mcp/server_search.py"], env=None
-    )
-
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            tools_list = await session.list_tools()
-
-            openai_tools = convert_mcp_tools_to_openai(tools_list.tools)
-
-            messages = [
-                ChatCompletionSystemMessageParam(role="system", content=SEARCH_PROMPT.strip()),
-                ChatCompletionUserMessageParam(role="user", content=text),
-            ]
-
-            final_response = await process_conversation_search(messages, openai_tools, session)
-
-            if final_response[1] is True:
-                return final_response[0]
-            return None
+    """Проверяет наличие намерения запросить информацию через поиск."""
+    return await check_tool_intent(text, "app/mcp/server_search.py", SEARCH_PROMPT)
 
 
-async def process_conversation_search(
+async def process_mcp_conversation(
     messages: list, tools: list, session: ClientSession
-) -> str | tuple:
-    """Обрабатывает разговор с возможными вызовами инструментов."""
+) -> tuple[str, bool]:
+    """Обрабатывает разговор с возможными вызовами MCP-инструментов."""
     response = await get_client().chat.completions.create(
         model=get_mini_model(),
         messages=messages,
-        tools=tools,  # Передаем доступные инструменты
-        tool_choice="auto",  # Модель сама решает, нужны ли инструменты
+        tools=tools,
+        tool_choice="auto",
     )
-
     assistant_message = response.choices[0].message
     print(assistant_message)
 
@@ -278,4 +229,4 @@ async def process_conversation_search(
         except Exception as e:
             print(f"Ошибка при вызове инструмента: {str(e)}")
 
-    return ""
+    return "", False
