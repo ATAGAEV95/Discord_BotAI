@@ -20,7 +20,7 @@ class Ranks(commands.Cog):
             return
 
         # Игнорируем команды
-        if message.content.startswith("!"):
+        if message.content.startswith(self.bot.command_prefix):
             return
 
         server_id = message.guild.id if message.guild else None
