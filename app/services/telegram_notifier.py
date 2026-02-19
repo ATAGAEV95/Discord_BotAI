@@ -1,9 +1,6 @@
 import os
 
 import aiohttp
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 class TelegramNotifier:
