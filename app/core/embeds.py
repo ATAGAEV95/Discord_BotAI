@@ -8,7 +8,7 @@ from discord import File
 from PIL import Image, ImageDraw, ImageFont
 
 from app.data.request import get_user_rank
-from app.tools.prompt import RANK_NAMES
+from app.tools.prompt import RANK_CONFIG
 from app.tools.utils import darken_color, get_rank_description
 
 
@@ -55,8 +55,9 @@ def create_help_embed() -> discord.Embed:
         value=(
             "`!reset` - очистка истории чата\n"
             "`!ai` - переключить/выбрать AI-провайдера\n"
-            "`!add_holiday [DD.MM] [Название]` - добавить праздник\n"
+            "`!holiday [DD.MM] [Название]` - добавить праздник\n"
             "`!check_holiday` - принудительная проверка праздников\n"
+            "`!check_birthday` - принудительная проверка дней рождения\n"
             "*(только для администраторов)*"
         ),
         inline=False,
@@ -154,17 +155,15 @@ def create_rang_list_embed() -> discord.Embed:
         description="Все возможные ранги и условия их получения:",
     )
 
-    embed.add_field(name=RANK_NAMES[0], value="0 сообщений", inline=False)
-
-    embed.add_field(name=RANK_NAMES[1], value="1-49 сообщений", inline=False)
-
-    embed.add_field(name=RANK_NAMES[2], value="50-99 сообщений", inline=False)
-
-    embed.add_field(name=RANK_NAMES[3], value="100-199 сообщений", inline=False)
-
-    embed.add_field(name=RANK_NAMES[4], value="200-499 сообщений", inline=False)
-
-    embed.add_field(name=RANK_NAMES[5], value="500+ сообщений", inline=False)
+    for i, rank in enumerate(RANK_CONFIG):
+        if i == 0:
+            value = "0 сообщений"
+        elif i == len(RANK_CONFIG) - 1:
+            value = f"{rank['threshold']}+ сообщений"
+        else:
+            next_threshold = RANK_CONFIG[i + 1]["threshold"]
+            value = f"{rank['threshold']}-{next_threshold - 1} сообщений"
+        embed.add_field(name=rank["name"], value=value, inline=False)
 
     embed.set_footer(text="Пишите сообщения, чтобы повысить свой ранг!")
     return embed
