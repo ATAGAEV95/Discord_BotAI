@@ -15,7 +15,7 @@ async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
     date_plus_month = current_date + timedelta(days=30)
     old_year = date_minus_month.year
     new_year = date_plus_month.year
-    if holiday == "Новым годом":
+    if current_date.month == 1 and current_date.day == 1:
         messages = [
             ChatCompletionSystemMessageParam(
                 role="system", content=system_holiday_prompt(holiday).strip()
@@ -25,7 +25,7 @@ async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
                 content=f"{relevant_contexts}. Новый год {new_year}. Старый год {old_year}.",
             ),
         ]
-    if holiday == "Днем Бичей":
+    elif holiday == "Днем Бичей":
         messages = [
             ChatCompletionSystemMessageParam(
                 role="system", content=system_holiday_prompt(holiday).strip()
