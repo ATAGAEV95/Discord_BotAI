@@ -1,4 +1,4 @@
-"""Unit-тесты для app/cogs/commands.py."""
+"""Unit-тесты для разбитых Cog-модулей."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -6,7 +6,10 @@ import discord
 import pytest
 from discord.ext import commands
 
-from app.cogs.commands import BotCommands
+from app.cogs.admin import Admin
+from app.cogs.error_handler import ErrorHandler
+from app.cogs.general import General
+from app.cogs.youtube import YouTube
 from app.core.bot import DisBot
 
 
@@ -17,6 +20,7 @@ def mock_bot() -> MagicMock:
     bot.weather_enabled = True
     bot.search_enabled = True
     bot.context_limit = 50
+    bot.command_prefix = "!"
     return bot
 
 
@@ -39,24 +43,42 @@ def mock_ctx() -> AsyncMock:
 
 
 @pytest.fixture
-def cog(mock_bot: MagicMock) -> BotCommands:
-    """Фикстура для инициализации Cog."""
-    return BotCommands(mock_bot)
+def general_cog(mock_bot: MagicMock) -> General:
+    """Фикстура для General Cog."""
+    return General(mock_bot)
+
+
+@pytest.fixture
+def admin_cog(mock_bot: MagicMock) -> Admin:
+    """Фикстура для Admin Cog."""
+    return Admin(mock_bot)
+
+
+@pytest.fixture
+def youtube_cog(mock_bot: MagicMock) -> YouTube:
+    """Фикстура для YouTube Cog."""
+    return YouTube(mock_bot)
+
+
+@pytest.fixture
+def error_cog(mock_bot: MagicMock) -> ErrorHandler:
+    """Фикстура для ErrorHandler Cog."""
+    return ErrorHandler(mock_bot)
 
 
 # ── help_command ────────────────────────────────────────────────
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.em.create_help_embed")
+@patch("app.cogs.general.em.create_help_embed")
 async def test_help_command(
-    mock_create_help: MagicMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_create_help: MagicMock, general_cog: General, mock_ctx: AsyncMock
 ) -> None:
     """Команда !help отправляет embed."""
     mock_embed = MagicMock()
     mock_create_help.return_value = mock_embed
 
-    await cog.help_command.callback(cog, mock_ctx)
+    await general_cog.help_command.callback(general_cog, mock_ctx)
 
     mock_ctx.send.assert_called_once_with(embed=mock_embed)
 
@@ -65,12 +87,12 @@ async def test_help_command(
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.get_rank", new_callable=AsyncMock)
-@patch("app.cogs.commands.em.create_rang_embed", new_callable=AsyncMock)
+@patch("app.cogs.general.get_rank", new_callable=AsyncMock)
+@patch("app.cogs.general.em.create_rang_embed", new_callable=AsyncMock)
 async def test_rank_command_show_user(
     mock_create_embed: AsyncMock,
     mock_get_rank: AsyncMock,
-    cog: BotCommands,
+    general_cog: General,
     mock_ctx: AsyncMock,
 ) -> None:
     """Команда !rank показывает ранг пользователя."""
@@ -79,35 +101,35 @@ async def test_rank_command_show_user(
     mock_file = MagicMock()
     mock_create_embed.return_value = (mock_embed, mock_file)
 
-    await cog.rank_command.callback(cog, mock_ctx)
+    await general_cog.rank_command.callback(general_cog, mock_ctx)
 
     mock_get_rank.assert_called_once_with(12345, 67890)
     mock_ctx.send.assert_called_once_with(embed=mock_embed, file=mock_file)
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.em.create_rang_list_embed")
+@patch("app.cogs.general.em.create_rang_list_embed")
 async def test_rank_command_list(
-    mock_create_list: MagicMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_create_list: MagicMock, general_cog: General, mock_ctx: AsyncMock
 ) -> None:
     """Команда !rank list показывает список рангов."""
     mock_embed = MagicMock()
     mock_create_list.return_value = mock_embed
 
-    await cog.rank_command.callback(cog, mock_ctx, arg="list")
+    await general_cog.rank_command.callback(general_cog, mock_ctx, arg="list")
 
     mock_ctx.send.assert_called_once_with(embed=mock_embed)
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.get_rank", new_callable=AsyncMock)
+@patch("app.cogs.general.get_rank", new_callable=AsyncMock)
 async def test_rank_command_error(
-    mock_get_rank: AsyncMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_get_rank: AsyncMock, general_cog: General, mock_ctx: AsyncMock
 ) -> None:
     """Обработка ошибки в !rank."""
     mock_get_rank.side_effect = Exception("DB Error")
 
-    await cog.rank_command.callback(cog, mock_ctx)
+    await general_cog.rank_command.callback(general_cog, mock_ctx)
 
     mock_ctx.send.assert_called_with("Произошла ошибка при получении статистики: DB Error")
 
@@ -116,26 +138,33 @@ async def test_rank_command_error(
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.save_birthday", new_callable=AsyncMock)
+@patch("app.cogs.general.save_birthday", new_callable=AsyncMock)
+@patch("app.cogs.general.parse_birthday_date")
 async def test_birthday_command_success(
-    mock_save: AsyncMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_parse: MagicMock, mock_save: AsyncMock, general_cog: General, mock_ctx: AsyncMock
 ) -> None:
     """Команда !birthday сохраняет дату."""
-    await cog.birthday_command.callback(cog, mock_ctx, date="12.05")
+    from datetime import datetime
 
-    mock_save.assert_called_once_with("!birthday 12.05", "Test User", "test_user", 12345)
+    fake_dt = datetime(2000, 5, 12)
+    mock_parse.return_value = fake_dt
+
+    await general_cog.birthday_command.callback(general_cog, mock_ctx, date="12.05.2000")
+
+    mock_parse.assert_called_once_with("12.05.2000")
+    mock_save.assert_called_once_with(12345, "Test User", "test_user", fake_dt)
     mock_ctx.send.assert_called_with("Дата рождения сохранена.")
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.save_birthday", new_callable=AsyncMock)
+@patch("app.cogs.general.parse_birthday_date")
 async def test_birthday_command_value_error(
-    mock_save: AsyncMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_parse: MagicMock, general_cog: General, mock_ctx: AsyncMock
 ) -> None:
     """Ошибка валидации даты в !birthday."""
-    mock_save.side_effect = ValueError("Неверный формат")
+    mock_parse.side_effect = ValueError("Неверный формат")
 
-    await cog.birthday_command.callback(cog, mock_ctx, date="invalid")
+    await general_cog.birthday_command.callback(general_cog, mock_ctx, date="invalid")
 
     mock_ctx.send.assert_called_with("Неверный формат")
 
@@ -144,13 +173,13 @@ async def test_birthday_command_value_error(
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.send_birthday_congratulations", new_callable=AsyncMock)
+@patch("app.cogs.admin.send_birthday_congratulations", new_callable=AsyncMock)
 async def test_manual_birthday_command(
-    mock_send: AsyncMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_send: AsyncMock, admin_cog: Admin, mock_ctx: AsyncMock
 ) -> None:
     """Команда !check_birthday вызывает рассылку."""
-    await cog.manual_birthday_command.callback(cog, mock_ctx)
-    mock_send.assert_called_once_with(cog.bot)
+    await admin_cog.manual_birthday_command.callback(admin_cog, mock_ctx)
+    mock_send.assert_called_once_with(admin_cog.bot)
 
 
 # ── reset_command ───────────────────────────────────────────────
@@ -159,11 +188,11 @@ async def test_manual_birthday_command(
 @pytest.mark.asyncio
 @patch("app.core.handlers.clear_server_history")
 async def test_reset_command(
-    mock_clear: AsyncMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_clear: AsyncMock, admin_cog: Admin, mock_ctx: AsyncMock
 ) -> None:
     """Команда !reset очищает историю."""
     mock_clear.return_value = "История очищена"
-    await cog.reset_command.callback(cog, mock_ctx)
+    await admin_cog.reset_command.callback(admin_cog, mock_ctx)
 
     mock_clear.assert_called_once_with(67890)
     mock_ctx.send.assert_called_with("История очищена")
@@ -175,7 +204,7 @@ async def test_reset_command(
 @pytest.mark.asyncio
 @patch("app.core.handlers.llama_manager.index_server_users", new_callable=AsyncMock)
 async def test_update_user_command(
-    mock_index: AsyncMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_index: AsyncMock, admin_cog: Admin, mock_ctx: AsyncMock
 ) -> None:
     """Команда !update_user индексирует пользователей."""
     member = MagicMock()
@@ -183,7 +212,7 @@ async def test_update_user_command(
     member.bot = False
     mock_ctx.guild.members = [member]
 
-    await cog.update_user_command.callback(cog, mock_ctx)
+    await admin_cog.update_user_command.callback(admin_cog, mock_ctx)
 
     mock_index.assert_called_once_with(67890, ["user1"])
     assert "Список пользователей сервера обновлен" in mock_ctx.send.call_args[0][0]
@@ -193,19 +222,19 @@ async def test_update_user_command(
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.get_available_providers")
-@patch("app.cogs.commands.next_provider")
+@patch("app.cogs.admin.get_available_providers")
+@patch("app.cogs.admin.next_provider")
 async def test_ai_provider_next(
     mock_next: MagicMock,
     mock_available: MagicMock,
-    cog: BotCommands,
+    admin_cog: Admin,
     mock_ctx: AsyncMock,
 ) -> None:
     """!ai без аргументов переключает на следующего провайдера."""
     mock_available.return_value = ["prov1", "prov2"]
     mock_next.return_value = "prov2"
 
-    await cog.ai_provider_command.callback(cog, mock_ctx, name=None)
+    await admin_cog.ai_provider_command.callback(admin_cog, mock_ctx, name=None)
 
     mock_next.assert_called_once()
     mock_ctx.send.assert_called()
@@ -213,32 +242,32 @@ async def test_ai_provider_next(
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.get_available_providers")
-@patch("app.cogs.commands.set_active_provider")
+@patch("app.cogs.admin.get_available_providers")
+@patch("app.cogs.admin.set_active_provider")
 async def test_ai_provider_set_valid(
     mock_set: MagicMock,
     mock_available: MagicMock,
-    cog: BotCommands,
+    admin_cog: Admin,
     mock_ctx: AsyncMock,
 ) -> None:
     """!ai name устанавливает провайдера."""
     mock_available.return_value = ["prov1", "prov2"]
 
-    await cog.ai_provider_command.callback(cog, mock_ctx, name="prov1")
+    await admin_cog.ai_provider_command.callback(admin_cog, mock_ctx, name="prov1")
 
     mock_set.assert_called_once_with("prov1")
     assert "переключён на **prov1**" in mock_ctx.send.call_args[0][0]
 
 
 @pytest.mark.asyncio
-@patch("app.cogs.commands.get_available_providers")
+@patch("app.cogs.admin.get_available_providers")
 async def test_ai_provider_invalid(
-    mock_available: MagicMock, cog: BotCommands, mock_ctx: AsyncMock
+    mock_available: MagicMock, admin_cog: Admin, mock_ctx: AsyncMock
 ) -> None:
     """!ai invalid сообщает об ошибке."""
     mock_available.return_value = ["prov1", "prov2"]
 
-    await cog.ai_provider_command.callback(cog, mock_ctx, name="invalid")
+    await admin_cog.ai_provider_command.callback(admin_cog, mock_ctx, name="invalid")
 
     assert "не найден" in mock_ctx.send.call_args[0][0]
 
@@ -247,27 +276,29 @@ async def test_ai_provider_invalid(
 
 
 @pytest.mark.asyncio
-async def test_add_youtube_command_success(cog: BotCommands, mock_ctx: AsyncMock) -> None:
+async def test_add_youtube_command_success(youtube_cog: YouTube, mock_ctx: AsyncMock) -> None:
     """!add_youtube добавляет канал."""
-    cog.youtube_notifier.add_channel = AsyncMock(return_value=True)
-    cog.bot.get_channel.return_value = MagicMock()
+    youtube_cog.youtube_notifier.add_channel = AsyncMock(return_value=True)
+    youtube_cog.bot.get_channel.return_value = MagicMock()
 
-    await cog.add_youtube_command.callback(
-        cog, mock_ctx, youtube_id="yt123", discord_channel_id=111, name="MyChannel"
+    await youtube_cog.add_youtube_command.callback(
+        youtube_cog, mock_ctx, youtube_id="yt123", discord_channel_id=111, name="MyChannel"
     )
 
-    cog.youtube_notifier.add_channel.assert_called_once()
+    youtube_cog.youtube_notifier.add_channel.assert_called_once()
     mock_ctx.send.assert_called_with("✅ Канал добавлен для отслеживания")
 
 
 @pytest.mark.asyncio
-async def test_youtube_toggle_command(cog: BotCommands, mock_ctx: AsyncMock) -> None:
+async def test_youtube_toggle_command(youtube_cog: YouTube, mock_ctx: AsyncMock) -> None:
     """!youtube on/off переключает статус."""
-    cog.youtube_notifier.toggle_channel = AsyncMock(return_value=True)
+    youtube_cog.youtube_notifier.toggle_channel = AsyncMock(return_value=True)
 
-    await cog.youtube_toggle_command.callback(cog, mock_ctx, action="off", name="MyChannel")
+    await youtube_cog.youtube_toggle_command.callback(
+        youtube_cog, mock_ctx, action="off", name="MyChannel"
+    )
 
-    cog.youtube_notifier.toggle_channel.assert_called_once_with("MyChannel", 67890, False)
+    youtube_cog.youtube_notifier.toggle_channel.assert_called_once_with("MyChannel", 67890, False)
     assert "отключено" in mock_ctx.send.call_args[0][0]
 
 
@@ -282,7 +313,7 @@ async def test_on_command_not_found_generates_ai_response(
     mock_ai: AsyncMock,
     mock_search: AsyncMock,
     mock_weather: AsyncMock,
-    cog: BotCommands,
+    error_cog: ErrorHandler,
     mock_ctx: AsyncMock,
 ) -> None:
     """Неизвестная команда вызывает AI-генерацию."""
@@ -292,7 +323,7 @@ async def test_on_command_not_found_generates_ai_response(
     mock_weather.return_value = None
     mock_search.return_value = None
 
-    await cog.on_command_error(mock_ctx, error)
+    await error_cog.on_command_error(mock_ctx, error)
 
     mock_ai.assert_called_once()
     mock_ctx.send.assert_called()
@@ -300,8 +331,8 @@ async def test_on_command_not_found_generates_ai_response(
 
 
 @pytest.mark.asyncio
-async def test_on_missing_permissions(cog: BotCommands, mock_ctx: AsyncMock) -> None:
+async def test_on_missing_permissions(error_cog: ErrorHandler, mock_ctx: AsyncMock) -> None:
     """Ошибка прав доступа."""
     error = commands.MissingPermissions(["administrator"])
-    await cog.on_command_error(mock_ctx, error)
+    await error_cog.on_command_error(mock_ctx, error)
     assert "недостаточно прав" in mock_ctx.send.call_args[0][0]
