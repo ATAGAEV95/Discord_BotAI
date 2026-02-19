@@ -15,4 +15,4 @@ pillow~=11.3.0
 httpx~=0.28.1
 mcp~=1.19.0
 tavily~=1.1.0
-feedparser~=6.0.11
+feedparser~=6.0.12
