@@ -15,7 +15,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine, AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import func
 
@@ -25,7 +25,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 SCHEMA = "public"
 
 
-def get_engine(schema: str) -> create_async_engine:
+def get_engine(schema: str) -> AsyncEngine:
     """Создает и возвращает асинхронный движок SQLAlchemy с указанной схемой."""
     return create_async_engine(
         DATABASE_URL,
