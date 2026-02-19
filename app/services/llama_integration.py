@@ -43,21 +43,36 @@ class LlamaIndexManager:
         return collection
 
     async def index_messages(self, server_id: int, messages: list[dict[str, Any]]) -> Any:
-        """Индексировать сообщения сервера."""
+        """Индексировать сообщения сервера как диалоговые пары user+assistant."""
         try:
-            documents = []
-            for msg in messages:
-                if msg.get("role") in ["user", "assistant"]:
-                    content = f"{msg['role']}: {msg['content']}"
-                    documents.append(
-                        Document(
-                            text=content,
-                            metadata={"document_type": "message", "server_id": server_id},
-                        )
-                    )
+            pairs = []
+            i = 0
+            while i < len(messages):
+                msg = messages[i]
+                if msg.get("role") == "user":
+                    pair_text = f"user: {msg['content']}"
+                    if i + 1 < len(messages) and messages[i + 1].get("role") == "assistant":
+                        pair_text += f"\nassistant: {messages[i + 1]['content']}"
+                        i += 2
+                    else:
+                        i += 1
+                    pairs.append(pair_text)
+                elif msg.get("role") == "assistant":
+                    pairs.append(f"assistant: {msg['content']}")
+                    i += 1
+                else:
+                    i += 1
 
-            if not documents:
+            if not pairs:
                 return None
+
+            documents = [
+                Document(
+                    text=text,
+                    metadata={"document_type": "message", "server_id": server_id},
+                )
+                for text in pairs
+            ]
 
             collection = self.get_server_collection(server_id)
             vector_store = ChromaVectorStore(chroma_collection=collection)
