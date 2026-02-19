@@ -56,14 +56,58 @@ USER_DESCRIPTIONS = {
 
 USER_DESCRIPTIONS_TEXT = "\n".join([f"- {user}, {desc}" for user, desc in USER_DESCRIPTIONS.items()])
 
-RANK_NAMES = {
-    0: "Человек",
-    1: "Начинающий бич",
-    2: "Радужный бич",
-    3: "Бич",
-    4: "Босс бичей",
-    5: "Бич-император",
-}
+RANK_CONFIG: list[dict] = [
+    {
+        "name": "Человек",
+        "threshold": 0,
+        "next_threshold": 50,
+        "color_name": "light_grey",
+        "text_color": (130, 130, 130),
+        "bg_filename": "rang0.jpg",
+    },
+    {
+        "name": "Начинающий бич",
+        "threshold": 1,
+        "next_threshold": 50,
+        "color_name": "green",
+        "text_color": (44, 255, 109),
+        "bg_filename": "rang1.png",
+    },
+    {
+        "name": "Радужный бич",
+        "threshold": 50,
+        "next_threshold": 100,
+        "color_name": "blue",
+        "text_color": (76, 142, 255),
+        "bg_filename": "rang2.png",
+    },
+    {
+        "name": "Бич",
+        "threshold": 100,
+        "next_threshold": 200,
+        "color_name": "red",
+        "text_color": (255, 73, 73),
+        "bg_filename": "rang3.png",
+    },
+    {
+        "name": "Босс бичей",
+        "threshold": 200,
+        "next_threshold": 500,
+        "color_name": "purple",
+        "text_color": (197, 94, 255),
+        "bg_filename": "rang4.png",
+    },
+    {
+        "name": "Бич-император",
+        "threshold": 500,
+        "next_threshold": 500,
+        "color_name": "gold",
+        "text_color": (255, 215, 0),
+        "bg_filename": "rang5.png",
+    },
+]
+
+RANK_NAMES = {i: rank["name"] for i, rank in enumerate(RANK_CONFIG)}
 
 SYSTEM_PROMPT = f"""
 Ты — Discord бот, дерзкий, немного грубый и остроумный. Твои задачи:
