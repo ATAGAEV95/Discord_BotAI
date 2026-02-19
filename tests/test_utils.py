@@ -2,8 +2,6 @@
 
 from types import SimpleNamespace
 
-import pytest
-
 from app.tools.prompt import RANK_NAMES
 from app.tools.utils import (
     clean_text,
@@ -279,48 +277,43 @@ class TestConvertMcpToolsToOpenai:
         assert convert_mcp_tools_to_openai([]) == []
 
 
-# ── clean_text (async) ──────────────────────────────────────────
+# ── clean_text ──────────────────────────────────────────────────
 
 
 class TestCleanText:
-    """Тесты для асинхронной функции clean_text."""
+    """Тесты для функции clean_text."""
 
-    @pytest.mark.asyncio
-    async def test_removes_bold(self) -> None:
+    def test_removes_bold(self) -> None:
         """Удаляет **жирный** markdown."""
-        result = await clean_text("**Жирный** текст")
+        result = clean_text("**Жирный** текст")
         assert "**" not in result
         assert "Жирный" in result
 
-    @pytest.mark.asyncio
-    async def test_removes_headers(self) -> None:
+    def test_removes_headers(self) -> None:
         """Удаляет заголовки #, ##, ###."""
-        result = await clean_text("### Заголовок")
+        result = clean_text("### Заголовок")
         assert "#" not in result
         assert "Заголовок" in result
 
-    @pytest.mark.asyncio
-    async def test_plain_text_unchanged(self) -> None:
+    def test_plain_text_unchanged(self) -> None:
         """Обычный текст не меняется."""
-        result = await clean_text("обычный текст")
+        result = clean_text("обычный текст")
         assert result == "обычный текст"
 
 
-# ── replace_emojis (async) ──────────────────────────────────────
+# ── replace_emojis ──────────────────────────────────────────────
 
 
 class TestReplaceEmojis:
-    """Тесты для асинхронной функции replace_emojis."""
+    """Тесты для функции replace_emojis."""
 
-    @pytest.mark.asyncio
-    async def test_replaces_known_emoji(self) -> None:
+    def test_replaces_known_emoji(self) -> None:
         """Заменяет известные текстовые эмодзи на Discord-формат."""
-        result = await replace_emojis("Привет :yoba: мир")
+        result = replace_emojis("Привет :yoba: мир")
         assert "<:yoba:1101900451852599427>" in result
         assert "Привет" in result
 
-    @pytest.mark.asyncio
-    async def test_no_emoji_unchanged(self) -> None:
+    def test_no_emoji_unchanged(self) -> None:
         """Текст без эмодзи не меняется."""
-        result = await replace_emojis("обычный текст")
+        result = replace_emojis("обычный текст")
         assert result == "обычный текст"
