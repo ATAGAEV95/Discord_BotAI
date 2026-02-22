@@ -1,5 +1,3 @@
-"""Административные команды бота."""
-
 from discord.ext import commands
 
 from app.core import handlers

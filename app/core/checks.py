@@ -1,5 +1,3 @@
-"""Проверки прав доступа для команд бота."""
-
 from collections.abc import Callable
 
 from discord.ext import commands
