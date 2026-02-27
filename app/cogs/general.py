@@ -22,6 +22,7 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name="rank")
+    @commands.cooldown(rate=1, per=10.0, type=commands.BucketType.user)
     async def rank_command(self, ctx: commands.Context, arg: str | None = None) -> None:
         """Показать ранг пользователя или список рангов.
 
@@ -59,6 +60,7 @@ class General(commands.Cog):
             await ctx.send(f"Произошла ошибка при получении статистики: {e}")
 
     @commands.command(name="birthday")
+    @commands.cooldown(rate=1, per=30.0, type=commands.BucketType.user)
     async def birthday_command(self, ctx: commands.Context, *, date: str) -> None:
         """Сохранить дату рождения."""
         try:
