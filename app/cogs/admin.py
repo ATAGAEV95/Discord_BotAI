@@ -64,6 +64,7 @@ class Admin(commands.Cog):
 
     @commands.command(name="update_user")
     @commands.guild_only()
+    @admin_or_owner()
     async def update_user_command(self, ctx: commands.Context) -> None:
         """Обновить список пользователей сервера."""
         try:
