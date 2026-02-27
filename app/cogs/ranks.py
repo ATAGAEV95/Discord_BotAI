@@ -23,7 +23,10 @@ class Ranks(commands.Cog):
         if message.content.startswith(self.bot.command_prefix):
             return
 
-        server_id = message.guild.id if message.guild else None
+        if not message.guild:
+            return
+
+        server_id = message.guild.id
 
         try:
             rank_info = await update_message_count(message.author.id, message.author.name, server_id)
