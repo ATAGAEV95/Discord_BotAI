@@ -21,7 +21,12 @@ from sqlalchemy.sql import func
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL: str = os.getenv("DATABASE_URL", "")
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL не задан в переменных окружения. "
+        "Установите переменную для подключения к PostgreSQL."
+    )
 SCHEMA = "public"
 
 
