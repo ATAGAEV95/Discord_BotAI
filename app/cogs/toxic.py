@@ -17,6 +17,7 @@ class Toxic(commands.Cog):
         self.bot = bot
 
     @commands.command(name="toxic")
+    @commands.cooldown(rate=1, per=30.0, type=commands.BucketType.user)
     async def roast_command(self, ctx: commands.Context, *args: str) -> None:
         """Прожарка последних сообщений чата.
 
@@ -34,7 +35,7 @@ class Toxic(commands.Cog):
 
             for arg in args:
                 if arg.isdigit():
-                    limit = int(arg)
+                    limit = max(1, min(int(arg), 80))
                 else:
                     persona = arg
 
