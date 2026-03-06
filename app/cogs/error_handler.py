@@ -39,28 +39,29 @@ class ErrorHandler(commands.Cog):
 
             server_id = ctx.guild.id if ctx.guild else None
 
-            weather_task = (
-                handlers.check_weather_intent(ctx.message.content)
-                if self.bot.weather_enabled
-                else asyncio.sleep(0)
-            )
-            search_task = (
-                handlers.check_search_intent(ctx.message.content)
-                if self.bot.search_enabled
-                else asyncio.sleep(0)
-            )
+            async with ctx.typing():
+                weather_task = (
+                    handlers.check_weather_intent(ctx.message.content)
+                    if self.bot.weather_enabled
+                    else asyncio.sleep(0)
+                )
+                search_task = (
+                    handlers.check_search_intent(ctx.message.content)
+                    if self.bot.search_enabled
+                    else asyncio.sleep(0)
+                )
 
-            tool_weather, tool_search = await asyncio.gather(weather_task, search_task)
+                tool_weather, tool_search = await asyncio.gather(weather_task, search_task)
 
-            response = await handlers.ai_generate(
-                ctx.message.content,
-                server_id,
-                ctx.author,
-                tool_weather,
-                tool_search,
-                limit=self.bot.context_limit,
-            )
-            await ctx.send(f"{ctx.author.mention} {response}")
+                response = await handlers.ai_generate(
+                    ctx.message.content,
+                    server_id,
+                    ctx.author,
+                    tool_weather,
+                    tool_search,
+                    limit=self.bot.context_limit,
+                )
+                await ctx.send(f"{ctx.author.mention} {response}")
         elif isinstance(error, commands.CommandOnCooldown):
             await ctx.send(
                 f"⏳ Подождите {error.retry_after:.0f} сек. перед повторным использованием."
