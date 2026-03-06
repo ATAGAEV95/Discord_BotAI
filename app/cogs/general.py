@@ -35,25 +35,26 @@ class General(commands.Cog):
             return
 
         try:
-            server_id = ctx.guild.id if ctx.guild else None
-            message_count = await get_rank(ctx.author.id, server_id)
-            rank_description = get_rank_description(int(message_count))
+            async with ctx.typing():
+                server_id = ctx.guild.id if ctx.guild else None
+                message_count = await get_rank(ctx.author.id, server_id)
+                rank_description = get_rank_description(int(message_count))
 
-            avatar_url = (
-                ctx.author.avatar.url
-                if ctx.author.avatar
-                else ctx.author.default_avatar.url
-            )
+                avatar_url = (
+                    ctx.author.avatar.url
+                    if ctx.author.avatar
+                    else ctx.author.default_avatar.url
+                )
 
-            embed, file = await em.create_rang_embed(
-                ctx.author.display_name,
-                message_count,
-                rank_description["description"],
-                avatar_url,
-                server_id,
-                ctx.author.id,
-            )
-            await ctx.send(embed=embed, file=file)
+                embed, file = await em.create_rang_embed(
+                    ctx.author.display_name,
+                    message_count,
+                    rank_description["description"],
+                    avatar_url,
+                    server_id,
+                    ctx.author.id,
+                )
+                await ctx.send(embed=embed, file=file)
         except ValueError as ve:
             await ctx.send(str(ve))
         except Exception as e:
