@@ -59,8 +59,9 @@ class Admin(commands.Cog):
     @admin_or_owner()
     async def reset_command(self, ctx: commands.Context) -> None:
         """Очистить историю сервера (только для администраторов)."""
-        answer = await handlers.clear_server_history(ctx.guild.id)
-        await ctx.send(answer)
+        async with ctx.typing():
+            answer = await handlers.clear_server_history(ctx.guild.id)
+            await ctx.send(answer)
 
     @commands.command(name="update_user")
     @commands.guild_only()
