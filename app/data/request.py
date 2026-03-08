@@ -40,7 +40,6 @@ def db_operation(operation_name: str) -> Callable:
     return decorator
 
 
-
 @db_operation("сохранении сообщения канала")
 async def save_channel_message(
     session: AsyncSession, channel_id: int, message_id: int, author: str, content: str
@@ -108,9 +107,7 @@ async def update_message_count(
 
         stmt = (
             update(UserMessageStats)
-            .where(
-                UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id
-            )
+            .where(UserMessageStats.user_id == user_id, UserMessageStats.guild_id == guild_id)
             .values(message_count=new_count, last_updated=func.now())
         )
         await session.execute(stmt)
@@ -188,9 +185,7 @@ async def check_holiday(session: AsyncSession, current_date: date) -> str | None
 
 
 @db_operation("сохранении праздника")
-async def save_holiday(
-    session: AsyncSession, day: int, month: int, holiday_name: str
-) -> str:
+async def save_holiday(session: AsyncSession, day: int, month: int, holiday_name: str) -> str:
     """Сохраняет праздник в БД."""
     query = select(Holiday).where(Holiday.day == day, Holiday.month == month)
     result = await session.execute(query)
