@@ -33,8 +33,7 @@ async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
             ChatCompletionUserMessageParam(
                 role="user",
                 content=(
-                    f"{relevant_contexts}. Сегодня {current_date},"
-                    " Сервер бичей открылся 2017 году."
+                    f"{relevant_contexts}. Сегодня {current_date}, Сервер бичей открылся 2017 году."
                 ),
             ),
         ]
@@ -55,7 +54,7 @@ async def ai_generate_holiday_congrats(names: list[str], holiday: str) -> str:
             top_p=0.8,  # Шире выборка слов
             frequency_penalty=0.1,  # Поощряет новые формулировки
             presence_penalty=0.2,  # Поощряет новые темы
-            max_tokens=2000,
+            max_tokens=5000,
         )
         text = completion.choices[0].message.content.strip()
         cleaned_response_text = clean_text(text)
