@@ -40,9 +40,7 @@ class YouTube(commands.Cog):
     @commands.command(name="youtube")
     @commands.guild_only()
     @admin_or_owner()
-    async def youtube_toggle_command(
-        self, ctx: commands.Context, action: str, *, name: str
-    ) -> None:
+    async def youtube_toggle_command(self, ctx: commands.Context, action: str, *, name: str) -> None:
         """Включить или отключить отслеживание YouTube канала."""
         action = action.lower()
         if action not in ("on", "off"):
