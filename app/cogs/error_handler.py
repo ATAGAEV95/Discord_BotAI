@@ -81,8 +81,7 @@ class ErrorHandler(commands.Cog):
             from app.services.telegram_notifier import telegram_notifier
 
             await telegram_notifier.send_message(
-                f"⚠️ <b>Сетевая ошибка</b>\n"
-                f"Ошибка в команде `{ctx.command.name}`: {original_error}"
+                f"⚠️ <b>Сетевая ошибка</b>\nОшибка в команде `{ctx.command.name}`: {original_error}"
             )
         else:
             await ctx.send("❌ Произошла ошибка при выполнении команды.")
