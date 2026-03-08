@@ -60,9 +60,7 @@ async def ai_generate(
 ) -> str:
     """Генерирует ответ от AI на основе контекста сервера и текущего сообщения пользователя."""
     messages = [{"role": "system", "content": user_prompt(f"{name}")}]
-    relevant_contexts = await llama_manager.query_relevant_context(
-        server_id, text, limit=limit
-    )
+    relevant_contexts = await llama_manager.query_relevant_context(server_id, text, limit=limit)
     relevant_contexts = enrich_users_context(relevant_contexts, USER_DESCRIPTIONS)
 
     if relevant_contexts:
@@ -163,9 +161,7 @@ async def check_tool_intent(text: str, server_script: str, prompt: str) -> str |
 
     Универсальная функция для проверки намерений (погода, поиск и т.д.).
     """
-    server_params = StdioServerParameters(
-        command="python", args=[server_script], env=None
-    )
+    server_params = StdioServerParameters(command="python", args=[server_script], env=None)
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
