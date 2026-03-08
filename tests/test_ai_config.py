@@ -1,6 +1,5 @@
 """Unit-тесты для app/core/ai_config.py."""
 
-
 import pytest
 from openai import AsyncOpenAI
 
