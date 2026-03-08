@@ -187,9 +187,7 @@ async def test_manual_birthday_command(
 
 @pytest.mark.asyncio
 @patch("app.core.handlers.clear_server_history")
-async def test_reset_command(
-    mock_clear: AsyncMock, admin_cog: Admin, mock_ctx: AsyncMock
-) -> None:
+async def test_reset_command(mock_clear: AsyncMock, admin_cog: Admin, mock_ctx: AsyncMock) -> None:
     """Команда !reset очищает историю."""
     mock_clear.return_value = "История очищена"
     await admin_cog.reset_command.callback(admin_cog, mock_ctx)
