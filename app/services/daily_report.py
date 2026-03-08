@@ -39,9 +39,7 @@ class ReportGenerator:
             self.channels[channel_id] = ChannelState()
         return self.channels[channel_id]
 
-    async def add_message(
-        self, channel_id: int, message: str, author: str, message_id: int
-    ) -> None:
+    async def add_message(self, channel_id: int, message: str, author: str, message_id: int) -> None:
         """Добавляет сообщение в историю канала.
 
         Обновляет время последней активности. При достижении или
@@ -155,9 +153,7 @@ class ReportGenerator:
                 report = "Ошибка генерации отчета"
 
             if "ID:" in report:
-                guild_id = (
-                    channel.guild.id if channel and hasattr(channel, "guild") else "UNKNOWN"
-                )
+                guild_id = channel.guild.id if channel and hasattr(channel, "guild") else "UNKNOWN"
 
                 for msg in messages:
                     msg_id = str(msg.message_id)
