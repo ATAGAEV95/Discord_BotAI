@@ -95,16 +95,12 @@ class Admin(commands.Cog):
         if name is None:
             new_provider = next_provider()
             await ctx.send(
-                f"🔄 Провайдер переключён на **{new_provider}**\n"
-                f"Доступные: {', '.join(available)}"
+                f"🔄 Провайдер переключён на **{new_provider}**\nДоступные: {', '.join(available)}"
             )
             return
 
         if name not in available:
-            await ctx.send(
-                f"❌ Провайдер **{name}** не найден.\n"
-                f"Доступные: {', '.join(available)}"
-            )
+            await ctx.send(f"❌ Провайдер **{name}** не найден.\nДоступные: {', '.join(available)}")
             return
 
         if name == get_active_provider():
