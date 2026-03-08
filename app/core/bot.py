@@ -25,9 +25,7 @@ class DisBot(commands.Bot):
         help_command: commands.HelpCommand | None = None,
     ):
         """Инициализация бота."""
-        super().__init__(
-            command_prefix=command_prefix, intents=intents, help_command=help_command
-        )
+        super().__init__(command_prefix=command_prefix, intents=intents, help_command=help_command)
         self.report_generator: ReportGenerator | None = None
         self.youtube_notifier: YouTubeNotifier = YouTubeNotifier(self)
         self.telegram_enabled: bool = telegram_enabled
@@ -51,11 +49,11 @@ class DisBot(commands.Bot):
         await init_models()
         self.report_generator = ReportGenerator(self)
         start_scheduler(self, self.youtube_notifier)
-        
+
         telegram_notifier.enabled = telegram_notifier.enabled and self.telegram_enabled
         if not self.telegram_enabled:
             print("Telegram уведомления отключены в настройках бота.")
-            
+
         print("Бот успешно подключился к Discord")
 
     async def on_disconnect(self) -> None:
