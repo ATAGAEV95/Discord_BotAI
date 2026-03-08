@@ -28,8 +28,7 @@ def get_provider_config(name: str | None = None) -> dict[str, str]:
     provider_name = name or _active_provider
     if provider_name not in PROVIDERS:
         raise ValueError(
-            f"Неизвестный провайдер: '{provider_name}'. "
-            f"Доступные: {', '.join(PROVIDERS.keys())}"
+            f"Неизвестный провайдер: '{provider_name}'. Доступные: {', '.join(PROVIDERS.keys())}"
         )
     config = PROVIDERS[provider_name]
     return {
@@ -71,8 +70,7 @@ def set_active_provider(name: str) -> None:
 
     if name not in PROVIDERS:
         raise ValueError(
-            f"Неизвестный провайдер: '{name}'. "
-            f"Доступные: {', '.join(PROVIDERS.keys())}"
+            f"Неизвестный провайдер: '{name}'. Доступные: {', '.join(PROVIDERS.keys())}"
         )
     _active_provider = name
     _cached_client = None
