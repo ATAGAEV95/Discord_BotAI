@@ -7,12 +7,12 @@ from dotenv import load_dotenv
 # так как он инициализируется сразу при импорте модуля
 load_dotenv()
 
-from app.services.telegram_notifier import telegram_notifier
+from app.services.telegram_notifier import telegram_notifier  # noqa: E402
 
 
 async def main() -> None:
-    """
-    Ручной тест для отправки сообщения в Telegram.
+    """Ручной тест для отправки сообщения в Telegram.
+
     Можно передать текст сообщения аргументом при запуске скрипта.
     """
     if len(sys.argv) > 1:
