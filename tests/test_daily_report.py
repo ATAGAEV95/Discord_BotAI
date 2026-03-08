@@ -72,9 +72,7 @@ class TestReportGeneratorAddMessage:
     @pytest.mark.asyncio
     @patch("app.services.daily_report.get_channel_messages", new_callable=AsyncMock, return_value=[])
     @patch("app.services.daily_report.save_channel_message", new_callable=AsyncMock)
-    async def test_accumulates_messages(
-        self, mock_save: AsyncMock, mock_get: AsyncMock
-    ) -> None:
+    async def test_accumulates_messages(self, mock_save: AsyncMock, mock_get: AsyncMock) -> None:
         """Несколько сообщений накапливаются."""
         bot = MagicMock()
         bot.report_msg_limit = 15
