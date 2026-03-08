@@ -11,6 +11,7 @@ from app.data.models import Birthday, async_session
 from app.data.request import check_holiday
 from app.services.holiday import ai_generate_holiday_congrats
 from app.services.youtube_notifier import YouTubeNotifier
+from app.tools.utils import chunk_message
 
 DB_TIMEOUT = 10
 
@@ -56,7 +57,9 @@ async def send_birthday_congratulations(bot: discord.Client) -> None:
 
                 try:
                     congrats_text = await ai_generate_birthday_congrats(user.name)
-                    await channel.send(f"{member.mention} {congrats_text}")
+                    full_text = f"{member.mention} {congrats_text}"
+                    for part in chunk_message(full_text):
+                        await channel.send(part)
                 except Exception as e:
                     print(f"[Ошибка] при отправке поздравления для {user.name}: {e}")
     except Exception as e:
@@ -84,7 +87,9 @@ async def send_holiday_congratulations(bot: discord.Client) -> None:
 
             try:
                 congrats_text = await ai_generate_holiday_congrats(member_names, holiday)
-                await channel.send(f"🎉 **С праздником, {guild.name}!** 🎉\n{congrats_text}")
+                full_text = f"🎉 **С праздником, {guild.name}!** 🎉\n{congrats_text}"
+                for part in chunk_message(full_text):
+                    await channel.send(part)
             except Exception as e:
                 print(f"[Ошибка] при отправке поздравления с {holiday} для {guild.name}: {e}")
 
