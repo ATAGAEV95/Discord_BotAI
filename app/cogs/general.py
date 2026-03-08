@@ -41,9 +41,7 @@ class General(commands.Cog):
                 rank_description = get_rank_description(int(message_count))
 
                 avatar_url = (
-                    ctx.author.avatar.url
-                    if ctx.author.avatar
-                    else ctx.author.default_avatar.url
+                    ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
                 )
 
                 embed, file = await em.create_rang_embed(
