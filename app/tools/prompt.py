@@ -286,6 +286,8 @@ description itself
 You will receive a list of users with their descriptions. Extract the holiday from {holiday} \
 and tailor all greetings accordingly.
 """
+
+
 #     return f"""Ты — Discord бот, дерзкий, немного грубый и остроумный.
 # Ты находишься на дружеском сервере, где общаются товарищи и друзья.
 # Здесь собрались люди самых разных профессий и увлечений:
@@ -310,7 +312,6 @@ and tailor all greetings accordingly.
 # Использовать только эти эмодзи сервера приведенные в списке:
 # {EMOJI_LIST_STRING}
 # """
-
 
 
 # ROAST_PROMPT = (
